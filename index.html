@@ -3,33 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#191713" />
-    <title>Fixly | Revisa antes de salir</title>
+    <meta name="theme-color" content="#121416" />
+    <title>Fixly | El estado de tu auto, por placa</title>
     <meta
       name="description"
-      content="Consulta la vigencia de tu SOAT y revisión técnica por placa."
+      content="Consulta por placa si tu SOAT y revisión técnica siguen vigentes en Lima."
     />
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Semi+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
 
       :root {
         color-scheme: dark;
-        --ink: #191713;
-        --surface: #24211d;
-        --surface-soft: #2d2924;
-        --paper: #fffdf8;
-        --dust: #d9d1c4;
-        --dust-muted: #b4aa9b;
-        --line: rgba(255, 253, 248, 0.16);
-        --line-soft: rgba(255, 253, 248, 0.1);
-        --brand: #f4c430;
-        --brand-ink: #855500;
-        --valid: #8de0b2;
-        --due: #ffb45c;
-        --expired: #ff9b91;
-        --radius-panel: 28px;
-        --radius-card: 20px;
-        --radius-control: 14px;
+        --ink: #121416;
+        --surface: #1c2023;
+        --paper: #f4f6f4;
+        --paper-soft: #dbe0e2;
+        --dust: #b7c0c7;
+        --dust-muted: #8d979f;
+        --line: rgba(244, 246, 244, 0.18);
+        --line-soft: rgba(244, 246, 244, 0.1);
+        --brand: #d8b24c;
+        --brand-soft: #ebcb74;
+        --brand-ink: #3e3211;
+        --valid: #86d2b0;
+        --due: #e8a65b;
+        --expired: #f08c83;
+        --radius-xl: 30px;
+        --radius-lg: 22px;
+        --radius-md: 15px;
         --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
         --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
       }
@@ -81,41 +82,59 @@
         overflow: hidden;
       }
 
-      .container {
+      .container,
+      .hero-content {
         width: min(1180px, calc(100% - 40px));
         margin: 0 auto;
       }
 
-      .mono {
+      .mono,
+      .eyebrow,
+      .section-label,
+      .field-label,
+      .form-note,
+      .state-label,
+      .impact-label,
+      .footer-note,
+      .roadmap-kicker,
+      .source-note,
+      .photo-caption {
         font-family: 'IBM Plex Mono', monospace;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
       }
 
-      .display {
+      .display,
+      h1,
+      h2,
+      h3,
+      .brand-lockup span,
+      .footer-brand {
         font-family: 'Barlow Semi Condensed', Arial, sans-serif;
       }
 
       .glass {
-        background: rgba(36, 33, 29, 0.62);
         border: 1px solid var(--line);
-        box-shadow: inset 0 1px 0 rgba(255, 253, 248, 0.12);
-        backdrop-filter: blur(18px) saturate(115%);
-        -webkit-backdrop-filter: blur(18px) saturate(115%);
+        background: rgba(28, 32, 35, 0.74);
+        box-shadow: inset 0 1px 0 rgba(244, 246, 244, 0.13), 0 22px 70px rgba(6, 8, 9, 0.3);
+        backdrop-filter: blur(18px) saturate(112%);
+        -webkit-backdrop-filter: blur(18px) saturate(112%);
       }
 
       .site-nav {
         position: absolute;
-        z-index: 2;
-        top: 18px;
+        z-index: 4;
+        top: 20px;
         left: 50%;
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
         gap: 34px;
         width: min(1180px, calc(100% - 40px));
-        min-height: 72px;
-        padding: 12px 18px 12px 22px;
+        min-height: 70px;
+        padding: 11px 17px 11px 22px;
         transform: translateX(-50%);
-        border-radius: 22px;
+        border-radius: 20px;
       }
 
       .brand-lockup {
@@ -132,7 +151,7 @@
       }
 
       .brand-lockup span {
-        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
+        color: var(--paper);
         font-size: 34px;
         font-weight: 800;
         letter-spacing: -0.05em;
@@ -147,20 +166,21 @@
         font-size: 15px;
       }
 
-      .nav-links a {
+      .nav-links a,
+      .source-list a {
         transition: color 160ms var(--ease-standard);
       }
 
       .nav-links a:hover,
-      .nav-links a:focus-visible {
+      .nav-links a:focus-visible,
+      .source-list a:hover,
+      .source-list a:focus-visible {
         color: var(--paper);
       }
 
       .nav-context {
         color: var(--dust-muted);
-        font-size: 12px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        font-size: 11px;
         white-space: nowrap;
       }
 
@@ -168,7 +188,7 @@
         position: relative;
         display: grid;
         align-items: center;
-        min-height: 100dvh;
+        min-height: 860px;
         isolation: isolate;
         overflow: hidden;
       }
@@ -184,45 +204,32 @@
 
       .hero-media {
         object-fit: cover;
-        object-position: 62% center;
-        filter: saturate(0.82) contrast(1.06) brightness(0.68);
+        object-position: 60% center;
+        filter: saturate(0.78) contrast(1.07) brightness(0.65);
       }
 
       .hero-scrim {
         z-index: -1;
-        background: rgba(25, 23, 19, 0.69);
+        background: rgba(18, 20, 22, 0.67);
       }
 
       .hero-content {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(400px, 0.76fr);
+        grid-template-columns: minmax(0, 1fr) minmax(400px, 0.74fr);
         align-items: center;
-        gap: 84px;
-        width: min(1180px, calc(100% - 40px));
-        margin: 0 auto;
-        padding: 142px 0 64px;
+        gap: 76px;
+        padding: 146px 0 76px;
       }
 
       .hero-copy {
-        max-width: 620px;
+        max-width: 660px;
       }
 
       .eyebrow,
-      .section-label,
-      .field-label,
-      .form-note,
-      .state-label,
-      .impact-label,
-      .footer-note {
-        font-family: 'IBM Plex Mono', monospace;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-      }
-
-      .eyebrow {
-        margin: 0 0 22px;
+      .section-label {
+        margin: 0 0 21px;
         color: var(--brand);
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
       }
 
@@ -236,17 +243,16 @@
       h1,
       h2,
       h3 {
-        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
         font-weight: 800;
         letter-spacing: -0.045em;
       }
 
       h1 {
-        max-width: 660px;
+        max-width: 18ch;
         margin-bottom: 24px;
         color: var(--paper);
-        font-size: clamp(54px, 7vw, 94px);
-        line-height: 0.88;
+        font-size: clamp(56px, 6.6vw, 84px);
+        line-height: 0.87;
       }
 
       h1 span {
@@ -255,23 +261,23 @@
       }
 
       .hero-copy > p:not(.eyebrow) {
-        max-width: 39ch;
+        max-width: 40ch;
         margin-bottom: 28px;
-        color: var(--dust);
-        font-size: 21px;
-        line-height: 1.35;
+        color: var(--paper-soft);
+        font-size: 20px;
+        line-height: 1.36;
       }
 
       .signal-rule {
-        width: 128px;
-        height: 8px;
+        width: 116px;
+        height: 7px;
         background: var(--brand);
       }
 
       .hero-proof {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        max-width: 510px;
+        max-width: 520px;
         margin-top: 34px;
         border-top: 1px solid var(--line);
         border-bottom: 1px solid var(--line);
@@ -292,29 +298,29 @@
       }
 
       .hero-proof span {
-        margin-bottom: 3px;
+        margin-bottom: 4px;
         color: var(--dust-muted);
         font-family: 'IBM Plex Mono', monospace;
         font-size: 10px;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.09em;
         text-transform: uppercase;
       }
 
       .hero-proof strong {
         color: var(--paper);
         font-family: 'Barlow Semi Condensed', Arial, sans-serif;
-        font-size: 20px;
+        font-size: 21px;
         font-weight: 700;
         letter-spacing: -0.02em;
       }
 
       .lookup-card {
         justify-self: end;
-        max-width: 500px;
         width: 100%;
-        padding: 34px;
-        border-radius: var(--radius-panel);
-        background: rgba(25, 23, 19, 0.76);
+        max-width: 492px;
+        padding: 32px;
+        border-radius: var(--radius-xl);
+        background: rgba(18, 20, 22, 0.84);
       }
 
       .lookup-top,
@@ -327,7 +333,7 @@
       }
 
       .lookup-top {
-        margin-bottom: 24px;
+        margin-bottom: 25px;
       }
 
       .lookup-kicker {
@@ -340,7 +346,7 @@
 
       .lookup-context {
         display: block;
-        margin-top: 4px;
+        margin-top: 5px;
         color: var(--dust-muted);
         font-family: 'IBM Plex Mono', monospace;
         font-size: 10px;
@@ -364,16 +370,16 @@
       }
 
       .lookup-card h2 {
-        max-width: 12ch;
-        margin-bottom: 12px;
+        max-width: 10ch;
+        margin-bottom: 13px;
         color: var(--paper);
-        font-size: 48px;
-        line-height: 0.95;
+        font-size: 49px;
+        line-height: 0.91;
       }
 
       .lookup-card > p {
-        max-width: 34ch;
-        margin-bottom: 26px;
+        max-width: 33ch;
+        margin-bottom: 27px;
         color: var(--dust);
         font-size: 16px;
         line-height: 1.4;
@@ -433,10 +439,10 @@
         min-width: 0;
         height: 56px;
         padding: 0 16px;
-        border: 1px solid rgba(255, 253, 248, 0.4);
-        border-radius: var(--radius-control);
+        border: 1px solid rgba(244, 246, 244, 0.4);
+        border-radius: var(--radius-md);
         outline: 0;
-        background: rgba(255, 253, 248, 0.96);
+        background: rgba(244, 246, 244, 0.97);
         color: var(--ink);
         font-family: 'IBM Plex Mono', monospace;
         font-size: 15px;
@@ -458,15 +464,16 @@
       .form-row input:focus,
       .whatsapp-form input:focus {
         border-color: var(--brand);
-        box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.24);
+        box-shadow: 0 0 0 3px rgba(216, 178, 76, 0.28);
       }
 
-      .primary-button,
-      .secondary-button {
+      .primary-button {
         min-height: 56px;
         padding: 0 21px;
         border: 0;
-        border-radius: var(--radius-control);
+        border-radius: var(--radius-md);
+        background: var(--brand);
+        color: var(--ink);
         font-family: 'Atkinson Hyperlegible', Arial, sans-serif;
         font-size: 16px;
         font-weight: 700;
@@ -474,18 +481,12 @@
         transition: transform 80ms var(--ease-standard), background-color 160ms var(--ease-standard), color 160ms var(--ease-standard);
       }
 
-      .primary-button {
-        background: var(--brand);
-        color: var(--ink);
-      }
-
       .primary-button:hover,
       .primary-button:focus-visible {
-        background: #ffd85d;
+        background: var(--brand-soft);
       }
 
-      .primary-button:active,
-      .secondary-button:active {
+      .primary-button:active {
         transform: scale(0.98);
       }
 
@@ -501,123 +502,241 @@
         line-height: 1.5;
       }
 
-      .form-status {
+      .form-status,
+      .whatsapp-feedback {
         min-height: 23px;
         margin: 13px 0 0;
         color: var(--dust);
         font-size: 14px;
       }
 
-      .form-status[data-kind='error'] {
+      .form-status[data-kind='error'],
+      .whatsapp-feedback[data-kind='error'] {
         color: var(--expired);
       }
 
-      .form-status[data-kind='ready'] {
+      .form-status[data-kind='ready'],
+      .whatsapp-feedback[data-kind='ready'] {
         color: var(--valid);
       }
 
+      .hero-footnote {
+        position: absolute;
+        right: max(20px, calc((100% - 1180px) / 2));
+        bottom: 23px;
+        color: rgba(244, 246, 244, 0.58);
+        font-size: 12px;
+      }
+
       .section {
-        padding: 124px 0;
+        padding: 128px 0;
       }
 
       .section-heading {
-        max-width: 650px;
-        margin-bottom: 52px;
+        max-width: 690px;
+        margin-bottom: 53px;
       }
 
       .section-heading h2 {
         margin-bottom: 14px;
         color: var(--paper);
-        font-size: clamp(42px, 5vw, 66px);
-        line-height: 0.96;
+        font-size: clamp(44px, 5.5vw, 72px);
+        line-height: 0.93;
       }
 
       .section-heading p {
-        max-width: 50ch;
+        max-width: 52ch;
         margin-bottom: 0;
         color: var(--dust);
         font-size: 19px;
       }
 
-      .process-layout {
+      .section-heading .section-label,
+      .maintenance-panel .section-label,
+      .whatsapp-card .section-label {
+        max-width: none;
+        margin-bottom: 21px;
+        color: var(--brand);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .overview {
+        background: var(--ink);
+      }
+
+      .overview-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
-        gap: 68px;
+        grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
+        gap: 72px;
         align-items: start;
       }
 
       .photo-card {
+        position: relative;
         overflow: hidden;
-        border-radius: var(--radius-panel);
+        margin: 0;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-xl);
         background: var(--surface);
       }
 
       .photo-card img {
         width: 100%;
-        aspect-ratio: 1.15;
+        aspect-ratio: 0.92;
         object-fit: cover;
         object-position: center;
+        filter: saturate(0.86) contrast(1.06);
       }
 
-      .photo-card figcaption {
-        padding: 16px 20px 20px;
+      .photo-card::after {
+        position: absolute;
+        top: 22px;
+        right: 22px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--brand);
+        box-shadow: 0 0 0 5px rgba(216, 178, 76, 0.18);
+        content: '';
+      }
+
+      .photo-caption {
+        padding: 17px 20px 19px;
         color: var(--dust-muted);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
+        font-size: 10px;
       }
 
-      .process-list {
-        display: grid;
-        gap: 0;
+      .detail-panel {
         border-top: 1px solid var(--line);
       }
 
-      .process-step {
+      .detail-row {
         display: grid;
-        grid-template-columns: 58px 1fr;
-        gap: 18px;
-        padding: 26px 0;
+        grid-template-columns: 56px 1fr;
+        gap: 20px;
+        padding: 27px 0;
         border-bottom: 1px solid var(--line);
       }
 
-      .process-step-number {
+      .detail-index {
         color: var(--brand);
         font-family: 'IBM Plex Mono', monospace;
         font-size: 13px;
       }
 
-      .process-step h3 {
+      .detail-row h3 {
         margin-bottom: 8px;
         color: var(--paper);
-        font-size: 28px;
+        font-size: 29px;
         line-height: 1;
       }
 
-      .process-step p {
+      .detail-row p {
+        max-width: 42ch;
         margin-bottom: 0;
         color: var(--dust);
         font-size: 17px;
         line-height: 1.4;
       }
 
-      .risk-section {
-        padding: 0 0 124px;
+      .roadmap-section,
+      .risk-section,
+      .maintenance-section,
+      .states-section {
+        padding-bottom: 128px;
+      }
+
+      .roadmap-intro {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 30px;
+        margin-bottom: 39px;
+      }
+
+      .roadmap-intro .section-heading {
+        margin-bottom: 0;
+      }
+
+      .roadmap-note {
+        max-width: 28ch;
+        margin-bottom: 3px;
+        color: var(--dust-muted);
+        font-size: 14px;
+      }
+
+      .roadmap-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .roadmap-card {
+        min-height: 250px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+      }
+
+      .roadmap-card--active {
+        border-color: var(--brand);
+        background: var(--brand);
+        color: var(--ink);
+      }
+
+      .roadmap-kicker {
+        display: block;
+        margin-bottom: 68px;
+        color: var(--brand);
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .roadmap-card--active .roadmap-kicker {
+        color: var(--brand-ink);
+      }
+
+      .roadmap-card h3 {
+        max-width: 12ch;
+        margin-bottom: 10px;
+        color: var(--paper);
+        font-size: 32px;
+        line-height: 0.95;
+      }
+
+      .roadmap-card--active h3 {
+        color: var(--ink);
+      }
+
+      .roadmap-card p {
+        margin-bottom: 0;
+        color: var(--dust);
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .roadmap-card--active p {
+        color: #4d3d0d;
+      }
+
+      .risk-section .section-heading {
+        max-width: 540px;
       }
 
       .impact-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        gap: 14px;
       }
 
       .impact-card {
         position: relative;
-        min-height: 260px;
-        padding: 26px;
+        min-height: 270px;
+        padding: 27px;
         border: 1px solid var(--line);
-        border-radius: var(--radius-card);
+        border-radius: var(--radius-lg);
         background: var(--surface);
       }
 
@@ -647,46 +766,112 @@
         margin-bottom: 7px;
         color: var(--paper);
         font-family: 'IBM Plex Mono', monospace;
-        font-size: clamp(34px, 4.4vw, 58px);
+        font-size: clamp(37px, 4.6vw, 62px);
         line-height: 1;
       }
 
-      .impact-card span {
+      .impact-card span:last-child {
         color: var(--dust);
         font-size: 17px;
       }
 
       .impact-note {
         grid-column: 1 / -1;
-        padding: 24px 0 0;
+        margin: 3px 0 0;
+        padding: 26px 0 0;
         color: var(--brand);
         font-family: 'Barlow Semi Condensed', Arial, sans-serif;
-        font-size: 34px;
+        font-size: 36px;
         font-weight: 700;
         letter-spacing: -0.03em;
+        line-height: 1;
       }
 
-      .states-section {
-        padding: 0 0 124px;
+      .maintenance-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(330px, 0.76fr);
+        gap: 58px;
+        align-items: center;
+        padding: 38px;
+        border-radius: var(--radius-xl);
+        background: var(--surface);
+      }
+
+      .maintenance-panel h2 {
+        max-width: 11ch;
+        margin-bottom: 16px;
+        color: var(--paper);
+        font-size: clamp(43px, 5vw, 67px);
+        line-height: 0.92;
+      }
+
+      .maintenance-panel > div > p {
+        max-width: 44ch;
+        margin-bottom: 0;
+        color: var(--dust);
+        font-size: 18px;
+      }
+
+      .maintenance-panel > div > p.section-label {
+        margin-bottom: 21px;
+        color: var(--brand);
+        font-size: 11px;
+      }
+
+      .maintenance-aside {
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--ink);
+      }
+
+      .maintenance-aside .eyebrow {
+        margin-bottom: 21px;
+      }
+
+      .brand-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .brand-list li {
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--paper-soft);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+      }
+
+      .aside-note {
+        margin: 22px 0 0;
+        color: var(--dust-muted);
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .state-card {
+        min-height: 204px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
       }
 
       .states-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-      }
-
-      .state-card {
-        min-height: 190px;
-        padding: 24px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-card);
-        background: var(--surface);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
       }
 
       .state-card::before {
         display: block;
-        width: 48px;
+        width: 52px;
         height: 6px;
         margin-bottom: 34px;
         content: '';
@@ -723,8 +908,15 @@
         font-size: 16px;
       }
 
+      .state-rule {
+        display: block;
+        margin-top: 19px;
+        color: var(--dust-muted);
+        font-size: 13px;
+      }
+
       .whatsapp-section {
-        padding: 0 0 124px;
+        padding: 0 0 78px;
       }
 
       .whatsapp-card {
@@ -732,22 +924,28 @@
         grid-template-columns: minmax(0, 0.9fr) minmax(390px, 1.1fr);
         gap: 44px;
         align-items: end;
-        padding: 34px;
-        border-radius: var(--radius-panel);
+        padding: 37px;
+        border-radius: var(--radius-xl);
       }
 
       .whatsapp-card h2 {
-        max-width: 10ch;
-        margin-bottom: 12px;
+        max-width: 11ch;
+        margin-bottom: 14px;
         color: var(--paper);
-        font-size: 44px;
-        line-height: 0.95;
+        font-size: 48px;
+        line-height: 0.91;
       }
 
       .whatsapp-card p {
-        max-width: 32ch;
+        max-width: 34ch;
         margin-bottom: 0;
         color: var(--dust);
+      }
+
+      .whatsapp-card p.section-label {
+        margin-bottom: 21px;
+        color: var(--brand);
+        font-size: 11px;
       }
 
       .whatsapp-form {
@@ -756,17 +954,35 @@
         gap: 10px;
       }
 
+      .whatsapp-form .field-label {
+        grid-column: 1 / -1;
+      }
+
       .whatsapp-form input {
         width: 100%;
       }
 
       .whatsapp-feedback {
-        grid-column: 2;
-        min-height: 22px;
-        margin: 11px 0 0;
-        color: var(--valid);
-        font-size: 14px;
-        text-align: right;
+        grid-column: 1 / -1;
+        text-align: left;
+      }
+
+      .source-note {
+        margin: 27px 0 0;
+        color: var(--dust-muted);
+        font-size: 10px;
+      }
+
+      .source-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 22px;
+        margin: 10px 0 0;
+        padding: 0;
+        list-style: none;
+        color: var(--dust);
+        font-size: 13px;
+        text-transform: none;
       }
 
       footer {
@@ -780,7 +996,6 @@
 
       .footer-brand {
         color: var(--paper);
-        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
         font-size: 22px;
         font-weight: 800;
         letter-spacing: -0.03em;
@@ -837,6 +1052,49 @@
         }
       }
 
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .hero-content,
+        .overview-grid,
+        .maintenance-panel,
+        .whatsapp-card {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+
+        .hero-content {
+          gap: 52px;
+          padding: 143px 0 75px;
+        }
+
+        .lookup-card {
+          justify-self: start;
+          max-width: 560px;
+        }
+
+        .overview-grid {
+          gap: 42px;
+        }
+
+        .maintenance-panel {
+          gap: 32px;
+        }
+
+        .hero-footnote {
+          position: static;
+          width: min(100% - 40px, 1180px);
+          margin: 0 auto 24px;
+        }
+      }
+
       @media (max-width: 820px) {
         .container,
         .site-nav,
@@ -861,62 +1119,63 @@
           font-size: 10px;
         }
 
-        .hero {
-          min-height: auto;
-        }
-
-        .hero-content {
-          grid-template-columns: 1fr;
-          gap: 42px;
-          padding: 142px 0 48px;
-        }
-
-        .hero-copy > p:not(.eyebrow) {
-          font-size: 18px;
-        }
-
-        .lookup-card {
-          padding: 24px;
-        }
-
         .section {
           padding: 88px 0;
         }
 
-        .section-heading {
-          margin-bottom: 36px;
-        }
-
-        .process-layout,
-        .whatsapp-card {
-          grid-template-columns: 1fr;
-          gap: 36px;
-        }
-
+        .roadmap-section,
         .risk-section,
-        .states-section,
-        .whatsapp-section {
+        .maintenance-section,
+        .states-section {
           padding-bottom: 88px;
         }
 
+        .section-heading {
+          margin-bottom: 38px;
+        }
+
+        .roadmap-intro {
+          display: block;
+        }
+
+        .roadmap-note {
+          margin-top: 20px;
+        }
+
+        .roadmap-grid,
         .states-grid,
         .impact-grid {
           grid-template-columns: 1fr;
         }
 
+        .roadmap-card {
+          min-height: 0;
+        }
+
+        .roadmap-kicker {
+          margin-bottom: 45px;
+        }
+
         .impact-note {
           grid-column: auto;
-          padding-top: 4px;
-          font-size: 29px;
+          padding-top: 5px;
+          font-size: 30px;
+        }
+
+        .maintenance-panel {
+          padding: 26px;
+        }
+
+        .whatsapp-section {
+          padding-bottom: 58px;
         }
 
         .whatsapp-form {
           grid-template-columns: 1fr;
         }
 
-        .whatsapp-feedback {
-          grid-column: auto;
-          text-align: left;
+        .whatsapp-form .primary-button {
+          width: 100%;
         }
 
         .footer-inner {
@@ -931,7 +1190,12 @@
 
       @media (max-width: 480px) {
         h1 {
-          font-size: 48px;
+          max-width: 11ch;
+          font-size: 51px;
+        }
+
+        .hero-copy > p:not(.eyebrow) {
+          font-size: 18px;
         }
 
         .hero-proof {
@@ -950,6 +1214,10 @@
           font-size: 17px;
         }
 
+        .lookup-card {
+          padding: 24px;
+        }
+
         .form-row {
           align-items: stretch;
           flex-direction: column;
@@ -960,7 +1228,7 @@
         }
 
         .lookup-card h2 {
-          font-size: 34px;
+          font-size: 37px;
         }
 
         .lookup-specs div {
@@ -974,6 +1242,23 @@
         .photo-card img {
           aspect-ratio: 1;
         }
+
+        .detail-row {
+          grid-template-columns: 36px 1fr;
+          gap: 11px;
+        }
+
+        .detail-row h3 {
+          font-size: 25px;
+        }
+
+        .whatsapp-card {
+          padding: 24px;
+        }
+
+        .whatsapp-card h2 {
+          font-size: 39px;
+        }
       }
     </style>
   </head>
@@ -982,50 +1267,50 @@
       <header class="hero" id="inicio">
         <img
           class="hero-media"
-          src="fixly-hero-sedan.png"
-          alt="Sedán compacto circulando por una vía de Lima al atardecer."
+          src="fixly-hero-premium-v2.png"
+          alt="Sedán compacto circulando por una vía de Lima al amanecer."
         />
         <div class="hero-scrim" aria-hidden="true"></div>
 
         <nav class="site-nav glass" aria-label="Navegación principal">
           <a class="brand-lockup" href="#inicio" aria-label="Fixly, inicio">
             <svg viewBox="0 0 96 96" aria-hidden="true">
-              <path fill="#F4C430" d="M16 8H68L88 28V88H16Z" />
-              <path fill="#191713" d="M32 26H72V38H45V49H65V61H45V76H32Z" />
+              <path fill="#D8B24C" d="M16 8H68L88 28V88H16Z" />
+              <path fill="#121416" d="M32 26H72V38H45V49H65V61H45V76H32Z" />
             </svg>
             <span>Fixly</span>
           </a>
           <div class="nav-links">
-            <a href="#como-funciona">Tu auto</a>
-            <a href="#que-revisa">Los costos</a>
-            <a href="#whatsapp">Recordatorio</a>
+            <a href="#consulta">Consulta</a>
+            <a href="#riesgo">El riesgo</a>
+            <a href="#lo-que-sigue">Lo que sigue</a>
           </div>
           <span class="nav-context mono">Lima / por placa</span>
         </nav>
 
-        <div class="hero-content">
+        <div class="hero-content" id="consulta">
           <div class="hero-copy">
-            <p class="eyebrow">Control de vehículo / Lima</p>
+            <p class="eyebrow">Estado del vehículo / Lima</p>
             <h1>Tu auto trabaja. <span>Que no lo detengan.</span></h1>
-            <p>Consulta tu placa antes de salir y mira si tu SOAT y revisión técnica siguen vigentes.</p>
+            <p>Fixly reúne en una sola consulta por placa lo que puede dejar tu ruta en pausa: SOAT, revisión técnica y días restantes.</p>
             <div class="signal-rule" aria-hidden="true"></div>
-            <div class="hero-proof" aria-label="Lo que revisa Fixly">
+            <div class="hero-proof" aria-label="Alcance de la consulta Fixly">
               <div>
-                <span>Documento</span>
-                <strong>SOAT</strong>
+                <span>Entrada</span>
+                <strong>1 placa</strong>
               </div>
               <div>
-                <span>Documento</span>
-                <strong>Revisión técnica</strong>
+                <span>Revisa</span>
+                <strong>2 documentos</strong>
               </div>
               <div>
                 <span>Respuesta</span>
-                <strong>En 5 segundos</strong>
+                <strong>5 segundos</strong>
               </div>
             </div>
           </div>
 
-          <section class="lookup-card glass" id="consultar" aria-labelledby="lookup-title">
+          <section class="lookup-card glass" aria-labelledby="lookup-title">
             <div class="lookup-top">
               <div>
                 <span class="lookup-kicker">Ficha de control</span>
@@ -1033,21 +1318,21 @@
               </div>
               <span class="lookup-time"><strong>5</strong> s</span>
             </div>
-            <h2 id="lookup-title">Revisa tu auto antes de salir.</h2>
-            <p>En 5 segundos ves la vigencia, los días que quedan y la multa si ya venció.</p>
+            <h2 id="lookup-title">Saber antes cuesta menos.</h2>
+            <p>Mira si tu auto está listo para seguir trabajando y cuánto te puede costar llegar tarde.</p>
 
             <div class="lookup-specs" aria-label="Información de la consulta">
               <div>
-                <span>Revisa</span>
+                <span>Consulta</span>
                 <strong>SOAT</strong>
               </div>
               <div>
-                <span>Revisa</span>
+                <span>Consulta</span>
                 <strong>Revisión técnica</strong>
               </div>
               <div>
-                <span>Te dice</span>
-                <strong>Los días</strong>
+                <span>Resultado</span>
+                <strong>Días / multa</strong>
               </div>
             </div>
 
@@ -1066,51 +1351,60 @@
                 />
                 <button class="primary-button" type="submit">Consultar placa</button>
               </div>
-              <p class="form-note" id="plate-note">SOAT y revisión técnica en una sola consulta.</p>
+              <p class="form-note" id="plate-note">Sin registro. Una placa para empezar.</p>
               <p class="form-status" id="plate-status" role="status" aria-live="polite"></p>
             </form>
           </section>
         </div>
+        <p class="hero-footnote mono">Fixly / ficha de control para autos que trabajan</p>
       </header>
 
       <main>
-        <section class="section" id="como-funciona">
+        <section class="section overview" id="como-funciona">
           <div class="container">
             <div class="section-heading">
-              <h2>Antes de manejar, mira la placa.</h2>
-              <p>Fixly convierte una fecha silenciosa en una decisión visible.</p>
+              <p class="section-label">La placa como punto de partida</p>
+              <h2>Una placa. Cuatro respuestas.</h2>
+              <p>La fecha vence en silencio. Fixly la convierte en información que puedes usar antes de encender el auto.</p>
             </div>
 
-            <div class="process-layout">
+            <div class="overview-grid">
               <figure class="photo-card">
                 <img
                   src="fixly-dashboard-detail.png"
-                  alt="Detalle de un tablero antiguo visto desde el asiento del conductor, con el parabrisas en primer plano."
+                  alt="Detalle de un tablero antiguo visto desde el asiento del conductor."
                   loading="lazy"
                 />
-                <figcaption>La consulta empieza con la placa.</figcaption>
+                <figcaption class="photo-caption">La consulta empieza con la placa.</figcaption>
               </figure>
 
-              <div class="process-list">
-                <article class="process-step">
-                  <span class="process-step-number">01</span>
+              <div class="detail-panel">
+                <article class="detail-row">
+                  <span class="detail-index">01</span>
                   <div>
-                    <h3>Escribe tu placa</h3>
-                    <p>Un campo grande, una acción clara y nada que aprender.</p>
+                    <h3>Vigencia del SOAT</h3>
+                    <p>Sabes si sigue activo y cuántos días quedan antes de que una fecha se convierta en un problema.</p>
                   </div>
                 </article>
-                <article class="process-step">
-                  <span class="process-step-number">02</span>
+                <article class="detail-row">
+                  <span class="detail-index">02</span>
                   <div>
-                    <h3>Mira la vigencia</h3>
-                    <p>SOAT y revisión técnica aparecen con días restantes y estado explícito.</p>
+                    <h3>Revisión técnica</h3>
+                    <p>La revisión aparece en el mismo lugar. Sin buscar entre papeles, mensajes o recuerdos.</p>
                   </div>
                 </article>
-                <article class="process-step">
-                  <span class="process-step-number">03</span>
+                <article class="detail-row">
+                  <span class="detail-index">03</span>
                   <div>
-                    <h3>Deja tu WhatsApp</h3>
-                    <p>Si te sirve, Fixly te avisa la próxima vez.</p>
+                    <h3>El costo de llegar tarde</h3>
+                    <p>Si ya venció, ves la multa correspondiente y entiendes el riesgo de seguir en ruta.</p>
+                  </div>
+                </article>
+                <article class="detail-row">
+                  <span class="detail-index">04</span>
+                  <div>
+                    <h3>Un aviso para la próxima</h3>
+                    <p>Si te sirve, dejas tu WhatsApp para que la siguiente consulta no dependa de tu memoria.</p>
                   </div>
                 </article>
               </div>
@@ -1118,11 +1412,42 @@
           </div>
         </section>
 
-        <section class="risk-section" id="que-revisa">
+        <section class="roadmap-section" id="lo-que-sigue">
+          <div class="container">
+            <div class="roadmap-intro">
+              <div class="section-heading">
+                <p class="section-label">La ruta del producto</p>
+                <h2>Primero evita el golpe. Después cuida el valor.</h2>
+              </div>
+              <p class="roadmap-note">Fixly empieza con una respuesta útil hoy y construye contexto para cada auto que vuelve.</p>
+            </div>
+
+            <div class="roadmap-grid">
+              <article class="roadmap-card roadmap-card--active">
+                <span class="roadmap-kicker">Disponible en esta etapa</span>
+                <h3>Consulta por placa</h3>
+                <p>SOAT, revisión técnica, días restantes y multa si ya venció.</p>
+              </article>
+              <article class="roadmap-card">
+                <span class="roadmap-kicker">Próxima etapa / S/19</span>
+                <h3>Informe completo</h3>
+                <p>Una lectura más amplia para decidir mejor antes de comprar o vender un auto.</p>
+              </article>
+              <article class="roadmap-card">
+                <span class="roadmap-kicker">En validación / S/14,90 al mes</span>
+                <h3>Recordatorios y mantenimiento</h3>
+                <p>La relación continua que ayuda a que el auto no vuelva a sorprenderte.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="risk-section" id="riesgo">
           <div class="container">
             <div class="section-heading">
+              <p class="section-label">El costo de no saber</p>
               <h2>El susto tiene un número.</h2>
-              <p>Si ya venció, la multa no es el único costo.</p>
+              <p>Y para quien vive de su auto, la retención también se mide en días sin facturar.</p>
             </div>
 
             <div class="impact-grid">
@@ -1141,25 +1466,52 @@
           </div>
         </section>
 
+        <section class="maintenance-section">
+          <div class="container">
+            <div class="maintenance-panel">
+              <div>
+                <p class="section-label">Lo que estamos construyendo</p>
+                <h2>El siguiente problema no vive en un calendario.</h2>
+                <p>Muchos autos de trabajo recorren entre 5.000 y 10.000 km entre mantenimientos. Fixly puede convertir esa rutina difusa en información por modelo, especialmente para marcas que hoy reciben poca atención local.</p>
+              </div>
+              <aside class="maintenance-aside" aria-label="Marcas contempladas para el futuro sistema de mantenimiento">
+                <p class="eyebrow">Base de mantenimiento / en construcción</p>
+                <ul class="brand-list">
+                  <li>Changan</li>
+                  <li>Jetour</li>
+                  <li>JAC</li>
+                  <li>Chery</li>
+                  <li>Geely</li>
+                </ul>
+                <p class="aside-note">No es una promesa de cobertura actual. Es la parte de Fixly que busca convertir datos dispersos en una ventaja para el conductor.</p>
+              </aside>
+            </div>
+          </div>
+        </section>
+
         <section class="states-section" aria-labelledby="states-title">
           <div class="container">
             <div class="section-heading">
-              <h2 id="states-title">Una respuesta clara, incluso bajo el sol.</h2>
-              <p>El color acompaña. La etiqueta siempre explica.</p>
+              <p class="section-label">Una lectura sin ambigüedad</p>
+              <h2 id="states-title">La etiqueta manda. El color ayuda.</h2>
+              <p>Los estados nunca dependen solo del color: siempre llevan palabra, barra y explicación para leerse bajo el sol.</p>
             </div>
 
             <div class="states-grid">
               <article class="state-card">
                 <span class="state-label">Vigente</span>
-                <p>Todo está al día. El conductor puede seguir con su ruta.</p>
+                <p>El documento está al día y puedes seguir con tu ruta.</p>
+                <span class="state-rule">Verde + “vigente”</span>
               </article>
               <article class="state-card state-card--due">
                 <span class="state-label">Por vencer</span>
-                <p>La fecha se acerca. El sistema lo hace visible antes de la sorpresa.</p>
+                <p>La fecha se acerca. El sistema te lo hace visible antes del susto.</p>
+                <span class="state-rule">Ámbar + “por vencer”</span>
               </article>
               <article class="state-card state-card--expired">
                 <span class="state-label">Vencido</span>
-                <p>La fecha pasó. La alerta se muestra con prioridad y sin ambigüedad.</p>
+                <p>La fecha pasó. La alerta muestra prioridad y el costo asociado.</p>
+                <span class="state-rule">Rojo coral + “vencido”</span>
               </article>
             </div>
           </div>
@@ -1169,17 +1521,22 @@
           <div class="container">
             <div class="whatsapp-card glass">
               <div>
-                <h2>Te avisamos la próxima vez.</h2>
-                <p>Deja tu WhatsApp después de revisar la vigencia.</p>
+                <p class="section-label">La próxima fecha no debería sorprenderte</p>
+                <h2>Que te encuentre trabajando.</h2>
+                <p>Deja tu WhatsApp después de revisar la vigencia y te avisamos en la próxima consulta.</p>
               </div>
               <form class="whatsapp-form" id="whatsapp-form" novalidate>
                 <label class="field-label" for="whatsapp">WhatsApp</label>
-                <span aria-hidden="true"></span>
                 <input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" placeholder="Tu número de WhatsApp" />
                 <button class="primary-button" type="submit">Dejar WhatsApp</button>
                 <p class="whatsapp-feedback" id="whatsapp-feedback" role="status" aria-live="polite"></p>
               </form>
             </div>
+            <p class="source-note">Fuentes públicas para vigencias</p>
+            <ul class="source-list">
+              <li><a href="https://servicios.sbs.gob.pe/reportesoat/BusquedaPlaca" target="_blank" rel="noreferrer">SBS / SOAT</a></li>
+              <li><a href="https://sistemas.mtc.gob.pe/aplicaciones/consulta-de-inspeccion-tecnica-vehicular/" target="_blank" rel="noreferrer">MTC / revisión técnica</a></li>
+            </ul>
           </div>
         </section>
       </main>
@@ -1187,7 +1544,7 @@
       <footer>
         <div class="container footer-inner">
           <span class="footer-brand">Fixly</span>
-          <span class="footer-note">Borde seguro / Lima / SOAT y revisión técnica</span>
+          <span class="footer-note">Ficha de control / Lima / SOAT y revisión técnica</span>
         </div>
       </footer>
     </div>
@@ -1225,7 +1582,7 @@
         window.setTimeout(() => {
           plateButton.disabled = false;
           plateButton.textContent = 'Consultar placa';
-          plateStatus.textContent = 'Preview visual listo para conectar con la consulta real.';
+          plateStatus.textContent = 'Vista de demostración lista para conectar con la consulta real.';
         }, 720);
       });
 
@@ -1234,13 +1591,13 @@
 
         if (!whatsappInput.value.trim()) {
           whatsappFeedback.textContent = 'Escribe tu número para continuar.';
-          whatsappFeedback.style.color = 'var(--expired)';
+          whatsappFeedback.dataset.kind = 'error';
           whatsappInput.focus();
           return;
         }
 
-        whatsappFeedback.textContent = 'Preview listo para conectar con WhatsApp.';
-        whatsappFeedback.style.color = 'var(--valid)';
+        whatsappFeedback.textContent = 'Vista de demostración lista para conectar con WhatsApp.';
+        whatsappFeedback.dataset.kind = 'ready';
       });
     </script>
   </body>
