@@ -4,11 +4,11 @@ Fuente de verdad para generar pantallas nuevas en Google Stitch. Los valores sal
 del sistema real de `index.html`, no de una plantilla. Una pantalla generada con
 este documento tiene que poder ponerse al lado de la landing sin desentonar.
 
-**Producto:** app de mantenimiento vehicular para Perú. El usuario escribe su placa,
+**Producto:** app de mantenimiento vehicular. El usuario escribe su placa,
 la app reconoce su auto y le dice qué mantenimiento le toca, cuánto debería costarle
 y qué documentos vencen.
 
-**Quién la usa:** conductor de aplicativo en Lima. Auto propio de 8 a 15 años.
+**Quién la usa:** conductor de aplicativo. Auto propio de 8 a 15 años.
 Unos 45 años. No sabe de mecánica. Android de gama baja, al sol, pantalla sucia,
 a veces manejando. El contraste no es una preferencia estética: es un requisito
 funcional.
