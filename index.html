@@ -9,8 +9,13 @@
       name="description"
       content="Consulta por placa si tu SOAT y revisión técnica siguen vigentes en Lima."
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Barlow+Semi+Condensed:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;display=swap"
+    />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Semi+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
 
       :root {
         color-scheme: dark;
@@ -583,6 +588,9 @@
 
       .photo-card img {
         width: 100%;
+        /* height:auto es obligatorio al poner width/height en el HTML:
+           si no, el atributo actúa como hint y gana sobre aspect-ratio. */
+        height: auto;
         aspect-ratio: 0.92;
         object-fit: cover;
         object-position: center;
@@ -1671,14 +1679,95 @@
         position: relative;
         z-index: 2;
       }
+    
+      /* ── Correcciones de accesibilidad y layout ── */
+
+      .skip-link {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 999;
+        padding: 12px 18px;
+        border-radius: 0 0 var(--radius-md) 0;
+        background: var(--brand);
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .skip-link:focus {
+        left: 0;
+      }
+
+      /* La nav flota arriba: sin esto el ancla aterriza debajo de ella. */
+      [id] {
+        scroll-margin-top: 108px;
+      }
+
+      /* Sin el retardo de doble tap, y sin el flash azul de Android. */
+      button,
+      a,
+      input,
+      summary {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(216, 178, 76, 0.18);
+      }
+
+      /* Pantallas con notch: el contenido a sangre necesita respirar. */
+      .site-nav {
+        margin-top: env(safe-area-inset-top, 0px);
+      }
+      .hero,
+      footer {
+        padding-left: env(safe-area-inset-left, 0px);
+        padding-right: env(safe-area-inset-right, 0px);
+      }
+      footer {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      /* Titulares sin viudas. */
+      h1,
+      h2,
+      h3 {
+        text-wrap: balance;
+      }
+      .hero-copy > p,
+      .section-heading > p {
+        text-wrap: pretty;
+      }
+
+      /* Las dos multas se comparan lado a lado: las cifras deben alinear. */
+      .impact-card strong {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .aside-lead {
+        margin: 0 0 14px;
+        color: var(--dust);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      /* La etapa destino se marca con el canto, no con relleno:
+         el dorado ya lo usa la etapa disponible. */
+      .roadmap-card--goal {
+        border-color: rgba(216, 178, 76, 0.42);
+      }
+      .roadmap-card--goal .roadmap-kicker {
+        color: var(--brand-soft);
+      }
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#como-funciona">Saltar al contenido</a>
     <div class="site-shell">
       <header class="hero" id="inicio">
         <img
           class="hero-media"
           src="fixly-hero-premium-v2.png"
+          width="1672"
+          height="941"
+          fetchpriority="high"
+          decoding="async"
           alt="Sedán compacto circulando por una vía de Lima al amanecer."
         />
         <div class="hero-scrim" aria-hidden="true"></div>
@@ -1701,22 +1790,22 @@
 
         <div class="hero-content" id="consulta">
           <div class="hero-copy">
-            <p class="eyebrow">Estado del vehículo / Lima</p>
-            <h1>Tu auto trabaja. <span>Que no lo detengan.</span></h1>
-            <p>Fixly reúne en una sola consulta por placa lo que puede dejar tu ruta en pausa: SOAT, revisión técnica y días restantes.</p>
+            <p class="eyebrow">Mantenimiento vehicular / Lima</p>
+            <h1>Tu auto pide cosas. <span>Nadie te dice cuáles.</span></h1>
+            <p>Pon tu placa y Fixly sabe qué auto tienes. Desde ahí te dice qué mantenimiento le toca, cuánto debería costarte en Lima, y qué papeles vencen sin avisarte.</p>
             <div class="signal-rule" aria-hidden="true"></div>
             <div class="hero-proof" aria-label="Alcance de la consulta Fixly">
               <div>
-                <span>Entrada</span>
+                <span>Escribes</span>
                 <strong>1 placa</strong>
               </div>
               <div>
-                <span>Revisa</span>
-                <strong>2 documentos</strong>
+                <span>Reconoce</span>
+                <strong>Marca, modelo, año</strong>
               </div>
               <div>
-                <span>Respuesta</span>
-                <strong>5 segundos</strong>
+                <span>Te dice</span>
+                <strong>Qué toca y cuánto</strong>
               </div>
             </div>
           </div>
@@ -1729,21 +1818,21 @@
               </div>
               <span class="lookup-time"><strong>5</strong> s</span>
             </div>
-            <h2 id="lookup-title">Saber antes cuesta menos.</h2>
-            <p>Mira si tu auto está listo para seguir trabajando y cuánto te puede costar llegar tarde.</p>
+            <h2 id="lookup-title">Empieza por tu placa.</h2>
+            <p>Es lo único que Fixly necesita para reconocer tu auto. Hoy te devuelve la vigencia de tus documentos; el plan de mantenimiento de tu modelo es lo que estamos construyendo.</p>
 
             <div class="lookup-specs" aria-label="Información de la consulta">
               <div>
-                <span>Consulta</span>
+                <span>Hoy</span>
                 <strong>SOAT</strong>
               </div>
               <div>
-                <span>Consulta</span>
+                <span>Hoy</span>
                 <strong>Revisión técnica</strong>
               </div>
               <div>
-                <span>Resultado</span>
-                <strong>Días / multa</strong>
+                <span>En construcción</span>
+                <strong>Plan por modelo</strong>
               </div>
             </div>
 
@@ -1757,7 +1846,7 @@
                   inputmode="text"
                   autocomplete="off"
                   maxlength="8"
-                  placeholder="Ingresa tu placa"
+                  placeholder="ABC-123…"
                   aria-describedby="plate-note plate-status"
                 />
                 <button class="primary-button" type="submit">Consultar placa</button>
@@ -1776,17 +1865,20 @@
         <section class="section overview" id="como-funciona">
           <div class="container">
             <div class="section-heading">
-              <p class="section-label">La placa como punto de partida</p>
-              <h2>Una placa. Cuatro respuestas.</h2>
-              <p>La fecha vence en silencio. Fixly la convierte en información que puedes usar antes de encender el auto.</p>
+              <p class="section-label">Lo que Fixly sabe de tu auto</p>
+              <h2>Seis caracteres. Todo lo que tu auto necesita.</h2>
+              <p>Tu placa dice marca, modelo y año. Con eso alcanza para saber qué le toca a ese auto en particular, y no consejos genéricos de internet.</p>
             </div>
 
             <div class="overview-grid">
               <figure class="photo-card">
                 <img
                   src="fixly-dashboard-detail.png"
-                  alt="Detalle de un tablero antiguo visto desde el asiento del conductor."
+                  width="1254"
+                  height="1254"
                   loading="lazy"
+                  decoding="async"
+                  alt="Detalle de un tablero antiguo visto desde el asiento del conductor."
                 />
                 <figcaption class="photo-caption">La consulta empieza con la placa.</figcaption>
               </figure>
@@ -1795,29 +1887,29 @@
                 <article class="detail-row">
                   <span class="detail-index">01</span>
                   <div>
-                    <h3>Vigencia del SOAT</h3>
-                    <p>Sabes si sigue activo y cuántos días quedan antes de que una fecha se convierta en un problema.</p>
+                    <h3>Qué le toca ahora</h3>
+                    <p>Aceite, filtros, frenos, correa. Según el kilometraje de tu auto y lo que pide tu modelo, no una tabla genérica.</p>
                   </div>
                 </article>
                 <article class="detail-row">
                   <span class="detail-index">02</span>
                   <div>
-                    <h3>Revisión técnica</h3>
-                    <p>La revisión aparece en el mismo lugar. Sin buscar entre papeles, mensajes o recuerdos.</p>
+                    <h3>Cuánto debería costarte</h3>
+                    <p>El rango real en Lima para cada servicio. Es la única forma de saber si la proforma del taller es justa.</p>
                   </div>
                 </article>
                 <article class="detail-row">
                   <span class="detail-index">03</span>
                   <div>
-                    <h3>El costo de llegar tarde</h3>
-                    <p>Si ya venció, ves la multa correspondiente y entiendes el riesgo de seguir en ruta.</p>
+                    <h3>Qué papeles vencen</h3>
+                    <p>SOAT y revisión técnica en la misma pantalla. Vencen solos y te enteras cuando ya te pararon.</p>
                   </div>
                 </article>
                 <article class="detail-row">
                   <span class="detail-index">04</span>
                   <div>
-                    <h3>Un aviso para la próxima</h3>
-                    <p>Si te sirve, dejas tu WhatsApp para que la siguiente consulta no dependa de tu memoria.</p>
+                    <h3>Cuándo vuelve a tocar</h3>
+                    <p>El aviso llega antes, no el día que ya no puedes hacer nada. Sin depender de tu memoria.</p>
                   </div>
                 </article>
               </div>
@@ -1832,7 +1924,7 @@
                 <p class="section-label">La ruta del producto</p>
                 <h2>Primero evita el golpe. Después cuida el valor.</h2>
               </div>
-              <p class="roadmap-note">Fixly empieza con una respuesta útil hoy y construye contexto para cada auto que vuelve.</p>
+              <p class="roadmap-note">Fixly parte de algo útil hoy y avanza hacia lo que de verdad importa: que tu auto deje de sorprenderte.</p>
             </div>
 
             <div class="roadmap-grid">
@@ -1846,10 +1938,10 @@
                 <h3>Informe completo</h3>
                 <p>Una lectura más amplia para decidir mejor antes de comprar o vender un auto.</p>
               </article>
-              <article class="roadmap-card">
-                <span class="roadmap-kicker">En validación / S/14,90 al mes</span>
-                <h3>Recordatorios y mantenimiento</h3>
-                <p>La relación continua que ayuda a que el auto no vuelva a sorprenderte.</p>
+              <article class="roadmap-card roadmap-card--goal">
+                <span class="roadmap-kicker">A dónde va Fixly / S/14,90 al mes</span>
+                <h3>El plan de tu auto</h3>
+                <p>Qué le toca, cuándo y cuánto cuesta. Con avisos antes de cada fecha, para tu modelo.</p>
               </article>
             </div>
           </div>
@@ -1883,12 +1975,13 @@
           <div class="container">
             <div class="maintenance-panel">
               <div>
-                <p class="section-label">Lo que estamos construyendo</p>
-                <h2>El siguiente problema no vive en un calendario.</h2>
-                <p>Muchos autos de trabajo recorren entre 5.000 y 10.000 km entre mantenimientos. Fixly puede convertir esa rutina difusa en información por modelo, especialmente para marcas que hoy reciben poca atención local.</p>
+                <p class="section-label">Por qué tu auto no te avisa</p>
+                <h2>El manual está en un cajón. O nunca estuvo.</h2>
+                <p>Un auto de ocho o quince años cambió de dueño dos veces y el manual se quedó en el camino. El mecánico sabe qué le toca y tú no, y esa diferencia se paga en cada visita. Fixly existe para cerrarla: lo que dice el fabricante, en tu bolsillo, para tu modelo y tu kilometraje.</p>
               </div>
               <aside class="maintenance-aside" aria-label="Marcas contempladas para el futuro sistema de mantenimiento">
-                <p class="eyebrow">Base de mantenimiento / en construcción</p>
+                <p class="eyebrow">Marcas que nadie cubre / en construcción</p>
+                <p class="aside-lead">Las que más crecen en Perú son las que ningún proveedor de datos documenta. Ahí es donde Fixly puede saber algo que no se compra.</p>
                 <ul class="brand-list">
                   <li>Changan</li>
                   <li>Jetour</li>
@@ -1940,7 +2033,14 @@
               </div>
               <form class="whatsapp-form" id="whatsapp-form" novalidate>
                 <label class="field-label" for="whatsapp">WhatsApp</label>
-                <input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" placeholder="Tu número de WhatsApp" />
+                <input
+                  id="whatsapp"
+                  name="whatsapp"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  placeholder="9XX XXX XXX…"
+                />
                 <button class="primary-button" type="submit">Dejar WhatsApp</button>
                 <p class="whatsapp-feedback" id="whatsapp-feedback" role="status" aria-live="polite"></p>
               </form>
@@ -2318,7 +2418,7 @@
 
             plateInput.blur(); // en móvil el teclado tapa justo la respuesta
             plateButton.disabled = true;
-            plateButton.textContent = 'Consultando...';
+            plateButton.textContent = 'Consultando…';
             plateStatus.textContent = 'Consulta en curso.';
             plateStatus.dataset.kind = 'ready';
 
