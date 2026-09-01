@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Fixly / Borde seguro, brochure de identidad visual</title>
+  <desc id="desc">Sistema visual de Fixly con isotipo, paleta, tipografía, estados y una fotografía editorial de un auto circulando en Lima.</desc>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Barlow+Semi+Condensed:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;display=swap');
+    .barlow { font-family: 'Barlow Semi Condensed', Arial, sans-serif; }
+    .atkinson { font-family: 'Atkinson Hyperlegible', Arial, sans-serif; }
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+    .label { font: 700 13px 'IBM Plex Mono', monospace; letter-spacing: 2px; }
+    .meta { font: 500 12px 'IBM Plex Mono', monospace; letter-spacing: 1.1px; }
+    .body { font: 400 18px 'Atkinson Hyperlegible', Arial, sans-serif; }
+    .small { font: 700 14px 'Atkinson Hyperlegible', Arial, sans-serif; }
+  </style>
+
+  <defs>
+    <pattern id="micro-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#FFFDF8" stroke-opacity=".06" stroke-width="1"/>
+    </pattern>
+    <pattern id="tape" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(25)">
+      <rect width="40" height="40" fill="#F4C430"/>
+      <rect width="18" height="40" fill="#191713"/>
+    </pattern>
+    <clipPath id="image-clip">
+      <rect x="814" y="158" width="690" height="300" rx="14"/>
+    </clipPath>
+  </defs>
+
+  <!-- Outer presentation canvas -->
+  <rect width="1600" height="1000" fill="#191713"/>
+
+  <!-- Header -->
+  <g transform="translate(52 24)">
+    <path fill="#F4C430" d="M0 8H24L36 20V56H0Z"/>
+    <path fill="#191713" d="M10 20H30V28H18V35H27V43H18V50H10Z"/>
+    <text x="54" y="43" fill="#FFFDF8" class="barlow" font-size="36" font-weight="800" letter-spacing="-.6">Fixly</text>
+  </g>
+  <text x="1548" y="48" fill="#D9D1C4" text-anchor="end" class="label">VISUAL IDENTITY / 01</text>
+  <path d="M52 80H1548" stroke="#D6CEC0" stroke-opacity=".28"/>
+
+  <!-- Cover panel -->
+  <rect x="52" y="112" width="690" height="390" rx="18" fill="#FFFDF8"/>
+  <text x="92" y="157" fill="#855500" class="label">FIXLY / BORDE SEGURO</text>
+  <text x="92" y="230" fill="#191713" class="barlow" font-size="68" font-weight="800" letter-spacing="-1.6">SOAT Y</text>
+  <text x="92" y="296" fill="#191713" class="barlow" font-size="68" font-weight="800" letter-spacing="-1.6">REVISIÓN</text>
+  <text x="92" y="362" fill="#191713" class="barlow" font-size="68" font-weight="800" letter-spacing="-1.6">TÉCNICA</text>
+  <rect x="92" y="394" width="210" height="8" fill="#F4C430"/>
+  <text x="92" y="441" fill="#6A6258" class="body">Consulta la placa en 5 segundos.</text>
+  <text x="92" y="474" fill="#6A6258" class="meta">LIMA, PERÚ  /  WEB-FIRST  /  CONTRASTE PRIMERO</text>
+  <g transform="translate(570 344) scale(1.08)">
+    <path fill="#F4C430" d="M16 8H68L88 28V88H16Z"/>
+    <path fill="#191713" d="M32 26H72V38H45V49H65V61H45V76H32Z"/>
+  </g>
+
+  <!-- Image-led visual world panel -->
+  <rect x="770" y="112" width="778" height="390" rx="18" fill="#24211D"/>
+  <image href="fixly-hero-sedan.png" x="770" y="112" width="778" height="390" preserveAspectRatio="xMidYMid slice" clip-path="url(#image-clip)" opacity=".76"/>
+  <rect x="770" y="112" width="778" height="390" rx="18" fill="#191713" fill-opacity=".34"/>
+  <rect x="770" y="112" width="778" height="390" rx="18" fill="url(#micro-grid)"/>
+  <text x="810" y="157" fill="#D9D1C4" class="label">VISUAL WORLD / PARABRISAS · PLACA · RUTA</text>
+  <g clip-path="url(#image-clip)">
+    <!-- windshield plane -->
+    <path d="M820 442L938 186H1458L1510 442Z" fill="#F3EFE6" fill-opacity=".12"/>
+    <path d="M948 211H1438L1478 420H900Z" fill="#191713" fill-opacity=".24"/>
+    <!-- horizon and lane geometry -->
+    <path d="M950 286H1438" stroke="#D9D1C4" stroke-opacity=".5" stroke-width="2"/>
+    <path d="M1186 286L1096 442M1186 286L1280 442" stroke="#D9D1C4" stroke-opacity=".4" stroke-width="2"/>
+    <path d="M1186 309L1160 352M1186 371L1165 402M1186 309L1211 352M1186 371L1210 402" stroke="#F4C430" stroke-width="8"/>
+    <!-- reflective tape / dashboard line -->
+    <path d="M810 412H1515V466H810Z" fill="url(#tape)"/>
+    <path d="M810 466H1515V482H810Z" fill="#191713"/>
+    <!-- plate-frame mark in the scene -->
+    <g transform="translate(1138 224) scale(.65)">
+      <path fill="#F4C430" d="M16 8H68L88 28V88H16Z"/>
+      <path fill="#191713" d="M32 26H72V38H45V49H65V61H45V76H32Z"/>
+    </g>
+  </g>
+  <text x="810" y="482" fill="#FFFDF8" class="small">UNA SEÑAL VISIBLE ANTES DE LA GARITA</text>
+
+  <!-- Palette panel -->
+  <rect x="52" y="534" width="440" height="414" rx="18" fill="#F3EFE6"/>
+  <text x="84" y="580" fill="#855500" class="label">01 / PALETA</text>
+  <text x="84" y="624" fill="#191713" class="barlow" font-size="34" font-weight="800">Marca primero.</text>
+  <g class="meta">
+    <rect x="84" y="652" width="72" height="42" rx="8" fill="#191713"/>
+    <text x="172" y="669" fill="#191713" class="small">ASFALTO</text>
+    <text x="172" y="688" fill="#6A6258" class="meta">#191713</text>
+
+    <rect x="84" y="708" width="72" height="42" rx="8" fill="#FFFDF8" stroke="#D6CEC0"/>
+    <text x="172" y="725" fill="#191713" class="small">PAPEL</text>
+    <text x="172" y="744" fill="#6A6258" class="meta">#FFFDF8</text>
+
+    <rect x="84" y="764" width="72" height="42" rx="8" fill="#F4C430"/>
+    <text x="172" y="781" fill="#191713" class="small">AMARILLO FIXLY</text>
+    <text x="172" y="800" fill="#855500" class="meta">#F4C430</text>
+  </g>
+  <path d="M84 828H460" stroke="#D6CEC0"/>
+  <text x="84" y="856" fill="#191713" class="label">ESTADOS / SOLO SEMÁNTICA</text>
+  <rect x="84" y="875" width="40" height="28" rx="6" fill="#1F7A4D"/>
+  <rect x="136" y="875" width="40" height="28" rx="6" fill="#A14F00"/>
+  <rect x="188" y="875" width="40" height="28" rx="6" fill="#B3261E"/>
+  <text x="248" y="895" fill="#6A6258" class="meta">VERDE · ÁMBAR · ROJO</text>
+
+  <!-- Type panel -->
+  <rect x="516" y="534" width="500" height="414" rx="18" fill="#FFFDF8"/>
+  <text x="548" y="580" fill="#855500" class="label">02 / TYPOGRAPHY</text>
+  <text x="548" y="644" fill="#191713" class="barlow" font-size="64" font-weight="800" letter-spacing="-1.4">Fixly</text>
+  <text x="548" y="683" fill="#191713" class="barlow" font-size="31" font-weight="700">SOAT Y REVISIÓN TÉCNICA</text>
+  <text x="548" y="731" fill="#6A6258" class="body">Atkinson Hyperlegible para cada instrucción.</text>
+  <text x="548" y="770" fill="#191713" class="mono" font-size="24" font-weight="600">PLACA  /  24 / 28</text>
+  <path d="M548 792H974" stroke="#D6CEC0"/>
+  <text x="548" y="826" fill="#191713" class="meta">BARLOW SEMI CONDENSED / DISPLAY</text>
+  <text x="548" y="851" fill="#191713" class="meta">ATKINSON HYPERLEGIBLE / UI Y CUERPO</text>
+  <text x="548" y="876" fill="#191713" class="meta">IBM PLEX MONO / PLACA, FECHAS, DÍAS</text>
+
+  <!-- Status + web application panel -->
+  <rect x="1040" y="534" width="508" height="414" rx="18" fill="#24211D"/>
+  <text x="1072" y="580" fill="#D9D1C4" class="label">03 / ESTADOS</text>
+  <text x="1072" y="624" fill="#FFFDF8" class="barlow" font-size="34" font-weight="800">Nunca solo color.</text>
+
+  <!-- state chips -->
+  <g transform="translate(1072 648)">
+    <circle cx="13" cy="13" r="10" fill="none" stroke="#8DE0B2" stroke-width="2"/>
+    <path d="M8 13L12 17L19 9" fill="none" stroke="#8DE0B2" stroke-width="2"/>
+    <text x="32" y="18" fill="#8DE0B2" class="small">VIGENTE</text>
+  </g>
+  <g transform="translate(1216 648)">
+    <path d="M13 3L24 23H2Z" fill="none" stroke="#FFB45C" stroke-width="2"/>
+    <path d="M13 9V15M13 19V20" stroke="#FFB45C" stroke-width="2"/>
+    <text x="32" y="18" fill="#FFB45C" class="small">POR VENCER</text>
+  </g>
+  <g transform="translate(1396 648)">
+    <rect x="3" y="3" width="20" height="20" rx="3" fill="none" stroke="#FF9B91" stroke-width="2"/>
+    <path d="M8 8L18 18M18 8L8 18" stroke="#FF9B91" stroke-width="2"/>
+    <text x="32" y="18" fill="#FF9B91" class="small">VENCIDO</text>
+  </g>
+
+  <!-- web mockup -->
+  <rect x="1072" y="700" width="444" height="188" rx="12" fill="#FFFDF8"/>
+  <text x="1096" y="731" fill="#6A6258" class="label">CONSULTA POR PLACA</text>
+  <rect x="1096" y="749" width="270" height="52" rx="8" fill="#FFFDF8" stroke="#191713" stroke-width="2"/>
+  <text x="1114" y="781" fill="#6A6258" class="meta">INGRESA TU PLACA</text>
+  <rect x="1380" y="749" width="108" height="52" rx="8" fill="#F4C430"/>
+  <text x="1434" y="781" fill="#191713" text-anchor="middle" class="small">CONSULTAR</text>
+  <path d="M1096 830H1488" stroke="#D6CEC0"/>
+  <text x="1096" y="858" fill="#191713" class="meta">ICONO + ETIQUETA + DATO</text>
+  <text x="1096" y="880" fill="#6A6258" class="meta">AMARILLO NUNCA COMUNICA ESTADO</text>
+
+  <!-- Footer -->
+  <text x="52" y="982" fill="#D9D1C4" class="meta">FIXLY / BORDE SEGURO</text>
+  <text x="1548" y="982" fill="#D9D1C4" text-anchor="end" class="meta">SIN DEGRADADOS · SIN EMOJIS · CONTRASTE FUNCIONAL</text>
+</svg>

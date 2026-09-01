@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#191713" />
+    <title>Fixly | Revisa antes de salir</title>
+    <meta
+      name="description"
+      content="Consulta la vigencia de tu SOAT y revisión técnica por placa."
+    />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Semi+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+
+      :root {
+        color-scheme: dark;
+        --ink: #191713;
+        --surface: #24211d;
+        --surface-soft: #2d2924;
+        --paper: #fffdf8;
+        --dust: #d9d1c4;
+        --dust-muted: #b4aa9b;
+        --line: rgba(255, 253, 248, 0.16);
+        --line-soft: rgba(255, 253, 248, 0.1);
+        --brand: #f4c430;
+        --brand-ink: #855500;
+        --valid: #8de0b2;
+        --due: #ffb45c;
+        --expired: #ff9b91;
+        --radius-panel: 28px;
+        --radius-card: 20px;
+        --radius-control: 14px;
+        --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: 'Atkinson Hyperlegible', Arial, sans-serif;
+        font-size: 18px;
+        line-height: 1.45;
+        text-rendering: optimizeLegibility;
+      }
+
+      body,
+      button,
+      input {
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      .site-shell {
+        overflow: hidden;
+      }
+
+      .container {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      .mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .display {
+        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
+      }
+
+      .glass {
+        background: rgba(36, 33, 29, 0.62);
+        border: 1px solid var(--line);
+        box-shadow: inset 0 1px 0 rgba(255, 253, 248, 0.12);
+        backdrop-filter: blur(18px) saturate(115%);
+        -webkit-backdrop-filter: blur(18px) saturate(115%);
+      }
+
+      .site-nav {
+        position: absolute;
+        z-index: 2;
+        top: 18px;
+        left: 50%;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 34px;
+        width: min(1180px, calc(100% - 40px));
+        min-height: 72px;
+        padding: 12px 18px 12px 22px;
+        transform: translateX(-50%);
+        border-radius: 22px;
+      }
+
+      .brand-lockup {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        min-width: max-content;
+      }
+
+      .brand-lockup svg {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+      }
+
+      .brand-lockup span {
+        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 1;
+      }
+
+      .nav-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        color: var(--dust);
+        font-size: 15px;
+      }
+
+      .nav-links a {
+        transition: color 160ms var(--ease-standard);
+      }
+
+      .nav-links a:hover,
+      .nav-links a:focus-visible {
+        color: var(--paper);
+      }
+
+      .nav-context {
+        color: var(--dust-muted);
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .hero {
+        position: relative;
+        display: grid;
+        align-items: center;
+        min-height: 100dvh;
+        isolation: isolate;
+        overflow: hidden;
+      }
+
+      .hero-media,
+      .hero-scrim {
+        position: absolute;
+        z-index: -2;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .hero-media {
+        object-fit: cover;
+        object-position: 62% center;
+        filter: saturate(0.82) contrast(1.06) brightness(0.68);
+      }
+
+      .hero-scrim {
+        z-index: -1;
+        background: rgba(25, 23, 19, 0.69);
+      }
+
+      .hero-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(400px, 0.76fr);
+        align-items: center;
+        gap: 84px;
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 142px 0 64px;
+      }
+
+      .hero-copy {
+        max-width: 620px;
+      }
+
+      .eyebrow,
+      .section-label,
+      .field-label,
+      .form-note,
+      .state-label,
+      .impact-label,
+      .footer-note {
+        font-family: 'IBM Plex Mono', monospace;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow {
+        margin: 0 0 22px;
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.045em;
+      }
+
+      h1 {
+        max-width: 660px;
+        margin-bottom: 24px;
+        color: var(--paper);
+        font-size: clamp(54px, 7vw, 94px);
+        line-height: 0.88;
+      }
+
+      h1 span {
+        display: block;
+        color: var(--brand);
+      }
+
+      .hero-copy > p:not(.eyebrow) {
+        max-width: 39ch;
+        margin-bottom: 28px;
+        color: var(--dust);
+        font-size: 21px;
+        line-height: 1.35;
+      }
+
+      .signal-rule {
+        width: 128px;
+        height: 8px;
+        background: var(--brand);
+      }
+
+      .hero-proof {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        max-width: 510px;
+        margin-top: 34px;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-proof div {
+        padding: 14px 14px 14px 0;
+      }
+
+      .hero-proof div + div {
+        padding-left: 14px;
+        border-left: 1px solid var(--line);
+      }
+
+      .hero-proof span,
+      .hero-proof strong {
+        display: block;
+      }
+
+      .hero-proof span {
+        margin-bottom: 3px;
+        color: var(--dust-muted);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .hero-proof strong {
+        color: var(--paper);
+        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .lookup-card {
+        justify-self: end;
+        max-width: 500px;
+        width: 100%;
+        padding: 34px;
+        border-radius: var(--radius-panel);
+        background: rgba(25, 23, 19, 0.76);
+      }
+
+      .lookup-top,
+      .form-row,
+      .whatsapp-form,
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .lookup-top {
+        margin-bottom: 24px;
+      }
+
+      .lookup-kicker {
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .lookup-context {
+        display: block;
+        margin-top: 4px;
+        color: var(--dust-muted);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .lookup-time {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        color: var(--dust-muted);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+      }
+
+      .lookup-time strong {
+        color: var(--paper);
+        font-size: 26px;
+        line-height: 1;
+      }
+
+      .lookup-card h2 {
+        max-width: 12ch;
+        margin-bottom: 12px;
+        color: var(--paper);
+        font-size: 48px;
+        line-height: 0.95;
+      }
+
+      .lookup-card > p {
+        max-width: 34ch;
+        margin-bottom: 26px;
+        color: var(--dust);
+        font-size: 16px;
+        line-height: 1.4;
+      }
+
+      .lookup-specs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin: 0 0 26px;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .lookup-specs div {
+        padding: 12px 10px 13px 0;
+      }
+
+      .lookup-specs div + div {
+        padding-left: 10px;
+        border-left: 1px solid var(--line);
+      }
+
+      .lookup-specs span,
+      .lookup-specs strong {
+        display: block;
+      }
+
+      .lookup-specs span {
+        margin-bottom: 4px;
+        color: var(--dust-muted);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .lookup-specs strong {
+        color: var(--paper);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .field-label {
+        display: block;
+        margin-bottom: 9px;
+        color: var(--dust);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .form-row {
+        gap: 10px;
+      }
+
+      .form-row input,
+      .whatsapp-form input {
+        min-width: 0;
+        height: 56px;
+        padding: 0 16px;
+        border: 1px solid rgba(255, 253, 248, 0.4);
+        border-radius: var(--radius-control);
+        outline: 0;
+        background: rgba(255, 253, 248, 0.96);
+        color: var(--ink);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 15px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        transition: border-color 120ms var(--ease-standard), box-shadow 120ms var(--ease-standard);
+      }
+
+      .form-row input {
+        width: 100%;
+      }
+
+      .form-row input::placeholder,
+      .whatsapp-form input::placeholder {
+        color: #6a6258;
+        opacity: 1;
+      }
+
+      .form-row input:focus,
+      .whatsapp-form input:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.24);
+      }
+
+      .primary-button,
+      .secondary-button {
+        min-height: 56px;
+        padding: 0 21px;
+        border: 0;
+        border-radius: var(--radius-control);
+        font-family: 'Atkinson Hyperlegible', Arial, sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: transform 80ms var(--ease-standard), background-color 160ms var(--ease-standard), color 160ms var(--ease-standard);
+      }
+
+      .primary-button {
+        background: var(--brand);
+        color: var(--ink);
+      }
+
+      .primary-button:hover,
+      .primary-button:focus-visible {
+        background: #ffd85d;
+      }
+
+      .primary-button:active,
+      .secondary-button:active {
+        transform: scale(0.98);
+      }
+
+      .primary-button:disabled {
+        cursor: wait;
+        opacity: 0.65;
+      }
+
+      .form-note {
+        margin: 14px 0 0;
+        color: var(--dust-muted);
+        font-size: 10px;
+        line-height: 1.5;
+      }
+
+      .form-status {
+        min-height: 23px;
+        margin: 13px 0 0;
+        color: var(--dust);
+        font-size: 14px;
+      }
+
+      .form-status[data-kind='error'] {
+        color: var(--expired);
+      }
+
+      .form-status[data-kind='ready'] {
+        color: var(--valid);
+      }
+
+      .section {
+        padding: 124px 0;
+      }
+
+      .section-heading {
+        max-width: 650px;
+        margin-bottom: 52px;
+      }
+
+      .section-heading h2 {
+        margin-bottom: 14px;
+        color: var(--paper);
+        font-size: clamp(42px, 5vw, 66px);
+        line-height: 0.96;
+      }
+
+      .section-heading p {
+        max-width: 50ch;
+        margin-bottom: 0;
+        color: var(--dust);
+        font-size: 19px;
+      }
+
+      .process-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+        gap: 68px;
+        align-items: start;
+      }
+
+      .photo-card {
+        overflow: hidden;
+        border-radius: var(--radius-panel);
+        background: var(--surface);
+      }
+
+      .photo-card img {
+        width: 100%;
+        aspect-ratio: 1.15;
+        object-fit: cover;
+        object-position: center;
+      }
+
+      .photo-card figcaption {
+        padding: 16px 20px 20px;
+        color: var(--dust-muted);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .process-list {
+        display: grid;
+        gap: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .process-step {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 18px;
+        padding: 26px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .process-step-number {
+        color: var(--brand);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+      }
+
+      .process-step h3 {
+        margin-bottom: 8px;
+        color: var(--paper);
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .process-step p {
+        margin-bottom: 0;
+        color: var(--dust);
+        font-size: 17px;
+        line-height: 1.4;
+      }
+
+      .risk-section {
+        padding: 0 0 124px;
+      }
+
+      .impact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .impact-card {
+        position: relative;
+        min-height: 260px;
+        padding: 26px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-card);
+        background: var(--surface);
+      }
+
+      .impact-card::before {
+        position: absolute;
+        top: 0;
+        right: 26px;
+        left: 26px;
+        height: 5px;
+        content: '';
+        background: var(--expired);
+      }
+
+      .impact-card--soat::before {
+        background: var(--due);
+      }
+
+      .impact-label {
+        display: block;
+        margin: 22px 0 34px;
+        color: var(--dust-muted);
+        font-size: 11px;
+      }
+
+      .impact-card strong {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--paper);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: clamp(34px, 4.4vw, 58px);
+        line-height: 1;
+      }
+
+      .impact-card span {
+        color: var(--dust);
+        font-size: 17px;
+      }
+
+      .impact-note {
+        grid-column: 1 / -1;
+        padding: 24px 0 0;
+        color: var(--brand);
+        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+
+      .states-section {
+        padding: 0 0 124px;
+      }
+
+      .states-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .state-card {
+        min-height: 190px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-card);
+        background: var(--surface);
+      }
+
+      .state-card::before {
+        display: block;
+        width: 48px;
+        height: 6px;
+        margin-bottom: 34px;
+        content: '';
+        background: var(--valid);
+      }
+
+      .state-card--due::before {
+        background: var(--due);
+      }
+
+      .state-card--expired::before {
+        background: var(--expired);
+      }
+
+      .state-label {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--valid);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .state-card--due .state-label {
+        color: var(--due);
+      }
+
+      .state-card--expired .state-label {
+        color: var(--expired);
+      }
+
+      .state-card p {
+        margin-bottom: 0;
+        color: var(--dust);
+        font-size: 16px;
+      }
+
+      .whatsapp-section {
+        padding: 0 0 124px;
+      }
+
+      .whatsapp-card {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(390px, 1.1fr);
+        gap: 44px;
+        align-items: end;
+        padding: 34px;
+        border-radius: var(--radius-panel);
+      }
+
+      .whatsapp-card h2 {
+        max-width: 10ch;
+        margin-bottom: 12px;
+        color: var(--paper);
+        font-size: 44px;
+        line-height: 0.95;
+      }
+
+      .whatsapp-card p {
+        max-width: 32ch;
+        margin-bottom: 0;
+        color: var(--dust);
+      }
+
+      .whatsapp-form {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+      }
+
+      .whatsapp-form input {
+        width: 100%;
+      }
+
+      .whatsapp-feedback {
+        grid-column: 2;
+        min-height: 22px;
+        margin: 11px 0 0;
+        color: var(--valid);
+        font-size: 14px;
+        text-align: right;
+      }
+
+      footer {
+        padding: 26px 0 34px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .footer-inner {
+        gap: 20px;
+      }
+
+      .footer-brand {
+        color: var(--paper);
+        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .footer-note {
+        color: var(--dust-muted);
+        font-size: 10px;
+        text-align: right;
+      }
+
+      :focus-visible {
+        outline: 3px solid var(--brand);
+        outline-offset: 3px;
+      }
+
+      @media (prefers-reduced-transparency: reduce) {
+        .glass {
+          background: var(--surface);
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .hero-copy {
+          animation: enter-copy 650ms var(--ease-emphasis) both;
+        }
+
+        .lookup-card {
+          animation: enter-card 720ms 100ms var(--ease-emphasis) both;
+        }
+
+        @keyframes enter-copy {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes enter-card {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      }
+
+      @media (max-width: 820px) {
+        .container,
+        .site-nav,
+        .hero-content {
+          width: min(100% - 32px, 620px);
+        }
+
+        .site-nav {
+          grid-template-columns: auto auto;
+          gap: 14px;
+          min-height: 64px;
+          padding: 10px 14px 10px 16px;
+          border-radius: 18px;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .nav-context {
+          justify-self: end;
+          font-size: 10px;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+
+        .hero-content {
+          grid-template-columns: 1fr;
+          gap: 42px;
+          padding: 142px 0 48px;
+        }
+
+        .hero-copy > p:not(.eyebrow) {
+          font-size: 18px;
+        }
+
+        .lookup-card {
+          padding: 24px;
+        }
+
+        .section {
+          padding: 88px 0;
+        }
+
+        .section-heading {
+          margin-bottom: 36px;
+        }
+
+        .process-layout,
+        .whatsapp-card {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+
+        .risk-section,
+        .states-section,
+        .whatsapp-section {
+          padding-bottom: 88px;
+        }
+
+        .states-grid,
+        .impact-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .impact-note {
+          grid-column: auto;
+          padding-top: 4px;
+          font-size: 29px;
+        }
+
+        .whatsapp-form {
+          grid-template-columns: 1fr;
+        }
+
+        .whatsapp-feedback {
+          grid-column: auto;
+          text-align: left;
+        }
+
+        .footer-inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .footer-note {
+          text-align: left;
+        }
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 48px;
+        }
+
+        .hero-proof {
+          margin-top: 28px;
+        }
+
+        .hero-proof div {
+          padding-right: 8px;
+        }
+
+        .hero-proof div + div {
+          padding-left: 8px;
+        }
+
+        .hero-proof strong {
+          font-size: 17px;
+        }
+
+        .form-row {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .form-row .primary-button {
+          width: 100%;
+        }
+
+        .lookup-card h2 {
+          font-size: 34px;
+        }
+
+        .lookup-specs div {
+          padding-right: 7px;
+        }
+
+        .lookup-specs div + div {
+          padding-left: 7px;
+        }
+
+        .photo-card img {
+          aspect-ratio: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="hero" id="inicio">
+        <img
+          class="hero-media"
+          src="fixly-hero-sedan.png"
+          alt="Sedán compacto circulando por una vía de Lima al atardecer."
+        />
+        <div class="hero-scrim" aria-hidden="true"></div>
+
+        <nav class="site-nav glass" aria-label="Navegación principal">
+          <a class="brand-lockup" href="#inicio" aria-label="Fixly, inicio">
+            <svg viewBox="0 0 96 96" aria-hidden="true">
+              <path fill="#F4C430" d="M16 8H68L88 28V88H16Z" />
+              <path fill="#191713" d="M32 26H72V38H45V49H65V61H45V76H32Z" />
+            </svg>
+            <span>Fixly</span>
+          </a>
+          <div class="nav-links">
+            <a href="#como-funciona">Tu auto</a>
+            <a href="#que-revisa">Los costos</a>
+            <a href="#whatsapp">Recordatorio</a>
+          </div>
+          <span class="nav-context mono">Lima / por placa</span>
+        </nav>
+
+        <div class="hero-content">
+          <div class="hero-copy">
+            <p class="eyebrow">Control de vehículo / Lima</p>
+            <h1>Tu auto trabaja. <span>Que no lo detengan.</span></h1>
+            <p>Consulta tu placa antes de salir y mira si tu SOAT y revisión técnica siguen vigentes.</p>
+            <div class="signal-rule" aria-hidden="true"></div>
+            <div class="hero-proof" aria-label="Lo que revisa Fixly">
+              <div>
+                <span>Documento</span>
+                <strong>SOAT</strong>
+              </div>
+              <div>
+                <span>Documento</span>
+                <strong>Revisión técnica</strong>
+              </div>
+              <div>
+                <span>Respuesta</span>
+                <strong>En 5 segundos</strong>
+              </div>
+            </div>
+          </div>
+
+          <section class="lookup-card glass" id="consultar" aria-labelledby="lookup-title">
+            <div class="lookup-top">
+              <div>
+                <span class="lookup-kicker">Ficha de control</span>
+                <span class="lookup-context">Consulta por placa</span>
+              </div>
+              <span class="lookup-time"><strong>5</strong> s</span>
+            </div>
+            <h2 id="lookup-title">Revisa tu auto antes de salir.</h2>
+            <p>En 5 segundos ves la vigencia, los días que quedan y la multa si ya venció.</p>
+
+            <div class="lookup-specs" aria-label="Información de la consulta">
+              <div>
+                <span>Revisa</span>
+                <strong>SOAT</strong>
+              </div>
+              <div>
+                <span>Revisa</span>
+                <strong>Revisión técnica</strong>
+              </div>
+              <div>
+                <span>Te dice</span>
+                <strong>Los días</strong>
+              </div>
+            </div>
+
+            <form id="plate-form" novalidate>
+              <label class="field-label" for="plate">Placa de tu auto</label>
+              <div class="form-row">
+                <input
+                  id="plate"
+                  name="plate"
+                  type="text"
+                  inputmode="text"
+                  autocomplete="off"
+                  maxlength="8"
+                  placeholder="Ingresa tu placa"
+                  aria-describedby="plate-note plate-status"
+                />
+                <button class="primary-button" type="submit">Consultar placa</button>
+              </div>
+              <p class="form-note" id="plate-note">SOAT y revisión técnica en una sola consulta.</p>
+              <p class="form-status" id="plate-status" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+        </div>
+      </header>
+
+      <main>
+        <section class="section" id="como-funciona">
+          <div class="container">
+            <div class="section-heading">
+              <h2>Antes de manejar, mira la placa.</h2>
+              <p>Fixly convierte una fecha silenciosa en una decisión visible.</p>
+            </div>
+
+            <div class="process-layout">
+              <figure class="photo-card">
+                <img
+                  src="fixly-dashboard-detail.png"
+                  alt="Detalle de un tablero antiguo visto desde el asiento del conductor, con el parabrisas en primer plano."
+                  loading="lazy"
+                />
+                <figcaption>La consulta empieza con la placa.</figcaption>
+              </figure>
+
+              <div class="process-list">
+                <article class="process-step">
+                  <span class="process-step-number">01</span>
+                  <div>
+                    <h3>Escribe tu placa</h3>
+                    <p>Un campo grande, una acción clara y nada que aprender.</p>
+                  </div>
+                </article>
+                <article class="process-step">
+                  <span class="process-step-number">02</span>
+                  <div>
+                    <h3>Mira la vigencia</h3>
+                    <p>SOAT y revisión técnica aparecen con días restantes y estado explícito.</p>
+                  </div>
+                </article>
+                <article class="process-step">
+                  <span class="process-step-number">03</span>
+                  <div>
+                    <h3>Deja tu WhatsApp</h3>
+                    <p>Si te sirve, Fixly te avisa la próxima vez.</p>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="risk-section" id="que-revisa">
+          <div class="container">
+            <div class="section-heading">
+              <h2>El susto tiene un número.</h2>
+              <p>Si ya venció, la multa no es el único costo.</p>
+            </div>
+
+            <div class="impact-grid">
+              <article class="impact-card">
+                <span class="impact-label">Sin revisión técnica vigente</span>
+                <strong>S/2,475</strong>
+                <span>multa + retención</span>
+              </article>
+              <article class="impact-card impact-card--soat">
+                <span class="impact-label">Sin SOAT</span>
+                <strong>S/660</strong>
+                <span>multa + retención</span>
+              </article>
+              <p class="impact-note">Un día con el auto retenido es un día sin facturar.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="states-section" aria-labelledby="states-title">
+          <div class="container">
+            <div class="section-heading">
+              <h2 id="states-title">Una respuesta clara, incluso bajo el sol.</h2>
+              <p>El color acompaña. La etiqueta siempre explica.</p>
+            </div>
+
+            <div class="states-grid">
+              <article class="state-card">
+                <span class="state-label">Vigente</span>
+                <p>Todo está al día. El conductor puede seguir con su ruta.</p>
+              </article>
+              <article class="state-card state-card--due">
+                <span class="state-label">Por vencer</span>
+                <p>La fecha se acerca. El sistema lo hace visible antes de la sorpresa.</p>
+              </article>
+              <article class="state-card state-card--expired">
+                <span class="state-label">Vencido</span>
+                <p>La fecha pasó. La alerta se muestra con prioridad y sin ambigüedad.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="whatsapp-section" id="whatsapp">
+          <div class="container">
+            <div class="whatsapp-card glass">
+              <div>
+                <h2>Te avisamos la próxima vez.</h2>
+                <p>Deja tu WhatsApp después de revisar la vigencia.</p>
+              </div>
+              <form class="whatsapp-form" id="whatsapp-form" novalidate>
+                <label class="field-label" for="whatsapp">WhatsApp</label>
+                <span aria-hidden="true"></span>
+                <input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" placeholder="Tu número de WhatsApp" />
+                <button class="primary-button" type="submit">Dejar WhatsApp</button>
+                <p class="whatsapp-feedback" id="whatsapp-feedback" role="status" aria-live="polite"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="container footer-inner">
+          <span class="footer-brand">Fixly</span>
+          <span class="footer-note">Borde seguro / Lima / SOAT y revisión técnica</span>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      const plateForm = document.querySelector('#plate-form');
+      const plateInput = document.querySelector('#plate');
+      const plateButton = plateForm.querySelector('button');
+      const plateStatus = document.querySelector('#plate-status');
+      const whatsappForm = document.querySelector('#whatsapp-form');
+      const whatsappInput = document.querySelector('#whatsapp');
+      const whatsappFeedback = document.querySelector('#whatsapp-feedback');
+
+      plateInput.addEventListener('input', () => {
+        plateInput.value = plateInput.value.toUpperCase();
+        plateStatus.textContent = '';
+        plateStatus.removeAttribute('data-kind');
+      });
+
+      plateForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (!plateInput.value.trim()) {
+          plateStatus.textContent = 'Escribe una placa para continuar.';
+          plateStatus.dataset.kind = 'error';
+          plateInput.focus();
+          return;
+        }
+
+        plateButton.disabled = true;
+        plateButton.textContent = 'Consultando...';
+        plateStatus.textContent = 'Consulta en curso.';
+        plateStatus.dataset.kind = 'ready';
+
+        window.setTimeout(() => {
+          plateButton.disabled = false;
+          plateButton.textContent = 'Consultar placa';
+          plateStatus.textContent = 'Preview visual listo para conectar con la consulta real.';
+        }, 720);
+      });
+
+      whatsappForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (!whatsappInput.value.trim()) {
+          whatsappFeedback.textContent = 'Escribe tu número para continuar.';
+          whatsappFeedback.style.color = 'var(--expired)';
+          whatsappInput.focus();
+          return;
+        }
+
+        whatsappFeedback.textContent = 'Preview listo para conectar con WhatsApp.';
+        whatsappFeedback.style.color = 'var(--valid)';
+      });
+    </script>
+  </body>
+</html>
