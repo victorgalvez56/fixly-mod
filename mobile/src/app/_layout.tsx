@@ -1,0 +1,31 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+
+import { VehicleProvider } from '@/state/vehicle-context';
+import { Colors } from '@/theme/tokens';
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
+      <VehicleProvider>
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: Colors.background },
+            animation: 'slide_from_right',
+          }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="servicio/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="historial/[year]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="mapa" options={{ presentation: 'card' }} />
+          <Stack.Screen name="sistema/[zone]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="vehiculo" options={{ presentation: 'card' }} />
+          <Stack.Screen name="avisos" options={{ presentation: 'card' }} />
+        </Stack>
+      </VehicleProvider>
+    </GestureHandlerRootView>
+  );
+}
