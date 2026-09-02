@@ -3,46 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#121416" />
-    <title>Fixly | El estado de tu auto, por placa</title>
-    <meta
-      name="description"
-      content="Consulta por placa si tu SOAT y revisión técnica siguen vigentes."
-    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Fixly te ayuda a entender qué necesita tu auto, cuándo toca y cuánto debería costar." />
+    <title>Fixly | Tu auto, al día</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Barlow+Semi+Condensed:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;display=swap"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
     <style>
-
       :root {
-        color-scheme: dark;
-        --ink: #121416;
-        --surface: #1c2023;
-        --paper: #f4f6f4;
-        --paper-soft: #dbe0e2;
-        --dust: #b7c0c7;
-        --dust-muted: #8d979f;
-        --line: rgba(244, 246, 244, 0.18);
-        --line-soft: rgba(244, 246, 244, 0.1);
-        --brand: #d8b24c;
-        --brand-soft: #ebcb74;
-        --brand-ink: #3e3211;
-        --valid: #86d2b0;
-        --due: #e8a65b;
-        --expired: #f08c83;
-        --radius-xl: 30px;
-        --radius-lg: 22px;
-        --radius-md: 15px;
-        --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
-        --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+        --lime: #79d218;
+        --lime-deep: #5da90f;
+        --lime-soft: #effbdc;
+        --charcoal: #2b2f33;
+        --charcoal-soft: #5e656a;
+        --muted: #899195;
+        --blue: #2da9ff;
+        --coral: #ff6b57;
+        --paper: #ffffff;
+        --paper-soft: #f6f8f9;
+        --line: #e7ebed;
+        --shadow: 0 24px 60px rgba(43, 47, 51, 0.12);
+        --shadow-soft: 0 12px 28px rgba(43, 47, 51, 0.08);
+        --radius-lg: 28px;
+        --radius-md: 18px;
+        --radius-pill: 999px;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
       }
 
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
 
       html {
         scroll-behavior: smooth;
@@ -50,2408 +38,972 @@
 
       body {
         margin: 0;
-        background: var(--ink);
-        color: var(--paper);
-        font-family: 'Atkinson Hyperlegible', Arial, sans-serif;
-        font-size: 18px;
-        line-height: 1.45;
+        color: var(--charcoal);
+        background: var(--paper);
+        font-family: "Nunito", ui-rounded, "Avenir Next", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
       }
 
-      body,
-      button,
-      input {
-        -webkit-font-smoothing: antialiased;
+      a { color: inherit; text-decoration: none; }
+      button, input { font: inherit; }
+      button { cursor: pointer; }
+
+      .skip-link {
+        position: fixed;
+        z-index: 20;
+        top: 12px;
+        left: 12px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--charcoal);
+        transform: translateY(-150%);
+        transition: transform 180ms ease;
       }
 
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
+      .skip-link:focus { transform: translateY(0); }
 
-      button,
-      input {
-        font: inherit;
-      }
-
-      button {
-        cursor: pointer;
-      }
-
-      img {
-        display: block;
-        max-width: 100%;
-      }
-
-      .site-shell {
-        overflow: hidden;
-      }
-
-      .container,
-      .hero-content {
-        width: min(1180px, calc(100% - 40px));
+      .shell {
+        width: min(1160px, calc(100% - 48px));
         margin: 0 auto;
       }
 
-      .mono,
-      .eyebrow,
-      .section-label,
-      .field-label,
-      .form-note,
-      .state-label,
-      .impact-label,
-      .footer-note,
-      .roadmap-kicker,
-      .source-note,
-      .photo-caption {
-        font-family: 'IBM Plex Mono', monospace;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+      .site-header {
+        position: sticky;
+        z-index: 10;
+        top: 0;
+        border-bottom: 1px solid rgba(231, 235, 237, 0.8);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(16px);
       }
 
-      .display,
-      h1,
-      h2,
-      h3,
-      .brand-lockup span,
-      .footer-brand {
-        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
-      }
-
-      .glass {
-        border: 1px solid var(--line);
-        background: rgba(28, 32, 35, 0.74);
-        box-shadow: inset 0 1px 0 rgba(244, 246, 244, 0.13), 0 22px 70px rgba(6, 8, 9, 0.3);
-        backdrop-filter: blur(18px) saturate(112%);
-        -webkit-backdrop-filter: blur(18px) saturate(112%);
-      }
-
-      .site-nav {
-        position: absolute;
-        z-index: 4;
-        top: 20px;
-        left: 50%;
-        display: grid;
-        grid-template-columns: auto 1fr auto;
+      .nav {
+        display: flex;
+        min-height: 76px;
         align-items: center;
-        gap: 34px;
-        width: min(1180px, calc(100% - 40px));
-        min-height: 70px;
-        padding: 11px 17px 11px 22px;
-        transform: translateX(-50%);
-        border-radius: 20px;
+        justify-content: space-between;
+        gap: 28px;
       }
 
-      .brand-lockup {
+      .brand {
         display: inline-flex;
         align-items: center;
-        gap: 11px;
-        min-width: max-content;
+        gap: 10px;
+        flex: 0 0 auto;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
       }
 
-      .brand-lockup svg {
+      .brand-mark {
+        display: grid;
         width: 38px;
         height: 38px;
-        flex: 0 0 auto;
-      }
-
-      .brand-lockup span {
-        color: var(--paper);
-        font-size: 34px;
-        font-weight: 800;
-        letter-spacing: -0.05em;
+        place-items: center;
+        color: #fff;
+        border-radius: 12px 12px 12px 5px;
+        background: var(--lime);
+        box-shadow: inset 0 -4px 0 rgba(78, 135, 10, 0.22);
+        font-size: 23px;
+        font-weight: 900;
         line-height: 1;
       }
 
       .nav-links {
         display: flex;
+        align-items: center;
+        gap: 28px;
+        color: var(--charcoal-soft);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .nav-links a { transition: color 180ms ease; }
+      .nav-links a:hover { color: var(--lime-deep); }
+
+      .nav-cta, .button-primary, .button-dark, .button-outline {
+        display: inline-flex;
+        min-height: 48px;
+        align-items: center;
         justify-content: center;
-        gap: 30px;
-        color: var(--dust);
-        font-size: 15px;
+        padding: 0 21px;
+        border: 0;
+        border-radius: var(--radius-pill);
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 0.01em;
+        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
       }
 
-      .nav-links a,
-      .source-list a {
-        transition: color 160ms var(--ease-standard);
+      .nav-cta, .button-dark {
+        color: #fff;
+        background: var(--charcoal);
+        box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
       }
 
-      .nav-links a:hover,
-      .nav-links a:focus-visible,
-      .source-list a:hover,
-      .source-list a:focus-visible {
-        color: var(--paper);
+      .button-primary {
+        color: #fff;
+        background: var(--lime);
+        box-shadow: inset 0 -4px 0 rgba(78, 135, 10, 0.22);
       }
 
-      .nav-context {
-        color: var(--dust-muted);
-        font-size: 11px;
-        white-space: nowrap;
+      .button-outline {
+        color: var(--charcoal);
+        border: 2px solid var(--line);
+        background: #fff;
+      }
+
+      .nav-cta:hover, .button-primary:hover, .button-dark:hover, .button-outline:hover {
+        transform: translateY(-2px);
+      }
+
+      .button-primary:hover { background: var(--lime-deep); }
+      .button-dark:hover { background: #171a1c; }
+      .button-outline:hover { border-color: var(--lime); }
+
+      :where(a, button, input):focus-visible {
+        outline: 3px solid rgba(45, 169, 255, 0.65);
+        outline-offset: 4px;
       }
 
       .hero {
         position: relative;
-        display: grid;
-        align-items: center;
-        min-height: 860px;
-        isolation: isolate;
         overflow: hidden;
+        padding: 78px 0 56px;
+        background: #fff;
       }
 
-      .hero-media,
-      .hero-scrim {
+      .hero::before {
         position: absolute;
-        z-index: -2;
-        inset: 0;
-        width: 100%;
-        height: 100%;
+        top: 56px;
+        right: -130px;
+        width: 590px;
+        height: 590px;
+        border-radius: 50%;
+        background: var(--lime-soft);
+        content: "";
       }
 
-      .hero-media {
-        object-fit: cover;
-        object-position: 60% center;
-        filter: saturate(0.78) contrast(1.07) brightness(0.65);
+      .hero::after {
+        position: absolute;
+        right: 8%;
+        bottom: 66px;
+        width: 70px;
+        height: 12px;
+        border-radius: 10px;
+        background: var(--coral);
+        content: "";
+        transform: rotate(-18deg);
       }
 
-      .hero-scrim {
-        z-index: -1;
-        background: rgba(18, 20, 22, 0.67);
-      }
-
-      .hero-content {
+      .hero-grid {
+        position: relative;
+        z-index: 1;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(400px, 0.74fr);
+        grid-template-columns: minmax(0, 0.94fr) minmax(360px, 1.06fr);
+        min-height: 625px;
         align-items: center;
-        gap: 76px;
-        padding: 146px 0 76px;
+        gap: 62px;
       }
 
-      .hero-copy {
-        max-width: 660px;
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--lime-deep);
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
-      .eyebrow,
-      .section-label {
-        margin: 0 0 21px;
-        color: var(--brand);
-        font-size: 11px;
-        font-weight: 700;
+      .eyebrow::before {
+        width: 26px;
+        height: 4px;
+        border-radius: 4px;
+        background: var(--lime);
+        content: "";
       }
 
-      h1,
-      h2,
-      h3,
-      p {
-        margin-top: 0;
-      }
-
-      h1,
-      h2,
-      h3 {
-        font-weight: 800;
-        letter-spacing: -0.045em;
-      }
+      h1, h2, h3, p { margin: 0; }
 
       h1 {
-        max-width: 18ch;
-        margin-bottom: 24px;
-        color: var(--paper);
-        font-size: clamp(56px, 6.6vw, 84px);
-        line-height: 0.87;
-      }
-
-      h1 span {
-        display: block;
-        color: var(--brand);
-      }
-
-      .hero-copy > p:not(.eyebrow) {
-        max-width: 40ch;
-        margin-bottom: 28px;
-        color: var(--paper-soft);
-        font-size: 20px;
-        line-height: 1.36;
-      }
-
-      .signal-rule {
-        width: 116px;
-        height: 7px;
-        background: var(--brand);
-      }
-
-      .hero-proof {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        max-width: 520px;
-        margin-top: 34px;
-        border-top: 1px solid var(--line);
-        border-bottom: 1px solid var(--line);
-      }
-
-      .hero-proof div {
-        padding: 14px 14px 14px 0;
-      }
-
-      .hero-proof div + div {
-        padding-left: 14px;
-        border-left: 1px solid var(--line);
-      }
-
-      .hero-proof span,
-      .hero-proof strong {
-        display: block;
-      }
-
-      .hero-proof span {
-        margin-bottom: 4px;
-        color: var(--dust-muted);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
-      }
-
-      .hero-proof strong {
-        color: var(--paper);
-        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
-        font-size: 21px;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-      }
-
-      .lookup-card {
-        justify-self: end;
-        width: 100%;
-        max-width: 492px;
-        padding: 32px;
-        border-radius: var(--radius-xl);
-        background: rgba(18, 20, 22, 0.84);
-      }
-
-      .lookup-top,
-      .form-row,
-      .whatsapp-form,
-      .footer-inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .lookup-top {
-        margin-bottom: 25px;
-      }
-
-      .lookup-kicker {
-        color: var(--brand);
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.11em;
-        text-transform: uppercase;
-      }
-
-      .lookup-context {
-        display: block;
-        margin-top: 5px;
-        color: var(--dust-muted);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .lookup-time {
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-        color: var(--dust-muted);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 13px;
-      }
-
-      .lookup-time strong {
-        color: var(--paper);
-        font-size: 26px;
-        line-height: 1;
-      }
-
-      .lookup-card h2 {
-        max-width: 10ch;
-        margin-bottom: 13px;
-        color: var(--paper);
-        font-size: 49px;
-        line-height: 0.91;
-      }
-
-      .lookup-card > p {
-        max-width: 33ch;
-        margin-bottom: 27px;
-        color: var(--dust);
-        font-size: 16px;
-        line-height: 1.4;
-      }
-
-      .lookup-specs {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        margin: 0 0 26px;
-        border-top: 1px solid var(--line);
-        border-bottom: 1px solid var(--line);
-      }
-
-      .lookup-specs div {
-        padding: 12px 10px 13px 0;
-      }
-
-      .lookup-specs div + div {
-        padding-left: 10px;
-        border-left: 1px solid var(--line);
-      }
-
-      .lookup-specs span,
-      .lookup-specs strong {
-        display: block;
-      }
-
-      .lookup-specs span {
-        margin-bottom: 4px;
-        color: var(--dust-muted);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .lookup-specs strong {
-        color: var(--paper);
-        font-size: 14px;
-        font-weight: 700;
-      }
-
-      .field-label {
-        display: block;
-        margin-bottom: 9px;
-        color: var(--dust);
-        font-size: 11px;
-        font-weight: 700;
-      }
-
-      .form-row {
-        gap: 10px;
-      }
-
-      .form-row input,
-      .whatsapp-form input {
-        min-width: 0;
-        height: 56px;
-        padding: 0 16px;
-        border: 1px solid rgba(244, 246, 244, 0.4);
-        border-radius: var(--radius-md);
-        outline: 0;
-        background: rgba(244, 246, 244, 0.97);
-        color: var(--ink);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 15px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        transition: border-color 120ms var(--ease-standard), box-shadow 120ms var(--ease-standard);
-      }
-
-      .form-row input {
-        width: 100%;
-      }
-
-      .form-row input::placeholder,
-      .whatsapp-form input::placeholder {
-        color: #6a6258;
-        opacity: 1;
-      }
-
-      .form-row input:focus,
-      .whatsapp-form input:focus {
-        border-color: var(--brand);
-        box-shadow: 0 0 0 3px rgba(216, 178, 76, 0.28);
-      }
-
-      .primary-button {
-        min-height: 56px;
-        padding: 0 21px;
-        border: 0;
-        border-radius: var(--radius-md);
-        background: var(--brand);
-        color: var(--ink);
-        font-family: 'Atkinson Hyperlegible', Arial, sans-serif;
-        font-size: 16px;
-        font-weight: 700;
-        white-space: nowrap;
-        transition: transform 80ms var(--ease-standard), background-color 160ms var(--ease-standard), color 160ms var(--ease-standard);
-      }
-
-      .primary-button:hover,
-      .primary-button:focus-visible {
-        background: var(--brand-soft);
-      }
-
-      .primary-button:active {
-        transform: scale(0.98);
-      }
-
-      .primary-button:disabled {
-        cursor: wait;
-        opacity: 0.65;
-      }
-
-      .form-note {
-        margin: 14px 0 0;
-        color: var(--dust-muted);
-        font-size: 10px;
-        line-height: 1.5;
-      }
-
-      .form-status,
-      .whatsapp-feedback {
-        min-height: 23px;
-        margin: 13px 0 0;
-        color: var(--dust);
-        font-size: 14px;
-      }
-
-      .form-status[data-kind='error'],
-      .whatsapp-feedback[data-kind='error'] {
-        color: var(--expired);
-      }
-
-      .form-status[data-kind='ready'],
-      .whatsapp-feedback[data-kind='ready'] {
-        color: var(--valid);
-      }
-
-      .hero-footnote {
-        position: absolute;
-        right: max(20px, calc((100% - 1180px) / 2));
-        bottom: 23px;
-        color: rgba(244, 246, 244, 0.58);
-        font-size: 12px;
-      }
-
-      .section {
-        padding: 128px 0;
-      }
-
-      .section-heading {
-        max-width: 690px;
-        margin-bottom: 53px;
-      }
-
-      .section-heading h2 {
-        margin-bottom: 14px;
-        color: var(--paper);
-        font-size: clamp(44px, 5.5vw, 72px);
+        max-width: 620px;
+        margin-top: 18px;
+        font-size: clamp(56px, 7vw, 92px);
+        font-weight: 900;
+        letter-spacing: -0.075em;
         line-height: 0.93;
       }
 
-      .section-heading p {
-        max-width: 52ch;
-        margin-bottom: 0;
-        color: var(--dust);
-        font-size: 19px;
+      h1 span { color: var(--lime); }
+
+      .hero-copy {
+        max-width: 500px;
+        margin-top: 26px;
+        color: var(--charcoal-soft);
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1.5;
       }
 
-      .section-heading .section-label,
-      .maintenance-panel .section-label,
-      .whatsapp-card .section-label {
-        max-width: none;
-        margin-bottom: 21px;
-        color: var(--brand);
-        font-size: 11px;
-        font-weight: 700;
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-top: 32px;
       }
 
-      .overview {
-        background: var(--ink);
+      .hero-note {
+        max-width: 420px;
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
       }
 
-      .overview-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
-        gap: 72px;
-        align-items: start;
-      }
-
-      .photo-card {
+      .hero-art {
         position: relative;
-        overflow: hidden;
-        margin: 0;
-        border: 1px solid var(--line-soft);
-        border-radius: var(--radius-xl);
-        background: var(--surface);
+        display: grid;
+        min-height: 625px;
+        place-items: center;
       }
 
-      .photo-card img {
-        width: 100%;
-        /* height:auto es obligatorio al poner width/height en el HTML:
-           si no, el atributo actúa como hint y gana sobre aspect-ratio. */
+      .hero-crew {
+        position: relative;
+        z-index: 1;
+        display: block;
+        width: min(590px, 100%);
         height: auto;
-        aspect-ratio: 0.92;
-        object-fit: cover;
-        object-position: center;
-        filter: saturate(0.86) contrast(1.06);
+        transform: rotate(-2deg);
       }
 
-      .photo-card::after {
+      .float-label {
         position: absolute;
-        top: 22px;
-        right: 22px;
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: var(--brand);
-        box-shadow: 0 0 0 5px rgba(216, 178, 76, 0.18);
-        content: '';
+        z-index: 2;
+        padding: 12px 15px;
+        color: var(--charcoal);
+        border: 1px solid rgba(231, 235, 237, 0.9);
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: var(--shadow-soft);
+        font-size: 12px;
+        font-weight: 900;
       }
 
-      .photo-caption {
-        padding: 17px 20px 19px;
-        color: var(--dust-muted);
-        font-size: 10px;
+      .float-label strong { display: block; color: var(--lime-deep); font-size: 18px; }
+      .float-label.one { top: 18%; right: 2%; transform: rotate(7deg); }
+      .float-label.two { bottom: 17%; left: 2%; transform: rotate(-6deg); }
+
+      .signal-bar {
+        padding: 22px 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        background: #fff;
       }
 
-      .detail-panel {
+      .signal-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .signal {
+        display: flex;
+        min-height: 50px;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        border-right: 1px solid var(--line);
+        color: var(--charcoal-soft);
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .signal:last-child { border-right: 0; }
+
+      .signal-icon {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 12px;
+        color: #fff;
+        background: var(--lime);
+        font-weight: 900;
+      }
+
+      section { scroll-margin-top: 90px; }
+
+      .section {
+        padding: 112px 0;
+      }
+
+      .section-muted { background: var(--paper-soft); }
+
+      .section-heading { max-width: 600px; }
+
+      h2 {
+        margin-top: 16px;
+        font-size: clamp(38px, 5vw, 64px);
+        font-weight: 900;
+        letter-spacing: -0.065em;
+        line-height: 0.98;
+      }
+
+      .section-lead {
+        max-width: 570px;
+        margin-top: 20px;
+        color: var(--charcoal-soft);
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .intro-grid {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+        align-items: center;
+        gap: 86px;
+      }
+
+      .intro-visual {
+        position: relative;
+        display: grid;
+        min-height: 480px;
+        place-items: center;
+        overflow: hidden;
+        border-radius: var(--radius-lg);
+        background: var(--lime-soft);
+      }
+
+      .intro-visual::after {
+        position: absolute;
+        right: -12px;
+        bottom: 28px;
+        width: 84px;
+        height: 16px;
+        border-radius: 12px;
+        background: var(--coral);
+        content: "";
+        transform: rotate(-15deg);
+      }
+
+      .intro-visual img {
+        position: relative;
+        z-index: 1;
+        display: block;
+        width: min(270px, 70%);
+        height: auto;
+        filter: drop-shadow(0 24px 24px rgba(43, 47, 51, 0.16));
+        transform: rotate(-4deg);
+      }
+
+      .step-list { margin-top: 36px; }
+
+      .step {
+        display: grid;
+        grid-template-columns: 54px 1fr;
+        gap: 18px;
+        padding: 22px 0;
         border-top: 1px solid var(--line);
       }
 
-      .detail-row {
+      .step:last-child { border-bottom: 1px solid var(--line); }
+
+      .step-number {
         display: grid;
-        grid-template-columns: 56px 1fr;
-        gap: 20px;
-        padding: 27px 0;
+        width: 46px;
+        height: 46px;
+        place-items: center;
+        color: var(--lime-deep);
+        border-radius: 50%;
+        background: var(--lime-soft);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .step h3 { font-size: 19px; font-weight: 900; }
+      .step p { margin-top: 5px; color: var(--charcoal-soft); line-height: 1.5; }
+
+      .feature-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(350px, 1.1fr);
+        align-items: center;
+        gap: 90px;
+      }
+
+      .benefit-list { margin-top: 34px; }
+
+      .benefit {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        gap: 15px;
+        padding: 18px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .benefit:last-child { border-bottom: 1px solid var(--line); }
+
+      .benefit-icon {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        color: var(--lime-deep);
+        border-radius: 12px;
+        background: var(--lime-soft);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .benefit h3 { font-size: 18px; font-weight: 900; }
+      .benefit p { margin-top: 4px; color: var(--charcoal-soft); line-height: 1.45; }
+
+      .feature-frame {
+        position: relative;
+        min-height: 610px;
+        overflow: hidden;
+        border-radius: var(--radius-lg);
+        background: #edf8df;
+      }
+
+      .feature-frame::before {
+        position: absolute;
+        top: 50px;
+        left: 50px;
+        width: 110px;
+        height: 110px;
+        border: 8px solid var(--coral);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .feature-frame img {
+        position: absolute;
+        right: 10%;
+        bottom: -60px;
+        display: block;
+        width: min(365px, 76%);
+        height: auto;
+        filter: drop-shadow(0 24px 22px rgba(43, 47, 51, 0.18));
+        transform: rotate(4deg);
+      }
+
+      .feature-sticker {
+        position: absolute;
+        z-index: 1;
+        top: 38%;
+        left: 10%;
+        max-width: 190px;
+        padding: 15px 17px;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: var(--shadow-soft);
+        font-size: 14px;
+        font-weight: 900;
+        transform: rotate(-7deg);
+      }
+
+      .journey-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 0.85fr) minmax(340px, 1.15fr);
+        align-items: start;
+        gap: 100px;
+      }
+
+      .journey-list { margin-top: 28px; }
+
+      .journey-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 0;
         border-bottom: 1px solid var(--line);
       }
 
-      .detail-index {
-        color: var(--brand);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 13px;
-      }
-
-      .detail-row h3 {
-        margin-bottom: 8px;
-        color: var(--paper);
-        font-size: 29px;
-        line-height: 1;
-      }
-
-      .detail-row p {
-        max-width: 42ch;
-        margin-bottom: 0;
-        color: var(--dust);
-        font-size: 17px;
-        line-height: 1.4;
-      }
-
-      .roadmap-section,
-      .risk-section,
-      .maintenance-section,
-      .states-section {
-        padding-bottom: 128px;
-      }
-
-      .roadmap-intro {
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        gap: 30px;
-        margin-bottom: 39px;
-      }
-
-      .roadmap-intro .section-heading {
-        margin-bottom: 0;
-      }
-
-      .roadmap-note {
-        max-width: 28ch;
-        margin-bottom: 3px;
-        color: var(--dust-muted);
-        font-size: 14px;
-      }
-
-      .roadmap-grid {
+      .journey-check {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        place-items: center;
+        color: #fff;
+        border-radius: 50%;
+        background: var(--lime);
+        font-weight: 900;
       }
 
-      .roadmap-card {
-        min-height: 250px;
-        padding: 24px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-lg);
-        background: var(--surface);
-      }
+      .journey-row small { display: block; color: var(--muted); font-weight: 800; }
+      .journey-row strong { display: block; margin-top: 3px; font-size: 17px; }
 
-      .roadmap-card--active {
-        border-color: var(--brand);
-        background: var(--brand);
-        color: var(--ink);
-      }
-
-      .roadmap-kicker {
-        display: block;
-        margin-bottom: 68px;
-        color: var(--brand);
-        font-size: 10px;
-        font-weight: 700;
-      }
-
-      .roadmap-card--active .roadmap-kicker {
-        color: var(--brand-ink);
-      }
-
-      .roadmap-card h3 {
-        max-width: 12ch;
-        margin-bottom: 10px;
-        color: var(--paper);
-        font-size: 32px;
-        line-height: 0.95;
-      }
-
-      .roadmap-card--active h3 {
-        color: var(--ink);
-      }
-
-      .roadmap-card p {
-        margin-bottom: 0;
-        color: var(--dust);
-        font-size: 16px;
-        line-height: 1.35;
-      }
-
-      .roadmap-card--active p {
-        color: #4d3d0d;
-      }
-
-      .risk-section .section-heading {
-        max-width: 540px;
-      }
-
-      .impact-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-      }
-
-      .impact-card {
+      .quote-card {
         position: relative;
-        min-height: 270px;
-        padding: 27px;
-        border: 1px solid var(--line);
+        overflow: hidden;
+        padding: 42px;
         border-radius: var(--radius-lg);
-        background: var(--surface);
+        color: #fff;
+        background: var(--lime);
+        box-shadow: var(--shadow);
       }
 
-      .impact-card::before {
+      .quote-card::after {
         position: absolute;
-        top: 0;
-        right: 26px;
-        left: 26px;
-        height: 5px;
-        content: '';
-        background: var(--expired);
+        right: -35px;
+        bottom: -35px;
+        width: 180px;
+        height: 180px;
+        border: 26px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        content: "";
       }
 
-      .impact-card--soat::before {
-        background: var(--due);
-      }
-
-      .impact-label {
-        display: block;
-        margin: 22px 0 34px;
-        color: var(--dust-muted);
-        font-size: 11px;
-      }
-
-      .impact-card strong {
-        display: block;
-        margin-bottom: 7px;
-        color: var(--paper);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: clamp(37px, 4.6vw, 62px);
+      .quote-card p {
+        position: relative;
+        z-index: 1;
+        max-width: 350px;
+        font-size: clamp(28px, 4vw, 43px);
+        font-weight: 900;
+        letter-spacing: -0.06em;
         line-height: 1;
       }
 
-      .impact-card span:last-child {
-        color: var(--dust);
-        font-size: 17px;
-      }
-
-      .impact-note {
-        grid-column: 1 / -1;
-        margin: 3px 0 0;
-        padding: 26px 0 0;
-        color: var(--brand);
-        font-family: 'Barlow Semi Condensed', Arial, sans-serif;
-        font-size: 36px;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        line-height: 1;
-      }
-
-      .maintenance-panel {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(330px, 0.76fr);
-        gap: 58px;
-        align-items: center;
-        padding: 38px;
-        border-radius: var(--radius-xl);
-        background: var(--surface);
-      }
-
-      .maintenance-panel h2 {
-        max-width: 11ch;
-        margin-bottom: 16px;
-        color: var(--paper);
-        font-size: clamp(43px, 5vw, 67px);
-        line-height: 0.92;
-      }
-
-      .maintenance-panel > div > p {
-        max-width: 44ch;
-        margin-bottom: 0;
-        color: var(--dust);
-        font-size: 18px;
-      }
-
-      .maintenance-panel > div > p.section-label {
-        margin-bottom: 21px;
-        color: var(--brand);
-        font-size: 11px;
-      }
-
-      .maintenance-aside {
-        padding: 24px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-lg);
-        background: var(--ink);
-      }
-
-      .maintenance-aside .eyebrow {
-        margin-bottom: 21px;
-      }
-
-      .brand-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-
-      .brand-list li {
-        padding: 7px 10px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        color: var(--paper-soft);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        letter-spacing: 0.05em;
-      }
-
-      .aside-note {
-        margin: 22px 0 0;
-        color: var(--dust-muted);
+      .quote-card a {
+        position: relative;
+        z-index: 1;
+        display: inline-flex;
+        margin-top: 32px;
+        padding: 12px 17px;
+        color: var(--charcoal);
+        border-radius: var(--radius-pill);
+        background: #fff;
         font-size: 14px;
-        line-height: 1.35;
+        font-weight: 900;
       }
 
-      .state-card {
-        min-height: 204px;
-        padding: 24px;
+      .lookup-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.85fr) minmax(360px, 1.15fr);
+        align-items: center;
+        gap: 88px;
+      }
+
+      .lookup-card {
+        padding: 30px;
         border: 1px solid var(--line);
         border-radius: var(--radius-lg);
-        background: var(--surface);
+        background: #fff;
+        box-shadow: var(--shadow-soft);
       }
 
-      .states-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .state-card::before {
+      .form-label {
         display: block;
-        width: 52px;
-        height: 6px;
-        margin-bottom: 34px;
-        content: '';
-        background: var(--valid);
-      }
-
-      .state-card--due::before {
-        background: var(--due);
-      }
-
-      .state-card--expired::before {
-        background: var(--expired);
-      }
-
-      .state-label {
-        display: block;
-        margin-bottom: 10px;
-        color: var(--valid);
-        font-size: 12px;
-        font-weight: 700;
-      }
-
-      .state-card--due .state-label {
-        color: var(--due);
-      }
-
-      .state-card--expired .state-label {
-        color: var(--expired);
-      }
-
-      .state-card p {
-        margin-bottom: 0;
-        color: var(--dust);
-        font-size: 16px;
-      }
-
-      .state-rule {
-        display: block;
-        margin-top: 19px;
-        color: var(--dust-muted);
+        margin-bottom: 9px;
+        color: var(--charcoal-soft);
         font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
       }
 
-      .whatsapp-section {
-        padding: 0 0 78px;
-      }
-
-      .whatsapp-card {
-        display: grid;
-        grid-template-columns: minmax(0, 0.9fr) minmax(390px, 1.1fr);
-        gap: 44px;
-        align-items: end;
-        padding: 37px;
-        border-radius: var(--radius-xl);
-      }
-
-      .whatsapp-card h2 {
-        max-width: 11ch;
-        margin-bottom: 14px;
-        color: var(--paper);
-        font-size: 48px;
-        line-height: 0.91;
-      }
-
-      .whatsapp-card p {
-        max-width: 34ch;
-        margin-bottom: 0;
-        color: var(--dust);
-      }
-
-      .whatsapp-card p.section-label {
-        margin-bottom: 21px;
-        color: var(--brand);
-        font-size: 11px;
-      }
-
-      .whatsapp-form {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+      .form-row {
+        display: flex;
         gap: 10px;
       }
 
-      .whatsapp-form .field-label {
-        grid-column: 1 / -1;
-      }
-
-      .whatsapp-form input {
+      .text-input {
         width: 100%;
-      }
-
-      .whatsapp-feedback {
-        grid-column: 1 / -1;
-        text-align: left;
-      }
-
-      .source-note {
-        margin: 27px 0 0;
-        color: var(--dust-muted);
-        font-size: 10px;
-      }
-
-      .source-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px 22px;
-        margin: 10px 0 0;
-        padding: 0;
-        list-style: none;
-        color: var(--dust);
-        font-size: 13px;
-        text-transform: none;
-      }
-
-      footer {
-        padding: 26px 0 34px;
-        border-top: 1px solid var(--line-soft);
-      }
-
-      .footer-inner {
-        gap: 20px;
-      }
-
-      .footer-brand {
-        color: var(--paper);
-        font-size: 22px;
+        min-height: 50px;
+        padding: 0 16px;
+        color: var(--charcoal);
+        border: 2px solid var(--line);
+        border-radius: 13px;
+        background: #fff;
+        font-size: 17px;
         font-weight: 800;
-        letter-spacing: -0.03em;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
       }
 
-      .footer-note {
-        color: var(--dust-muted);
-        font-size: 10px;
-        text-align: right;
+      .text-input::placeholder { color: #afb7ba; }
+      .text-input:focus { border-color: var(--lime); outline: 0; }
+
+      .form-help { margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+      .plate-result {
+        margin-top: 20px;
+        padding: 18px;
+        border-radius: 16px;
+        background: var(--lime-soft);
       }
 
-      :focus-visible {
-        outline: 3px solid var(--brand);
-        outline-offset: 3px;
+      .plate-result[hidden] { display: none; }
+      .result-title { font-weight: 900; }
+      .result-note { margin-top: 4px; color: var(--charcoal-soft); font-size: 13px; }
+
+      .result-list {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .result-chip {
+        padding: 12px 10px;
+        border-radius: 12px;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 900;
+        line-height: 1.25;
+      }
+
+      .waitlist {
+        padding: 88px 0;
+        color: #fff;
+        background: var(--charcoal);
+      }
+
+      .waitlist-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+        align-items: center;
+        gap: 80px;
+      }
+
+      .waitlist h2 { color: #fff; }
+      .waitlist p { max-width: 500px; margin-top: 18px; color: #c9d0d3; font-size: 18px; line-height: 1.55; }
+
+      .waitlist-marker {
+        display: block;
+        width: 66px;
+        height: 9px;
+        margin-top: 30px;
+        border-radius: 10px;
+        background: var(--lime);
+        transform: rotate(-8deg);
+      }
+
+      .waitlist-form { padding: 26px; border-radius: var(--radius-lg); background: #fff; }
+      .waitlist-form .form-label { color: var(--charcoal-soft); }
+      .waitlist-form .button-primary { width: 100%; margin-top: 12px; }
+      .form-feedback { min-height: 22px; margin-top: 10px; color: var(--lime-deep); font-size: 13px; font-weight: 800; }
+
+      footer { padding: 28px 0 36px; border-top: 1px solid var(--line); background: #fff; }
+
+      .footer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .footer-brand { color: var(--charcoal); font-size: 18px; font-weight: 900; }
+
+      [data-reveal] {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity 650ms var(--ease), transform 650ms var(--ease);
+      }
+
+      [data-reveal].is-visible { opacity: 1; transform: none; }
+
+      @media (max-width: 940px) {
+        .nav-links { display: none; }
+        .hero-grid, .intro-grid, .feature-layout, .journey-layout, .lookup-grid, .waitlist-grid { grid-template-columns: 1fr; gap: 48px; }
+        .hero { padding-top: 50px; }
+        .hero-grid { min-height: 0; }
+        .hero-art { min-height: 560px; }
+        .hero-content { max-width: 620px; }
+        .intro-visual { min-height: 430px; }
+        .feature-frame { min-height: 520px; }
+        .journey-layout { gap: 44px; }
+      }
+
+      @media (max-width: 680px) {
+        .shell { width: min(100% - 32px, 560px); }
+        .site-header { position: relative; }
+        .nav { min-height: 68px; }
+        .nav-cta { min-height: 42px; padding: 0 14px; font-size: 12px; }
+        .brand { font-size: 22px; }
+        .brand-mark { width: 34px; height: 34px; border-radius: 10px 10px 10px 4px; }
+        .hero { padding: 54px 0 36px; }
+        h1 { font-size: clamp(55px, 18vw, 78px); }
+        .hero-copy { font-size: 17px; }
+        .hero-actions { align-items: stretch; flex-direction: column; }
+        .hero-actions a { width: 100%; }
+        .hero-art { min-height: 450px; }
+        .hero-crew { width: min(410px, 100%); }
+        .float-label { font-size: 11px; }
+        .float-label strong { font-size: 15px; }
+        .float-label.one { top: 12%; right: 0; }
+        .float-label.two { bottom: 9%; left: 0; }
+        .hero::before { top: 210px; right: -220px; width: 460px; height: 460px; }
+        .signal-grid { grid-template-columns: 1fr; }
+        .signal { justify-content: flex-start; padding: 8px 0; border-right: 0; }
+        .section { padding: 76px 0; }
+        h2 { font-size: clamp(40px, 13vw, 57px); }
+        .section-lead { font-size: 16px; }
+        .intro-visual { min-height: 385px; }
+        .feature-frame { min-height: 470px; }
+        .feature-frame img { right: 5%; bottom: -30px; width: min(310px, 82%); }
+        .feature-sticker { top: 31%; left: 6%; max-width: 145px; font-size: 12px; }
+        .quote-card { padding: 30px; }
+        .lookup-card { padding: 22px; }
+        .form-row { flex-direction: column; }
+        .form-row .button-primary { width: 100%; }
+        .result-list { grid-template-columns: 1fr; }
+        .waitlist { padding: 70px 0; }
+        .waitlist-form { padding: 22px; }
+        .footer-row { align-items: flex-start; flex-direction: column; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+        [data-reveal] { opacity: 1; transform: none; }
       }
 
       @media (prefers-reduced-transparency: reduce) {
-        .glass {
-          background: var(--surface);
-          backdrop-filter: none;
-          -webkit-backdrop-filter: none;
-        }
-      }
-
-      @media (prefers-reduced-motion: no-preference) {
-        .hero-copy {
-          animation: enter-copy 650ms var(--ease-emphasis) both;
-        }
-
-        .lookup-card {
-          animation: enter-card 720ms 100ms var(--ease-emphasis) both;
-        }
-
-        @keyframes enter-copy {
-          from {
-            opacity: 0;
-            transform: translateY(14px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes enter-card {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        html {
-          scroll-behavior: auto;
-        }
-      }
-
-      @media (max-width: 900px) {
-        .hero-content,
-        .overview-grid,
-        .maintenance-panel,
-        .whatsapp-card {
-          grid-template-columns: 1fr;
-        }
-
-        .hero {
-          min-height: auto;
-        }
-
-        .hero-content {
-          gap: 52px;
-          padding: 143px 0 75px;
-        }
-
-        .lookup-card {
-          justify-self: start;
-          max-width: 560px;
-        }
-
-        .overview-grid {
-          gap: 42px;
-        }
-
-        .maintenance-panel {
-          gap: 32px;
-        }
-
-        .hero-footnote {
-          position: static;
-          width: min(100% - 40px, 1180px);
-          margin: 0 auto 24px;
-        }
-      }
-
-      @media (max-width: 820px) {
-        .container,
-        .site-nav,
-        .hero-content {
-          width: min(100% - 32px, 620px);
-        }
-
-        .site-nav {
-          grid-template-columns: auto auto;
-          gap: 14px;
-          min-height: 64px;
-          padding: 10px 14px 10px 16px;
-          border-radius: 18px;
-        }
-
-        .nav-links {
-          display: none;
-        }
-
-        .nav-context {
-          justify-self: end;
-          font-size: 10px;
-        }
-
-        .section {
-          padding: 88px 0;
-        }
-
-        .roadmap-section,
-        .risk-section,
-        .maintenance-section,
-        .states-section {
-          padding-bottom: 88px;
-        }
-
-        .section-heading {
-          margin-bottom: 38px;
-        }
-
-        .roadmap-intro {
-          display: block;
-        }
-
-        .roadmap-note {
-          margin-top: 20px;
-        }
-
-        .roadmap-grid,
-        .states-grid,
-        .impact-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .roadmap-card {
-          min-height: 0;
-        }
-
-        .roadmap-kicker {
-          margin-bottom: 45px;
-        }
-
-        .impact-note {
-          grid-column: auto;
-          padding-top: 5px;
-          font-size: 30px;
-        }
-
-        .maintenance-panel {
-          padding: 26px;
-        }
-
-        .whatsapp-section {
-          padding-bottom: 58px;
-        }
-
-        .whatsapp-form {
-          grid-template-columns: 1fr;
-        }
-
-        .whatsapp-form .primary-button {
-          width: 100%;
-        }
-
-        .footer-inner {
-          align-items: flex-start;
-          flex-direction: column;
-        }
-
-        .footer-note {
-          text-align: left;
-        }
-      }
-
-      @media (max-width: 480px) {
-        h1 {
-          max-width: 11ch;
-          font-size: 51px;
-        }
-
-        .hero-copy > p:not(.eyebrow) {
-          font-size: 18px;
-        }
-
-        .hero-proof {
-          margin-top: 28px;
-        }
-
-        .hero-proof div {
-          padding-right: 8px;
-        }
-
-        .hero-proof div + div {
-          padding-left: 8px;
-        }
-
-        .hero-proof strong {
-          font-size: 17px;
-        }
-
-        .lookup-card {
-          padding: 24px;
-        }
-
-        .form-row {
-          align-items: stretch;
-          flex-direction: column;
-        }
-
-        .form-row .primary-button {
-          width: 100%;
-        }
-
-        .lookup-card h2 {
-          font-size: 37px;
-        }
-
-        .lookup-specs div {
-          padding-right: 7px;
-        }
-
-        .lookup-specs div + div {
-          padding-left: 7px;
-        }
-
-        .photo-card img {
-          aspect-ratio: 1;
-        }
-
-        .detail-row {
-          grid-template-columns: 36px 1fr;
-          gap: 11px;
-        }
-
-        .detail-row h3 {
-          font-size: 25px;
-        }
-
-        .whatsapp-card {
-          padding: 24px;
-        }
-
-        .whatsapp-card h2 {
-          font-size: 39px;
-        }
-      }
-    
-      /* ══════════════════════════════════════════════════════════════
-         MOVIMIENTO
-         Sin dependencias. Todo se anima con transform y opacity.
-         Los efectos de puntero viven detrás de (hover:hover) para que
-         no corran en el celular, que es donde está el usuario real.
-         ══════════════════════════════════════════════════════════════ */
-
-      /* --- panel de resultado de la consulta --- */
-      .result-panel {
-        display: none;
-        margin-top: 22px;
-        padding-top: 22px;
-        border-top: 1px solid var(--line-soft);
-      }
-      .result-panel.is-on { display: block; }
-
-      .result-demo {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10.5px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--due);
-        border: 1px dashed rgba(232, 166, 91, 0.5);
-        border-radius: 999px;
-        padding: 5px 11px;
-        margin-bottom: 16px;
-      }
-
-      .result-vehicle {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 8px 12px;
-        margin-bottom: 16px;
-      }
-      .result-plate {
-        font-family: 'Barlow Semi Condensed', sans-serif;
-        font-weight: 700;
-        font-size: 21px;
-        letter-spacing: 0.14em;
-        color: var(--ink);
-        background: var(--paper);
-        border-radius: 7px;
-        padding: 4px 11px;
-        line-height: 1.2;
-      }
-      .result-model {
-        font-family: 'Barlow Semi Condensed', sans-serif;
-        font-weight: 700;
-        font-size: 22px;
-        letter-spacing: 0.01em;
-        color: var(--paper);
-      }
-      .result-meta {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: var(--dust-muted);
-      }
-
-      .result-rows { display: grid; gap: 10px; }
-
-      .result-row {
-        position: relative;
-        display: grid;
-        gap: 6px;
-        padding: 14px 16px 14px 18px;
-        border-radius: var(--radius-md);
-        background: rgba(244, 246, 244, 0.04);
-        border: 1px solid var(--line-soft);
-        overflow: hidden;
-      }
-      .result-row::before {
-        content: '';
-        position: absolute;
-        inset: 0 auto 0 0;
-        width: 4px;
-        background: var(--dust-muted);
-      }
-      .result-row[data-state='vigente']::before { background: var(--valid); }
-      .result-row[data-state='por-vencer']::before { background: var(--due); }
-      .result-row[data-state='vencido']::before { background: var(--expired); }
-
-      .result-row-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 12px;
-      }
-      .result-doc {
-        font-family: 'Barlow Semi Condensed', sans-serif;
-        font-weight: 700;
-        font-size: 18px;
-        color: var(--paper);
-      }
-      .result-badge {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        padding: 4px 9px;
-        border-radius: 5px;
-        white-space: nowrap;
-        background: rgba(183, 192, 199, 0.14);
-        color: var(--dust);
-      }
-      .result-row[data-state='vigente'] .result-badge { background: rgba(134, 210, 176, 0.16); color: var(--valid); }
-      .result-row[data-state='por-vencer'] .result-badge { background: rgba(232, 166, 91, 0.16); color: var(--due); }
-      .result-row[data-state='vencido'] .result-badge { background: rgba(240, 140, 131, 0.16); color: var(--expired); }
-
-      .result-line {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11.5px;
-        line-height: 1.65;
-        color: var(--dust-muted);
-      }
-      .result-line b { color: var(--paper-soft); font-weight: 600; }
-
-      .result-fine {
-        display: flex;
-        align-items: baseline;
-        gap: 10px;
-        margin-top: 6px;
-        padding-top: 10px;
-        border-top: 1px solid var(--line-soft);
-      }
-      .result-fine strong {
-        font-family: 'Barlow Semi Condensed', sans-serif;
-        font-weight: 800;
-        font-size: 30px;
-        line-height: 0.9;
-        color: var(--expired);
-        font-variant-numeric: tabular-nums;
-      }
-      .result-fine span {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10.5px;
-        line-height: 1.45;
-        color: var(--dust-muted);
-      }
-
-      /* --- esqueleto de carga: refleja el layout, no un spinner --- */
-      .skeleton-rows { display: grid; gap: 10px; }
-      .skeleton-row {
-        height: 76px;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--line-soft);
-        background:
-          linear-gradient(
-            100deg,
-            rgba(244, 246, 244, 0.04) 30%,
-            rgba(244, 246, 244, 0.11) 48%,
-            rgba(244, 246, 244, 0.04) 66%
-          );
-        background-size: 220% 100%;
-      }
-      .skeleton-row:nth-child(2) { height: 62px; }
-
-      /* --- destello en tarjetas bajo el cursor --- */
-      .spot {
-        position: relative;
-      }
-      .spot::after {
-        content: '';
-        position: absolute;
-        inset: -1px;
-        border-radius: inherit;
-        padding: 1px;
-        background: radial-gradient(
-          200px circle at var(--mx, 50%) var(--my, 50%),
-          rgba(216, 178, 76, 0.55),
-          transparent 62%
-        );
-        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-        -webkit-mask-composite: xor;
-        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-        mask-composite: exclude;
-        opacity: 0;
-        transition: opacity 260ms var(--ease-standard);
-        pointer-events: none;
-      }
-
-      /* --- ondas al tocar --- */
-      .primary-button { position: relative; overflow: hidden; }
-      .ripple {
-        position: absolute;
-        border-radius: 50%;
-        transform: scale(0);
-        background: rgba(18, 20, 22, 0.28);
-        pointer-events: none;
-      }
-
-      /* --- barra de navegación al hacer scroll --- */
-      .site-nav {
-        transition:
-          background-color 320ms var(--ease-standard),
-          border-color 320ms var(--ease-standard),
-          transform 420ms var(--ease-emphasis);
-      }
-      .site-nav.is-stuck { background-color: rgba(18, 20, 22, 0.86); }
-
-      /* --- carrusel infinito de marcas --- */
-      .brand-marquee {
-        overflow: hidden;
-        -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-        mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-      }
-      .brand-track {
-        display: flex;
-        gap: 10px;
-        width: max-content;
-        padding: 2px 0;
-      }
-      .brand-track li { flex: none; }
-
-      /* --- punto de estado de la etapa activa --- */
-      .roadmap-card--active .roadmap-kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-      }
-      .roadmap-card--active .roadmap-kicker::before {
-        content: '';
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: currentColor;
-        flex: none;
-      }
-
-      @media (prefers-reduced-motion: no-preference) {
-        /* Revelado escalonado. El índice lo asigna el JS en --i. */
-        [data-reveal] {
-          opacity: 0;
-          transform: translate3d(0, 22px, 0);
-          transition:
-            opacity 640ms var(--ease-emphasis),
-            transform 640ms var(--ease-emphasis);
-          transition-delay: calc(var(--i, 0) * 75ms);
-        }
-        [data-reveal].is-in {
-          opacity: 1;
-          transform: none;
-        }
-
-        /* Parallax del hero guiado por scroll, sin una línea de JS.
-           Donde no hay soporte simplemente no hay parallax. */
-        @supports (animation-timeline: view()) {
-          .hero-media {
-            animation: hero-drift linear both;
-            animation-timeline: view();
-            animation-range: entry 0% exit 100%;
-          }
-          @keyframes hero-drift {
-            from { transform: scale(1.12) translate3d(0, -2.2%, 0); }
-            to   { transform: scale(1.12) translate3d(0, 3.6%, 0); }
-          }
-        }
-
-        .skeleton-row { animation: shimmer 1.25s linear infinite; }
-        @keyframes shimmer { to { background-position: -220% 0; } }
-
-        .result-row {
-          animation: row-in 460ms var(--ease-emphasis) both;
-          animation-delay: calc(var(--i, 0) * 80ms);
-        }
-        @keyframes row-in {
-          from { opacity: 0; transform: translate3d(0, 14px, 0); }
-          to   { opacity: 1; transform: none; }
-        }
-
-        .ripple { animation: ripple-out 560ms var(--ease-standard) forwards; }
-        @keyframes ripple-out {
-          to { transform: scale(2.6); opacity: 0; }
-        }
-
-        .roadmap-card--active .roadmap-kicker::before {
-          animation: breathe 2.8s ease-in-out infinite;
-        }
-        @keyframes breathe {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%      { opacity: 0.4; transform: scale(0.78); }
-        }
-
-        .brand-track { animation: marquee 24s linear infinite; }
-        .brand-marquee:hover .brand-track { animation-play-state: paused; }
-        @keyframes marquee { to { transform: translate3d(-50%, 0, 0); } }
-
-        .site-nav.is-hidden { transform: translate3d(0, -140%, 0); }
-      }
-
-      /* Los efectos de puntero no existen en móvil. */
-      @media (hover: hover) and (pointer: fine) {
-        .spot:hover::after { opacity: 1; }
-        .magnetic { transition: transform 380ms var(--ease-emphasis); }
-        .magnetic.is-pulled { transition: transform 90ms linear; }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        [data-reveal] { opacity: 1; transform: none; transition: none; }
-        .result-row,
-        .skeleton-row,
-        .brand-track,
-        .roadmap-card--active .roadmap-kicker::before {
-          animation: none;
-        }
-        .ripple { display: none; }
-        .site-nav.is-hidden { transform: none; }
-      }
-    
-      /* ══════════════════════════════════════════════════════════════
-         VIDRIO LÍQUIDO
-         El vidrio no es una capa borrosa: es un material con canto.
-         Tres cosas lo hacen leer como físico —
-           1. el canto capta luz arriba y se oscurece abajo,
-           2. el borde es un degradado, no una línea plana,
-           3. un reflejo especular sigue al cursor sobre la superficie.
-         ══════════════════════════════════════════════════════════════ */
-
-      .glass {
-        position: relative;
-        isolation: isolate;
-        border: 1px solid transparent;
-        background:
-          linear-gradient(180deg, rgba(244, 246, 244, 0.07), rgba(244, 246, 244, 0) 42%),
-          rgba(28, 32, 35, 0.72);
-        box-shadow:
-          inset 0 1px 0 rgba(244, 246, 244, 0.17),
-          inset 0 -1px 0 rgba(6, 8, 9, 0.55),
-          0 26px 80px -22px rgba(6, 8, 9, 0.6);
-        backdrop-filter: blur(22px) saturate(132%);
-        -webkit-backdrop-filter: blur(22px) saturate(132%);
-      }
-
-      /* Canto refractivo: un borde de 1px hecho de degradado.
-         Claro arriba-izquierda, con un roce dorado abajo-derecha. */
-      .glass::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        border-radius: inherit;
-        padding: 1px;
-        background: linear-gradient(
-          158deg,
-          rgba(244, 246, 244, 0.36),
-          rgba(244, 246, 244, 0.07) 30%,
-          rgba(244, 246, 244, 0) 56%,
-          rgba(216, 178, 76, 0.2)
-        );
-        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-        -webkit-mask-composite: xor;
-        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-        mask-composite: exclude;
-        pointer-events: none;
-      }
-
-      /* La bandeja: el vidrio no se apoya en el fondo, se encaja en un
-         marco. Dos anillos de 1px simulan el doble bisel sin tocar el
-         markup ni añadir un contenedor. */
-      .lookup-card,
-      .whatsapp-card {
-        box-shadow:
-          inset 0 1px 0 rgba(244, 246, 244, 0.17),
-          inset 0 -1px 0 rgba(6, 8, 9, 0.55),
-          0 0 0 6px rgba(244, 246, 244, 0.025),
-          0 0 0 7px rgba(244, 246, 244, 0.055),
-          0 30px 90px -24px rgba(6, 8, 9, 0.66);
-      }
-
-      @media (hover: hover) and (pointer: fine) {
-        /* Reflejo especular: se mueve con el cursor, como la luz sobre
-           una superficie curva. Usa las mismas --mx/--my del destello. */
-        .glass.spot::after {
-          background:
-            radial-gradient(
-              240px circle at var(--mx, 50%) var(--my, 0%),
-              rgba(244, 246, 244, 0.16),
-              transparent 60%
-            );
-          -webkit-mask: none;
-          mask: none;
-          inset: 0;
-          padding: 0;
-          border-radius: inherit;
-          z-index: 0;
-        }
-      }
-
-      /* El campo de placa se lee como una placa: el input manda y el
-         botón toma sólo lo que necesita. Antes el input pedía 100% y
-         empujaba el botón fuera de la tarjeta. */
-      .form-row input {
-        flex: 1 1 auto;
-        width: auto;
-      }
-      .form-row .primary-button {
-        flex: 0 0 auto;
-      }
-
-      /* El contenido va sobre el canto, nunca debajo. */
-      .lookup-card > *,
-      .whatsapp-card > *,
-      .site-nav > * {
-        position: relative;
-        z-index: 2;
-      }
-    
-      /* ── Correcciones de accesibilidad y layout ── */
-
-      .skip-link {
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        z-index: 999;
-        padding: 12px 18px;
-        border-radius: 0 0 var(--radius-md) 0;
-        background: var(--brand);
-        color: var(--ink);
-        font-weight: 700;
-      }
-      .skip-link:focus {
-        left: 0;
-      }
-
-      /* La nav flota arriba: sin esto el ancla aterriza debajo de ella. */
-      [id] {
-        scroll-margin-top: 108px;
-      }
-
-      /* Sin el retardo de doble tap, y sin el flash azul de Android. */
-      button,
-      a,
-      input,
-      summary {
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(216, 178, 76, 0.18);
-      }
-
-      /* Pantallas con notch: el contenido a sangre necesita respirar. */
-      .site-nav {
-        margin-top: env(safe-area-inset-top, 0px);
-      }
-      .hero,
-      footer {
-        padding-left: env(safe-area-inset-left, 0px);
-        padding-right: env(safe-area-inset-right, 0px);
-      }
-      footer {
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-      }
-
-      /* Titulares sin viudas. */
-      h1,
-      h2,
-      h3 {
-        text-wrap: balance;
-      }
-      .hero-copy > p,
-      .section-heading > p {
-        text-wrap: pretty;
-      }
-
-      /* Las dos multas se comparan lado a lado: las cifras deben alinear. */
-      .impact-card strong {
-        font-variant-numeric: tabular-nums;
-      }
-
-      .aside-lead {
-        margin: 0 0 14px;
-        color: var(--dust);
-        font-size: 14px;
-        line-height: 1.6;
-      }
-
-      /* La etapa destino se marca con el canto, no con relleno:
-         el dorado ya lo usa la etapa disponible. */
-      .roadmap-card--goal {
-        border-color: rgba(216, 178, 76, 0.42);
-      }
-      .roadmap-card--goal .roadmap-kicker {
-        color: var(--brand-soft);
+        .site-header { background: #fff; backdrop-filter: none; }
       }
     </style>
   </head>
   <body>
-    <a class="skip-link" href="#como-funciona">Saltar al contenido</a>
-    <div class="site-shell">
-      <header class="hero" id="inicio">
-        <img
-          class="hero-media"
-          src="fixly-hero-premium-v2.png"
-          width="1672"
-          height="941"
-          fetchpriority="high"
-          decoding="async"
-          alt="Sedán compacto circulando por una vía al amanecer."
-        />
-        <div class="hero-scrim" aria-hidden="true"></div>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
-        <nav class="site-nav glass" aria-label="Navegación principal">
-          <a class="brand-lockup" href="#inicio" aria-label="Fixly, inicio">
-            <svg viewBox="0 0 96 96" aria-hidden="true">
-              <path fill="#D8B24C" d="M16 8H68L88 28V88H16Z" />
-              <path fill="#121416" d="M32 26H72V38H45V49H65V61H45V76H32Z" />
-            </svg>
-            <span>Fixly</span>
-          </a>
-          <div class="nav-links">
-            <a href="#consulta">Consulta</a>
-            <a href="#riesgo">El riesgo</a>
-            <a href="#lo-que-sigue">Lo que sigue</a>
-          </div>
-          <span class="nav-context mono">Consulta por placa</span>
+    <header class="site-header">
+      <div class="shell nav">
+        <a class="brand" href="#inicio" aria-label="Fixly, inicio">
+          <span class="brand-mark" aria-hidden="true">F</span>
+          <span>Fixly</span>
+        </a>
+        <nav class="nav-links" aria-label="Navegación principal">
+          <a href="#como-funciona">Cómo funciona</a>
+          <a href="#servicios">Lo que hace</a>
+          <a href="#consulta">Probar demo</a>
         </nav>
+        <a class="nav-cta" href="#whatsapp">Avisarme cuando salga</a>
+      </div>
+    </header>
 
-        <div class="hero-content" id="consulta">
-          <div class="hero-copy">
-            <p class="eyebrow">Mantenimiento vehicular</p>
-            <h1>Tu auto pide cosas. <span>Nadie te dice cuáles.</span></h1>
-            <p>Pon tu placa y Fixly sabe qué auto tienes. Desde ahí te dice qué mantenimiento le toca, cuánto debería costarte, y qué papeles vencen sin avisarte.</p>
-            <div class="signal-rule" aria-hidden="true"></div>
-            <div class="hero-proof" aria-label="Alcance de la consulta Fixly">
-              <div>
-                <span>Escribes</span>
-                <strong>1 placa</strong>
+    <main id="contenido">
+      <section class="hero" id="inicio">
+        <div class="shell hero-grid">
+          <div class="hero-content" data-reveal>
+            <span class="eyebrow">Mantenimiento sin vueltas</span>
+            <h1>Tu auto, <span>al día.</span></h1>
+            <p class="hero-copy">Fixly te dice qué necesita tu auto, cuándo toca y cuánto debería costar.</p>
+            <div class="hero-actions">
+              <a class="button-primary" href="#consulta">Empezar con mi placa</a>
+              <a class="button-outline" href="#como-funciona">Ver cómo funciona</a>
+            </div>
+            <p class="hero-note">Estamos construyendo la primera versión. La demo usa datos de ejemplo.</p>
+          </div>
+          <div class="hero-art" data-reveal>
+            <span class="float-label one"><strong>3 min</strong>para entenderlo</span>
+            <img class="hero-crew" src="fixly-crew-v1.png" width="1254" height="1254" fetchpriority="high" alt="Ilustración 2D animada del equipo de Fixly: una mascota verde y sus compañeros de mantenimiento" />
+            <span class="float-label two"><strong>Sin sorpresas</strong>llega preparado</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="signal-bar" aria-label="Resumen de la experiencia">
+        <div class="shell signal-grid">
+          <div class="signal"><span class="signal-icon" aria-hidden="true">1</span><span>Escribes tu placa</span></div>
+          <div class="signal"><span class="signal-icon" aria-hidden="true">2</span><span>Entiendes tu auto</span></div>
+          <div class="signal"><span class="signal-icon" aria-hidden="true">3</span><span>Decides mejor</span></div>
+        </div>
+      </div>
+
+      <section class="section" id="como-funciona">
+        <div class="shell intro-grid">
+          <div class="intro-visual" data-reveal>
+            <img src="fixly-onboarding-v4.png" width="853" height="1844" loading="lazy" alt="Mockup de bienvenida de Fixly con una mascota ranita animada y el mensaje Tu auto, al día" />
+          </div>
+          <div data-reveal>
+            <div class="section-heading">
+              <span class="eyebrow">Así de simple</span>
+              <h2>De la placa a la tranquilidad.</h2>
+              <p class="section-lead">No necesitas saber de mecánica. Solo cuéntanos qué auto tienes y te ordenamos lo importante.</p>
+            </div>
+            <div class="step-list">
+              <div class="step">
+                <span class="step-number">1</span>
+                <div><h3>Escribes tu placa</h3><p>Partimos de un dato que ya conoces. Sin formularios eternos.</p></div>
               </div>
-              <div>
-                <span>Reconoce</span>
-                <strong>Marca, modelo, año</strong>
+              <div class="step">
+                <span class="step-number">2</span>
+                <div><h3>Ves lo importante</h3><p>Tu próxima revisión, el estado general y lo que conviene vigilar.</p></div>
               </div>
-              <div>
-                <span>Te dice</span>
-                <strong>Qué toca y cuánto</strong>
+              <div class="step">
+                <span class="step-number">3</span>
+                <div><h3>Llegas preparado</h3><p>Entiendes qué preguntar y tomas decisiones con más calma.</p></div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <section class="lookup-card glass" aria-labelledby="lookup-title">
-            <div class="lookup-top">
-              <div>
-                <span class="lookup-kicker">Ficha de control</span>
-                <span class="lookup-context">Consulta por placa</span>
-              </div>
-              <span class="lookup-time"><strong>5</strong> s</span>
+      <section class="section section-muted" id="servicios">
+        <div class="shell feature-layout">
+          <div data-reveal>
+            <span class="eyebrow">Tu copiloto de mantenimiento</span>
+            <h2>Menos sustos. Más control.</h2>
+            <p class="section-lead">Fixly convierte el mantenimiento del auto en una rutina fácil de seguir.</p>
+            <div class="benefit-list">
+              <div class="benefit"><span class="benefit-icon" aria-hidden="true">✓</span><div><h3>Qué le toca</h3><p>Una lista clara de revisiones y pendientes.</p></div></div>
+              <div class="benefit"><span class="benefit-icon" aria-hidden="true">$</span><div><h3>Cuánto debería costar</h3><p>Referencias para conversar mejor con el taller.</p></div></div>
+              <div class="benefit"><span class="benefit-icon" aria-hidden="true">!</span><div><h3>Qué no debes olvidar</h3><p>Recordatorios oportunos, sin ruido ni alarmismo.</p></div></div>
             </div>
-            <h2 id="lookup-title">Empieza por tu placa.</h2>
-            <p>Es lo único que Fixly necesita para reconocer tu auto. Hoy te devuelve la vigencia de tus documentos; el plan de mantenimiento de tu modelo es lo que estamos construyendo.</p>
+          </div>
+          <div class="feature-frame" data-reveal>
+            <span class="feature-sticker">Tu próxima visita, mucho más clara.</span>
+            <img src="fixly-home-v4.png" width="853" height="1844" loading="lazy" alt="Pantalla demo de Fixly con una mascota ranita animada y servicios recomendados" />
+          </div>
+        </div>
+      </section>
 
-            <div class="lookup-specs" aria-label="Información de la consulta">
-              <div>
-                <span>Hoy</span>
-                <strong>SOAT</strong>
-              </div>
-              <div>
-                <span>Hoy</span>
-                <strong>Revisión técnica</strong>
-              </div>
-              <div>
-                <span>En construcción</span>
-                <strong>Plan por modelo</strong>
-              </div>
+      <section class="section" id="lo-que-sigue">
+        <div class="shell journey-layout">
+          <div data-reveal>
+            <span class="eyebrow">Una rutina que sí sigues</span>
+            <h2>No tienes que saber de autos.</h2>
+            <p class="section-lead">Solo necesitas una vista honesta de lo que viene. Fixly te acompaña antes, durante y después de la visita al taller.</p>
+            <div class="journey-list">
+              <div class="journey-row"><span class="journey-check">✓</span><div><small>Placa confirmada</small><strong>Listo para empezar</strong></div></div>
+              <div class="journey-row"><span class="journey-check">✓</span><div><small>Estado del auto</small><strong>Claro, sin tecnicismos</strong></div></div>
+              <div class="journey-row"><span class="journey-check">✓</span><div><small>Próximo servicio</small><strong>A tiempo, sin perseguirte</strong></div></div>
             </div>
+          </div>
+          <div class="quote-card" data-reveal>
+            <p>Tu auto también necesita una rutina.</p>
+            <a href="#consulta">Ver una demo</a>
+          </div>
+        </div>
+      </section>
 
+      <section class="section section-muted" id="consulta">
+        <div class="shell lookup-grid">
+          <div data-reveal>
+            <span class="eyebrow">Prueba la idea</span>
+            <h2>Empieza por tu placa.</h2>
+            <p class="section-lead">Escribe una placa de ejemplo y mira cómo Fixly podría resumir el siguiente paso para ti.</p>
+          </div>
+          <div class="lookup-card" data-reveal>
             <form id="plate-form" novalidate>
-              <label class="field-label" for="plate">Placa de tu auto</label>
+              <label class="form-label" for="plate">Placa del auto</label>
               <div class="form-row">
-                <input
-                  id="plate"
-                  name="plate"
-                  type="text"
-                  inputmode="text"
-                  autocomplete="off"
-                  maxlength="8"
-                  placeholder="ABC-123…"
-                  aria-describedby="plate-note plate-status"
-                />
-                <button class="primary-button" type="submit">Consultar placa</button>
+                <input class="text-input" id="plate" name="plate" type="text" inputmode="text" maxlength="8" placeholder="ABC-123" autocomplete="off" aria-describedby="plate-note plate-status" required />
+                <button class="button-primary" type="submit">Consultar</button>
               </div>
-              <p class="form-note" id="plate-note">Sin registro. Una placa para empezar.</p>
-              <p class="form-status" id="plate-status" role="status" aria-live="polite"></p>
+              <p class="form-help" id="plate-note">Demo visual: prueba con ABC-123, BCD-456 o cualquier placa de ejemplo.</p>
+              <p class="form-help" id="plate-status" role="status" aria-live="polite"></p>
+              <div class="plate-result" id="plate-result" hidden></div>
             </form>
-
-            <div class="result-panel" id="plate-result" aria-live="polite"></div>
-          </section>
+          </div>
         </div>
-        <p class="hero-footnote mono">Fixly / ficha de control para autos que trabajan</p>
-      </header>
+      </section>
 
-      <main>
-        <section class="section overview" id="como-funciona">
-          <div class="container">
-            <div class="section-heading">
-              <p class="section-label">Lo que Fixly sabe de tu auto</p>
-              <h2>Seis caracteres. Todo lo que tu auto necesita.</h2>
-              <p>Tu placa dice marca, modelo y año. Con eso alcanza para saber qué le toca a ese auto en particular, y no consejos genéricos de internet.</p>
-            </div>
-
-            <div class="overview-grid">
-              <figure class="photo-card">
-                <img
-                  src="fixly-dashboard-detail.png"
-                  width="1254"
-                  height="1254"
-                  loading="lazy"
-                  decoding="async"
-                  alt="Detalle de un tablero antiguo visto desde el asiento del conductor."
-                />
-                <figcaption class="photo-caption">La consulta empieza con la placa.</figcaption>
-              </figure>
-
-              <div class="detail-panel">
-                <article class="detail-row">
-                  <span class="detail-index">01</span>
-                  <div>
-                    <h3>Qué le toca ahora</h3>
-                    <p>Aceite, filtros, frenos, correa. Según el kilometraje de tu auto y lo que pide tu modelo, no una tabla genérica.</p>
-                  </div>
-                </article>
-                <article class="detail-row">
-                  <span class="detail-index">02</span>
-                  <div>
-                    <h3>Cuánto debería costarte</h3>
-                    <p>El rango real de precios para cada servicio. Es la única forma de saber si la proforma del taller es justa.</p>
-                  </div>
-                </article>
-                <article class="detail-row">
-                  <span class="detail-index">03</span>
-                  <div>
-                    <h3>Qué papeles vencen</h3>
-                    <p>SOAT y revisión técnica en la misma pantalla. Vencen solos y te enteras cuando ya te pararon.</p>
-                  </div>
-                </article>
-                <article class="detail-row">
-                  <span class="detail-index">04</span>
-                  <div>
-                    <h3>Cuándo vuelve a tocar</h3>
-                    <p>El aviso llega antes, no el día que ya no puedes hacer nada. Sin depender de tu memoria.</p>
-                  </div>
-                </article>
-              </div>
-            </div>
+      <section class="waitlist" id="whatsapp">
+        <div class="shell waitlist-grid">
+          <div data-reveal>
+            <span class="eyebrow">Primera versión en camino</span>
+            <h2>Que te encuentre trabajando.</h2>
+            <p>Déjanos tu WhatsApp y te avisamos cuando puedas probar Fixly con tu auto.</p>
+            <span class="waitlist-marker" aria-hidden="true"></span>
           </div>
-        </section>
-
-        <section class="roadmap-section" id="lo-que-sigue">
-          <div class="container">
-            <div class="roadmap-intro">
-              <div class="section-heading">
-                <p class="section-label">La ruta del producto</p>
-                <h2>Primero evita el golpe. Después cuida el valor.</h2>
-              </div>
-              <p class="roadmap-note">Fixly parte de algo útil hoy y avanza hacia lo que de verdad importa: que tu auto deje de sorprenderte.</p>
-            </div>
-
-            <div class="roadmap-grid">
-              <article class="roadmap-card roadmap-card--active">
-                <span class="roadmap-kicker">Disponible en esta etapa</span>
-                <h3>Consulta por placa</h3>
-                <p>SOAT, revisión técnica, días restantes y multa si ya venció.</p>
-              </article>
-              <article class="roadmap-card">
-                <span class="roadmap-kicker">Próxima etapa / S/19</span>
-                <h3>Informe completo</h3>
-                <p>Una lectura más amplia para decidir mejor antes de comprar o vender un auto.</p>
-              </article>
-              <article class="roadmap-card roadmap-card--goal">
-                <span class="roadmap-kicker">A dónde va Fixly / S/14,90 al mes</span>
-                <h3>El plan de tu auto</h3>
-                <p>Qué le toca, cuándo y cuánto cuesta. Con avisos antes de cada fecha, para tu modelo.</p>
-              </article>
-            </div>
+          <div class="waitlist-form" data-reveal>
+            <form id="whatsapp-form" novalidate>
+              <label class="form-label" for="whatsapp">Tu WhatsApp</label>
+              <input class="text-input" id="whatsapp" name="whatsapp" type="tel" inputmode="tel" placeholder="999 999 999" autocomplete="tel" aria-describedby="whatsapp-feedback" required />
+              <button class="button-primary" type="submit">Avisarme</button>
+              <p class="form-feedback" id="whatsapp-feedback" role="status" aria-live="polite"></p>
+            </form>
           </div>
-        </section>
-
-        <section class="risk-section" id="riesgo">
-          <div class="container">
-            <div class="section-heading">
-              <p class="section-label">El costo de no saber</p>
-              <h2>El susto tiene un número.</h2>
-              <p>Y para quien vive de su auto, la retención también se mide en días sin facturar.</p>
-            </div>
-
-            <div class="impact-grid">
-              <article class="impact-card">
-                <span class="impact-label">Sin revisión técnica vigente</span>
-                <strong>S/2,475</strong>
-                <span>multa + retención</span>
-              </article>
-              <article class="impact-card impact-card--soat">
-                <span class="impact-label">Sin SOAT</span>
-                <strong>S/660</strong>
-                <span>multa + retención</span>
-              </article>
-              <p class="impact-note">Un día con el auto retenido es un día sin facturar.</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="maintenance-section">
-          <div class="container">
-            <div class="maintenance-panel">
-              <div>
-                <p class="section-label">Por qué tu auto no te avisa</p>
-                <h2>El manual está en un cajón. O nunca estuvo.</h2>
-                <p>Un auto de ocho o quince años cambió de dueño dos veces y el manual se quedó en el camino. El mecánico sabe qué le toca y tú no, y esa diferencia se paga en cada visita. Fixly existe para cerrarla: lo que dice el fabricante, en tu bolsillo, para tu modelo y tu kilometraje.</p>
-              </div>
-              <aside class="maintenance-aside" aria-label="Marcas contempladas para el futuro sistema de mantenimiento">
-                <p class="eyebrow">Marcas que nadie cubre / en construcción</p>
-                <p class="aside-lead">Las que más crecen en Perú son las que ningún proveedor de datos documenta. Ahí es donde Fixly puede saber algo que no se compra.</p>
-                <ul class="brand-list">
-                  <li>Changan</li>
-                  <li>Jetour</li>
-                  <li>JAC</li>
-                  <li>Chery</li>
-                  <li>Geely</li>
-                </ul>
-                <p class="aside-note">No es una promesa de cobertura actual. Es la parte de Fixly que busca convertir datos dispersos en una ventaja para el conductor.</p>
-              </aside>
-            </div>
-          </div>
-        </section>
-
-        <section class="states-section" aria-labelledby="states-title">
-          <div class="container">
-            <div class="section-heading">
-              <p class="section-label">Una lectura sin ambigüedad</p>
-              <h2 id="states-title">La etiqueta manda. El color ayuda.</h2>
-              <p>Los estados nunca dependen solo del color: siempre llevan palabra, barra y explicación para leerse bajo el sol.</p>
-            </div>
-
-            <div class="states-grid">
-              <article class="state-card">
-                <span class="state-label">Vigente</span>
-                <p>El documento está al día y puedes seguir con tu ruta.</p>
-                <span class="state-rule">Verde + “vigente”</span>
-              </article>
-              <article class="state-card state-card--due">
-                <span class="state-label">Por vencer</span>
-                <p>La fecha se acerca. El sistema te lo hace visible antes del susto.</p>
-                <span class="state-rule">Ámbar + “por vencer”</span>
-              </article>
-              <article class="state-card state-card--expired">
-                <span class="state-label">Vencido</span>
-                <p>La fecha pasó. La alerta muestra prioridad y el costo asociado.</p>
-                <span class="state-rule">Rojo coral + “vencido”</span>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="whatsapp-section" id="whatsapp">
-          <div class="container">
-            <div class="whatsapp-card glass">
-              <div>
-                <p class="section-label">La próxima fecha no debería sorprenderte</p>
-                <h2>Que te encuentre trabajando.</h2>
-                <p>Deja tu WhatsApp después de revisar la vigencia y te avisamos en la próxima consulta.</p>
-              </div>
-              <form class="whatsapp-form" id="whatsapp-form" novalidate>
-                <label class="field-label" for="whatsapp">WhatsApp</label>
-                <input
-                  id="whatsapp"
-                  name="whatsapp"
-                  type="tel"
-                  inputmode="tel"
-                  autocomplete="tel"
-                  placeholder="9XX XXX XXX…"
-                />
-                <button class="primary-button" type="submit">Dejar WhatsApp</button>
-                <p class="whatsapp-feedback" id="whatsapp-feedback" role="status" aria-live="polite"></p>
-              </form>
-            </div>
-            <p class="source-note">Fuentes públicas para vigencias</p>
-            <ul class="source-list">
-              <li><a href="https://servicios.sbs.gob.pe/reportesoat/BusquedaPlaca" target="_blank" rel="noreferrer">SBS / SOAT</a></li>
-              <li><a href="https://sistemas.mtc.gob.pe/aplicaciones/consulta-de-inspeccion-tecnica-vehicular/" target="_blank" rel="noreferrer">MTC / revisión técnica</a></li>
-            </ul>
-          </div>
-        </section>
-      </main>
-
-      <footer>
-        <div class="container footer-inner">
-          <span class="footer-brand">Fixly</span>
-          <span class="footer-note">Ficha de control / SOAT y revisión técnica</span>
         </div>
-      </footer>
-    </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-row">
+        <span class="footer-brand">Fixly</span>
+        <span>Tu auto, al día.</span>
+        <span>Diseñado para manejar con más calma.</span>
+      </div>
+    </footer>
 
     <script>
-      (function () {
-        'use strict';
+      (() => {
+        const revealItems = document.querySelectorAll("[data-reveal]");
+        const reveal = (element) => element.classList.add("is-visible");
 
-        const $ = (sel, root) => (root || document).querySelector(sel);
-        const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
-        const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const punteroFino = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-        /* ─── Revelado escalonado ────────────────────────────────────
-           Un solo observer para toda la página. El índice dentro de
-           cada grupo define el retraso, así la cascada se lee como una
-           secuencia y no como ruido. */
-        (function revelar() {
-          const grupos = [
-            '.section-heading',
-            '.detail-row',
-            '.roadmap-card',
-            '.impact-card',
-            '.state-card',
-            '.photo-card',
-            '.maintenance-panel > *',
-            '.whatsapp-card > *',
-          ];
-
-          grupos.forEach((sel) => {
-            $$(sel).forEach((el, i) => {
-              el.setAttribute('data-reveal', '');
-              el.style.setProperty('--i', String(i));
+        if ("IntersectionObserver" in window) {
+          const observer = new IntersectionObserver((entries, currentObserver) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              reveal(entry.target);
+              currentObserver.unobserve(entry.target);
             });
-          });
+          }, { rootMargin: "0px 0px -10% 0px", threshold: 0.08 });
+          revealItems.forEach((element) => observer.observe(element));
+          window.setTimeout(() => revealItems.forEach(reveal), 1200);
+        } else {
+          revealItems.forEach(reveal);
+        }
 
-          const objetivos = $$('[data-reveal]');
-          if (!objetivos.length) return;
+        const plateForm = document.getElementById("plate-form");
+        const plateInput = document.getElementById("plate");
+        const plateStatus = document.getElementById("plate-status");
+        const plateResult = document.getElementById("plate-result");
 
-          if (quieto || !('IntersectionObserver' in window)) {
-            objetivos.forEach((el) => el.classList.add('is-in'));
+        plateInput.addEventListener("input", () => {
+          plateInput.value = plateInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+          if (plateStatus) plateStatus.textContent = "";
+        });
+
+        plateForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const plate = plateInput.value.trim();
+          if (plate.length < 5) {
+            plateStatus.textContent = "Escribe una placa de ejemplo de al menos 5 caracteres.";
+            plateStatus.style.color = "#c64c3d";
+            plateInput.focus();
             return;
           }
+          plateStatus.textContent = "";
+          plateResult.hidden = false;
+          plateResult.innerHTML = `
+            <div class="result-title">${plate} está listo para una primera mirada.</div>
+            <div class="result-note">Resultado de demo, no es un diagnóstico real.</div>
+            <div class="result-list">
+              <div class="result-chip">Próximo servicio<br><span style="color:var(--lime-deep)">En 30 días</span></div>
+              <div class="result-chip">Prioridad<br><span style="color:var(--blue)">Revisión</span></div>
+              <div class="result-chip">Nivel de claridad<br><span style="color:var(--coral)">Alto</span></div>
+            </div>`;
+          plateResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
 
-          const mostrar = (el) => {
-            el.classList.add('is-in');
-            io.unobserve(el); // una sola vez: reaparecer marea
-          };
+        const whatsappForm = document.getElementById("whatsapp-form");
+        const whatsappInput = document.getElementById("whatsapp");
+        const whatsappFeedback = document.getElementById("whatsapp-feedback");
 
-          const io = new IntersectionObserver(
-            (entradas) => {
-              entradas.forEach((e) => {
-                if (e.isIntersecting) mostrar(e.target);
-              });
-            },
-            { rootMargin: '0px 0px -8% 0px', threshold: 0.01 }
-          );
-          objetivos.forEach((el) => io.observe(el));
-
-          /* Red de seguridad. Contenido invisible por un observer que no
-             disparó es mucho peor que no tener animación, así que esto
-             falla abierto: revisamos por geometría tras cargar imágenes
-             (que mueven el layout) y, pase lo que pase, a los 2,5 s todo
-             lo pendiente se muestra. */
-          const barrer = () => {
-            const alto = window.innerHeight || document.documentElement.clientHeight || 0;
-            objetivos.forEach((el) => {
-              if (el.classList.contains('is-in')) return;
-              const r = el.getBoundingClientRect();
-              if (!alto || (r.top < alto * 1.05 && r.bottom > 0)) mostrar(el);
-            });
-          };
-
-          window.addEventListener('load', barrer, { once: true });
-          window.addEventListener('resize', barrer, { passive: true });
-          window.setTimeout(barrer, 900);
-          window.setTimeout(() => objetivos.forEach(mostrar), 2500);
-        })();
-
-        /* ─── Cifras que suben al entrar en pantalla ─────────────────
-           Sólo en la sección de riesgo: el monto es el argumento. */
-        (function contadores() {
-          const cifras = $$('.impact-card strong');
-          if (!cifras.length || !('IntersectionObserver' in window)) return;
-
-          const io = new IntersectionObserver(
-            (entradas) => {
-              entradas.forEach((e) => {
-                if (!e.isIntersecting) return;
-                io.unobserve(e.target);
-                if (quieto) return;
-
-                const texto = e.target.textContent.trim();
-                const objetivo = Number(texto.replace(/[^\d]/g, ''));
-                if (!objetivo) return;
-
-                const inicio = performance.now();
-                const dur = 900;
-                e.target.style.fontVariantNumeric = 'tabular-nums';
-
-                const paso = (ahora) => {
-                  const t = Math.min(1, (ahora - inicio) / dur);
-                  const suave = 1 - Math.pow(1 - t, 3);
-                  const val = Math.round(objetivo * suave);
-                  e.target.textContent = 'S/' + val.toLocaleString('es-PE');
-                  if (t < 1) requestAnimationFrame(paso);
-                  else e.target.textContent = texto;
-                };
-                e.target.textContent = 'S/0';
-                requestAnimationFrame(paso);
-              });
-            },
-            { threshold: 0.6 }
-          );
-          cifras.forEach((c) => io.observe(c));
-        })();
-
-        /* ─── Barra de navegación ────────────────────────────────────
-           Se oculta al bajar y vuelve al subir. Sin listener de scroll
-           sin throttle: todo pasa dentro de un rAF. */
-        (function nav() {
-          const barra = $('.site-nav');
-          if (!barra) return;
-
-          let ultimo = window.scrollY;
-          let pendiente = false;
-
-          const evaluar = () => {
-            const y = window.scrollY;
-            barra.classList.toggle('is-stuck', y > 40);
-            if (!quieto) {
-              const bajando = y > ultimo && y > 220;
-              barra.classList.toggle('is-hidden', bajando);
-            }
-            ultimo = y;
-            pendiente = false;
-          };
-
-          window.addEventListener(
-            'scroll',
-            () => {
-              if (pendiente) return;
-              pendiente = true;
-              requestAnimationFrame(evaluar);
-            },
-            { passive: true }
-          );
-        })();
-
-        /* ─── Botones magnéticos y destello ──────────────────────────
-           Nada de esto se registra en móvil. */
-        if (punteroFino && !quieto) {
-          $$('.primary-button').forEach((btn) => {
-            btn.classList.add('magnetic');
-            const fuerza = 0.28;
-
-            btn.addEventListener('pointermove', (ev) => {
-              const r = btn.getBoundingClientRect();
-              const dx = (ev.clientX - (r.left + r.width / 2)) * fuerza;
-              const dy = (ev.clientY - (r.top + r.height / 2)) * fuerza;
-              btn.classList.add('is-pulled');
-              btn.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
-            });
-
-            btn.addEventListener('pointerleave', () => {
-              btn.classList.remove('is-pulled');
-              btn.style.transform = '';
-            });
-          });
-
-          $$('.roadmap-card, .state-card, .impact-card, .lookup-card').forEach((c) => {
-            c.classList.add('spot');
-            c.addEventListener('pointermove', (ev) => {
-              const r = c.getBoundingClientRect();
-              c.style.setProperty('--mx', ev.clientX - r.left + 'px');
-              c.style.setProperty('--my', ev.clientY - r.top + 'px');
-            });
-          });
-        }
-
-        /* ─── Onda al pulsar ─────────────────────────────────────────
-           Feedback físico: el botón responde donde lo tocaste. */
-        if (!quieto) {
-          $$('.primary-button').forEach((btn) => {
-            btn.addEventListener('pointerdown', (ev) => {
-              const r = btn.getBoundingClientRect();
-              const d = Math.max(r.width, r.height);
-              const onda = document.createElement('span');
-              onda.className = 'ripple';
-              onda.style.width = onda.style.height = d + 'px';
-              onda.style.left = ev.clientX - r.left - d / 2 + 'px';
-              onda.style.top = ev.clientY - r.top - d / 2 + 'px';
-              btn.appendChild(onda);
-              onda.addEventListener('animationend', () => onda.remove());
-            });
-          });
-        }
-
-        /* ─── Carrusel infinito de marcas ────────────────────────────
-           Se duplica la lista para que el bucle no tenga costura. */
-        (function marcas() {
-          const lista = $('.brand-list');
-          if (!lista) return;
-
-          const envoltura = document.createElement('div');
-          envoltura.className = 'brand-marquee';
-          lista.parentNode.insertBefore(envoltura, lista);
-
-          lista.classList.add('brand-track');
-          envoltura.appendChild(lista);
-
-          lista.setAttribute('aria-label', 'Marcas contempladas');
-          const copia = lista.innerHTML;
-          lista.insertAdjacentHTML('beforeend', copia);
-          $$('li', lista)
-            .slice(lista.children.length / 2)
-            .forEach((li) => li.setAttribute('aria-hidden', 'true'));
-        })();
-
-        /* ─── La consulta ────────────────────────────────────────────
-           Es el momento del producto, así que es lo único que recibe
-           una secuencia completa: esqueleto, revelado escalonado y las
-           filas ordenadas por gravedad. Los datos son de ejemplo y la
-           interfaz lo dice sin letra chica. */
-        const plateForm = $('#plate-form');
-        const plateInput = $('#plate');
-        const plateButton = plateForm ? plateForm.querySelector('button') : null;
-        const plateStatus = $('#plate-status');
-        const panel = $('#plate-result');
-
-        const limpiar = (v) => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
-        const bonita = (v) => {
-          const c = limpiar(v);
-          return c.length > 3 ? c.slice(0, 3) + '-' + c.slice(3) : c;
-        };
-        const valida = (v) => {
-          const c = limpiar(v);
-          return c.length >= 6 && c.length <= 7;
-        };
-
-        if (plateInput) {
-          /* Reformatea conservando la posición lógica del cursor: si
-             corriges un carácter en medio, el caret no salta al final. */
-          plateInput.addEventListener('input', () => {
-            const previo = plateInput.value;
-            const caret = plateInput.selectionStart;
-            const antes = previo.slice(0, caret).replace(/[^A-Za-z0-9]/g, '').length;
-            const nuevo = bonita(previo);
-
-            if (nuevo !== previo) {
-              plateInput.value = nuevo;
-              let i = 0;
-              let vistos = 0;
-              while (i < nuevo.length && vistos < antes) {
-                if (/[A-Za-z0-9]/.test(nuevo.charAt(i))) vistos++;
-                i++;
-              }
-              plateInput.setSelectionRange(i, i);
-            }
-
-            if (plateStatus) {
-              plateStatus.textContent = '';
-              plateStatus.removeAttribute('data-kind');
-            }
-          });
-        }
-
-        const DEMO = [
-          {
-            doc: 'Revisión técnica',
-            estado: 'vencido',
-            etiqueta: 'Vencido',
-            linea: 'Venció hace <b>12 días</b> · 19/08/2026',
-            multa: 2475,
-            nota: 'multa (M27)<br>y retención',
-          },
-          {
-            doc: 'SOAT',
-            estado: 'por-vencer',
-            etiqueta: 'Por vencer',
-            linea: 'Vence en <b>23 días</b> · 23/09/2026',
-          },
-        ];
-
-        function pintarResultado(placa) {
-          if (!panel) return;
-
-          panel.innerHTML =
-            '<div class="skeleton-rows"><div class="skeleton-row"></div><div class="skeleton-row"></div></div>';
-          panel.classList.add('is-on');
-
-          window.setTimeout(
-            () => {
-              const filas = DEMO.map((d, i) => {
-                const multa = d.multa
-                  ? '<div class="result-fine"><strong>S/' +
-                    d.multa.toLocaleString('es-PE') +
-                    '</strong><span>' +
-                    d.nota +
-                    '</span></div>'
-                  : '';
-                return (
-                  '<article class="result-row" data-state="' +
-                  d.estado +
-                  '" style="--i:' +
-                  i +
-                  '">' +
-                  '<div class="result-row-top"><span class="result-doc">' +
-                  d.doc +
-                  '</span>' +
-                  '<span class="result-badge">' +
-                  d.etiqueta +
-                  '</span></div>' +
-                  '<p class="result-line">' +
-                  d.linea +
-                  '</p>' +
-                  multa +
-                  '</article>'
-                );
-              }).join('');
-
-              panel.innerHTML =
-                '<span class="result-demo">Vista de demostración · datos de ejemplo</span>' +
-                '<div class="result-vehicle">' +
-                '<span class="result-plate">' +
-                bonita(placa) +
-                '</span>' +
-                '<span class="result-model">Vehículo de ejemplo</span>' +
-                '<span class="result-meta">Al conectar la consulta real aparece tu auto</span>' +
-                '</div>' +
-                '<div class="result-rows">' +
-                filas +
-                '</div>';
-
-              if (plateButton) {
-                plateButton.disabled = false;
-                plateButton.textContent = 'Consultar placa';
-              }
-              if (plateStatus) {
-                plateStatus.textContent = 'Así se verá tu consulta cuando conectemos la fuente real.';
-                plateStatus.dataset.kind = 'ready';
-              }
-            },
-            quieto ? 0 : 760
-          );
-        }
-
-        if (plateForm) {
-          plateForm.addEventListener('submit', (ev) => {
-            ev.preventDefault();
-
-            if (!valida(plateInput.value)) {
-              plateStatus.textContent = 'Escribe una placa completa, por ejemplo ABC-123.';
-              plateStatus.dataset.kind = 'error';
-              plateInput.focus();
-              return;
-            }
-
-            plateInput.blur(); // en móvil el teclado tapa justo la respuesta
-            plateButton.disabled = true;
-            plateButton.textContent = 'Consultando…';
-            plateStatus.textContent = 'Consulta en curso.';
-            plateStatus.dataset.kind = 'ready';
-
-            pintarResultado(plateInput.value);
-          });
-        }
-
-        /* ─── WhatsApp ───────────────────────────────────────────── */
-        const whatsappForm = $('#whatsapp-form');
-        const whatsappInput = $('#whatsapp');
-        const whatsappFeedback = $('#whatsapp-feedback');
-
-        const limpiarTel = (v) => String(v || '').replace(/[^0-9]/g, '');
-        const validaTel = (v) => {
-          const c = limpiarTel(v);
-          return c.length === 9 || (c.length === 11 && c.indexOf('51') === 0);
-        };
-
-        if (whatsappForm) {
-          whatsappForm.addEventListener('submit', (ev) => {
-            ev.preventDefault();
-
-            if (!validaTel(whatsappInput.value)) {
-              whatsappFeedback.textContent = 'Necesitamos un número de 9 dígitos.';
-              whatsappFeedback.dataset.kind = 'error';
-              whatsappInput.focus();
-              return;
-            }
-
-            whatsappFeedback.textContent = 'Anotado. Vista de demostración lista para conectar.';
-            whatsappFeedback.dataset.kind = 'ready';
-          });
-        }
+        whatsappForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const digits = whatsappInput.value.replace(/\D/g, "");
+          const valid = digits.length === 9 || (digits.length === 11 && digits.startsWith("51"));
+          if (!valid) {
+            whatsappFeedback.textContent = "Usa un número peruano de 9 dígitos.";
+            whatsappFeedback.style.color = "#c64c3d";
+            whatsappInput.focus();
+            return;
+          }
+          whatsappFeedback.style.color = "var(--lime-deep)";
+          whatsappFeedback.textContent = "¡Listo! Te avisaremos cuando Fixly esté disponible.";
+          whatsappInput.value = "";
+        });
       })();
     </script>
   </body>
