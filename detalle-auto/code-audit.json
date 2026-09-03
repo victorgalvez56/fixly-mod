@@ -1,0 +1,290 @@
+{
+ "currentFlow": "estado.tsx (home tab) renders an IconRow \"Mapa de mantenimiento / Ve qué le toca a cada zona del auto\" (lines 79-87) whose only behaviour is router.push('/mapa'). mapa.tsx: DetailHeader + hint text + <CarDiagram> (SvgXml 240x400 string + 2 absolutely positioned 28px dots at ZONE_META top/left percentages) + a Surface with 2 IconRows (motor, frenos) each carrying a StatusChip. Status per zone = getZoneStatus(zone) = maintenancePlan.some(item.zone===zone && item.next) ? 'warn' : 'ok' (zones.ts:11-13); it never reads vehicle.mileage and can never be 'expired'. Tap dot or row -> router.push('/sistema/[zone]'). sistema/[zone].tsx: DetailHeader \"Sistema: Motor\" + IconRow per maintenancePlan item of that zone (title = service, subtitle = \"80,000 km · Hecho|Pendiente\", StatusChip = item.next ? 'warn' : 'ok'). Tap -> router.push('/servicio/[id]'). servicio/[id].tsx: screenTitle, a 3-fact card (Cada X mil km / Última vez = formatLongDate(lastDoneAt) or 'Sin registro' / Precio range), description, \"Si no lo haces\" warn block, checklist, footer Button \"Agendar este servicio\" with NO onPress. That is 4 stack hops (slide_from_right, presentation 'card' in src/app/_layout.tsx:21-24) from the home tab to the oil information, and none of the 4 screens shows wear, remaining km, or a due date. Parallel surfaces: estado.tsx:33 StatTile \"Próximo servicio\" = km milestone of the first maintenancePlan item with done===false (array order, not mileage); plan.tsx:15-16 timeline with a \"Hoy\" divider placed at the first !done index (array order, not mileage) and a 4px accent bar on items flagged next; vehiculo.tsx lets the user type mileage -> updateMileage in vehicle-context (in-memory useState only; lost on restart). mapa/sistema/servicio never call useVehicle(): they read the static maintenancePlan array directly, so editing the mileage changes nothing downstream. Concrete consequence with the shipped mock: oil last done at the 80,000 km milestone, intervalKm 5,000, mileage 87,400 -> ~2,400 km overdue, yet motor zone = 'ok', item = 'Hecho', and the home tile points at brakes at 90,000 km.",
+ "dataModelSummary": "src/mock/data.ts. Vehicle {plate, brand, model, year, color, engine, fuel, mileage, mileageUpdatedAt} — single latest odometer value, no reading history, no VIN/trim/manual reference, no usage profile (normal vs severo). MaintenanceZone = 'motor' | 'frenos'. MaintenanceItem {id, km (absolute milestone, hand-typed e.g. 80000), service, parts, done: boolean (hand-typed), next?: boolean (hand-typed flag that drives every status), zone, intervalKm, lastDoneAt? (ISO date only — NO odometer at the time of service), priceRange [min,max], description, whatIfSkipped, checklist[]}. Only 4 items exist: aceite-80k (done), filtro-aire-85k (done), pastillas-90k (next), correa-100k (no lastDoneAt, defaults to 'ok'). No intervalMonths, no severe-use interval, no action type (replace/inspect/top-up), no position (front/rear/FL...), no source (manual page), no per-model schedule — intervals are inline in one Toyota Yaris mock. HistoryEntry {id, date, service (free text), workshop, cost} grouped by year — not linked to any item id and has no km, so \"last done\" cannot be derived from history (mock is even inconsistent: plan says pastillas delanteras last 2023-11-10, history says pastillas traseras 2025-11-10). documentStatuses {id,title,status,dueDate,fineAmount?} is the only thing with real date logic (format.ts daysUntil/dueLabel). notificationSettings has a 'mantenimiento' leadTimeDays 7 but nothing consumes it. StatusMeta (tokens.ts:37-41) is document vocabulary: ok='Vigente', warn='Por vencer', expired='Vencido' — reused verbatim for maintenance chips. State: vehicle-context.tsx holds {vehicle, setFound(plate) -> mock vehicle with typed plate, updateMileage(km), reset} in useState; no persistence library in package.json. Derived-status functions: zones.ts getZoneStatus / getZoneItems and sistema statusFor — all keyed on the manual `next` flag.",
+ "gaps": [
+  {
+   "area": "Due-state computation",
+   "missing": "No function derives due/overdue/remaining from vehicle.mileage + interval + last service. Status everywhere is the hand-typed `next` flag; a zone can never be overdue (comment at zones.ts:10 claims maintenance items don't expire).",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/lib/zones.ts",
+   "severity": "blocker",
+   "fixSketch": "New src/lib/maintenance.ts: computeComponentState(def, schedule, records, odometer, now) -> { status: 'ok'|'soon'|'due'|'overdue'|'unknown', progress 0..1 = max(kmUsed/intervalKm, monthsUsed/intervalMonths), remainingKm, remainingDays, dueAtKm = lastKm+intervalKm, dueAtDate = lastDate+intervalMonths, basis: 'km'|'tiempo', lastRecord }. Thresholds: soon when remaining <= 10% of interval or <= 500 km / 30 days; unknown when no record. systemStatus = worst(componentStates). Replace getZoneStatus/statusFor/plan 'Hoy'/estado 'Próximo servicio' with selectors over this."
+  },
+  {
+   "area": "Data model: odometer at service",
+   "missing": "MaintenanceItem has lastDoneAt (date) but no lastDoneKm; km consumed since the last oil change is not computable.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/mock/data.ts",
+   "severity": "blocker",
+   "fixSketch": "Replace the per-item lastDoneAt/done/next/km fields with ServiceRecord { id, componentIds: string[], date, km, cost?, workshop?, note? } stored in state; lastDone is derived as the latest record per componentId. Migrate mock: aceite (2026-06-02, 80000), filtro-aire (2026-07-18, 85000), pastillas-del (2023-11-10, ~52000)."
+  },
+  {
+   "area": "Data model: time-based intervals",
+   "missing": "Only intervalKm exists. Manuals say 'cada 10,000 km o 6 meses, lo que ocurra primero'; coolant, brake fluid, timing belt (years), battery, wipers, cabin filter are time-bound.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/mock/data.ts",
+   "severity": "blocker",
+   "fixSketch": "ScheduleItem { componentId, intervalKm?, intervalMonths?, severeIntervalKm?, action, source }. Status uses whichever limit is hit first and reports `basis` so the copy can say 'por tiempo' vs 'por km'."
+  },
+  {
+   "area": "Zone taxonomy",
+   "missing": "MaintenanceZone is a 2-value enum (motor|frenos) mixing a system with a component; no place for spark plugs, coolant, gearbox oil, timing belt, air/cabin filters, battery, tires, suspension, wipers, brake fluid. ZONE_META has one point anchor per zone; brakes/tires need multiple anchors.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/mock/data.ts",
+   "severity": "blocker",
+   "fixSketch": "Three-level model System -> Component -> Action with optional positions (see zoneModelAssessment). SYSTEM_META[systemId] = { label, anchors: {x,y}[] in drawing units, icon }; COMPONENTS[] with system, anchor, criticality. Replace ZONE_META/ZONES in zones.ts and mapa.tsx with these tables; sistema/[zone] becomes sistema/[system] listing components not plan items."
+  },
+  {
+   "area": "Wear/progress visualization",
+   "missing": "No bar, ring, gauge or 'faltan X km' anywhere. servicio/[id].tsx shows three static facts; sistema shows 'Hecho|Pendiente'.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/servicio/[id].tsx",
+   "severity": "blocker",
+   "fixSketch": "New ui/WearBar.tsx: track + fill (progress) + tick at 100% + overflow segment in statusExpired when > 1, plus mandatory word + number line: 'Toca ya · pasaste 2,400 km' / 'Al día · faltan 2,600 km · ≈ 3 semanas'. Plain Views (no SVG) so it is cheap; animate fill with Reanimated transform scaleX (transform-only), 200 ms arrive easing. Use it in the details card, the system sheet rows and servicio."
+  },
+  {
+   "area": "Details view (the user's actual ask)",
+   "missing": "Home shows a navigation row, not details. The user wants to see wear and the oil due date without leaving the home context.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/(tabs)/estado.tsx",
+   "severity": "blocker",
+   "fixSketch": "Replace the IconRow (lines 79-87) with ui/CarHealthCard.tsx: Surface containing the car drawing at ~55% width on the left (or full-width hero) with system markers carrying a word chip, a headline StatusRow for the worst component ('Aceite de motor · Toca ya · pasaste 2,400 km'), and the next 2 components with WearBar. Tap a marker/system -> in-place reveal (same screen): drawing group scales/translates toward the system anchor (<=240 ms, transform+opacity), header content fades, component rows stagger in (60 ms). Alternative with zero new deps: push a Stack screen with presentation 'formSheet' + sheetAllowedDetents (react-native-screens 4.26) for the component list."
+  },
+  {
+   "area": "Diagram architecture",
+   "missing": "CarDiagram renders an opaque SvgXml string at fixed 240x400 and overlays RN Pressables at hand-typed percentages; no zone regions, no per-part animation, two coordinate systems (viewBox vs %), 28px dot + hitSlop 12 = 52px (< TouchTarget 56), markers are colour-only (no word), accessibilityLabel omits status.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/CarDiagram.tsx",
+   "severity": "major",
+   "fixSketch": "Rewrite as JSX <Svg viewBox=\"0 0 240 400\" width=\"100%\" style={{aspectRatio: 0.6}}> with <G id=...> per layer; zone hit areas as transparent <Path onPress> covering the real region (hood, wheels, cabin); markers drawn inside the Svg in the same coordinate space with a <Text>-free label rendered as an RN chip positioned from anchor*scale after onLayout; Animated.createAnimatedComponent(G/Path) + animatedProps for opacity/strokeDashoffset/stroke; wrapper Animated.View for the zoom transform. accessibilityLabel = `${system}: ${worstComponent} ${statusWord} ${remainingText}`."
+  },
+  {
+   "area": "Reveal / zoom interaction",
+   "missing": "All navigation is slide_from_right; no in-place zoom, fade, stagger or draw-in. Reanimated is only used in Button/Switch/Skeleton.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/_layout.tsx",
+   "severity": "major",
+   "fixSketch": "Keep the drawing mounted; useSharedValue progress 0->1 withTiming(240 ms, Motion.easing.arrive); wrapper Animated.View transform [{translateX},{translateY},{scale}] computed from the system anchor; non-selected layers opacity 1->0.25; component rows use Reanimated entering={FadeInDown.duration(200).delay(i*60)}; optional line-draw of the system schematic via animatedProps strokeDashoffset — this is the one allowed choreography; must be tap-triggered, interruptible, and fail open (content visible even if the animation never runs). Reverse on back/tap-outside (140 ms disappear)."
+  },
+  {
+   "area": "Hand-authored flags",
+   "missing": "`done`, `next` and the absolute `km` milestone are typed by hand in the mock; estado 'Próximo servicio' and plan 'Hoy' follow array order.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/(tabs)/plan.tsx",
+   "severity": "major",
+   "fixSketch": "Delete done/next/km from the model. plan.tsx: sort computed states by dueAtKm, place 'Hoy' at vehicle.mileage, show past-due items above it in statusExpired. estado.tsx: 'Próximo servicio' = component with smallest remainingKm, value 'en 2,600 km' not '90,000 km', valueColor by status not accent."
+  },
+  {
+   "area": "Status vocabulary",
+   "missing": "StatusMeta labels are document words (Vigente / Por vencer / Vencido) and StatusChip reuses them for oil and brakes; no 'sin registro' state.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/theme/tokens.ts",
+   "severity": "major",
+   "fixSketch": "Add ComponentStatusMeta = { ok:{label:'Al día'}, soon:{label:'Pronto'}, due:{label:'Toca ya'}, overdue:{label:'Pasado'}, unknown:{label:'Sin registro', color: textTertiary, soft: surfaceAlt} } mapped onto statusOk/statusWarn/statusExpired colours; StatusChip takes a meta prop or a new ComponentChip."
+  },
+  {
+   "area": "Unknown state / honesty rule",
+   "missing": "Items without lastDoneAt (correa-100k) default to 'ok'. For a 2015 car at 87,400 km the belt is unknown, not fine. Violates DESIGN.md 'nunca prometer datos que no existen'.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/sistema/[zone].tsx",
+   "severity": "major",
+   "fixSketch": "status 'unknown' when no record; gray neutral marker; copy 'Sin registro — anota cuándo se hizo por última vez'; CTA opens the record form prefilled with the component. Gravity order for lists: overdue > due > soon > unknown > ok."
+  },
+  {
+   "area": "Service history linkage",
+   "missing": "HistoryEntry is free text with no componentId and no km; cannot feed 'última vez' or wear.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/mock/data.ts",
+   "severity": "major",
+   "fixSketch": "Unify history and lastDone into ServiceRecord[] (componentIds[], date, km, cost, workshop). historial screens group the same records by year; servicio/[id] reads the latest record for its component."
+  },
+  {
+   "area": "Persistence",
+   "missing": "vehicle-context is useState only; mileage edits and any future records vanish on restart. No storage lib installed.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/state/vehicle-context.tsx",
+   "severity": "major",
+   "fixSketch": "npx expo install expo-sqlite (SDK 57; use expo-sqlite/kv-store for a JSON blob first) or @react-native-async-storage/async-storage; extend the context with odometerLog, serviceRecords, addRecord(), addOdometer(); hydrate on mount behind the existing Skeleton pattern."
+  },
+  {
+   "area": "Odometer log / rate estimation",
+   "missing": "Only the latest mileage is stored; km/day is unknown so 'faltan 2,600 km' cannot become '≈ 3 semanas' and time-based reminders cannot be scheduled.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/vehiculo.tsx",
+   "severity": "major",
+   "fixSketch": "OdometerReading { km, date }[]; kmPerDay = (last.km - first.km)/days over the last 90 days, fallback to a usage-profile default (ride-hailing ~150-250 km/day, editable in Ajustes); remainingDays = min(remainingKm/kmPerDay, remainingDaysByTime). Show the estimate with '≈' and the basis."
+  },
+  {
+   "area": "Manual-based schedule per model",
+   "missing": "Intervals live inline in a single Yaris mock; there is no schedule entity keyed by brand/model/year/engine, no source citation, no generic fallback, no severe-use variant (ride-hailing = 'uso severo' in most manuals: oil 5,000 vs 10,000 km).",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/mock/data.ts",
+   "severity": "major",
+   "fixSketch": "src/data/schedules/<brand>-<model>-<years>.ts exporting MaintenanceSchedule { vehicleKey, source:{manual, edition, page}, items: ScheduleItem[] }; getScheduleFor(vehicle) with a generic-ICE fallback flagged in UI as 'Intervalos genéricos, no del manual de tu modelo'. Vehicle gains usage: 'normal'|'severo'."
+  },
+  {
+   "area": "Record-a-service action",
+   "missing": "The footer Button 'Agendar este servicio' has no onPress and there is no 'ya lo hice' flow anywhere. Recording the oil change is the only way the user feeds the model.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/servicio/[id].tsx",
+   "severity": "major",
+   "fixSketch": "Primary CTA 'Registrar que ya lo hice' -> src/app/registrar.tsx (or formSheet) with fields fecha (default hoy), km (default vehicle.mileage), costo, taller; on save addRecord + addOdometer, then the wear bar animates to 0% (colorChange 160 ms). Keep 'Agendar' as secondary/tertiary until a workshop flow exists (NEGOCIO: informar, nunca autorizar)."
+  },
+  {
+   "area": "Component-level list screen",
+   "missing": "sistema/[zone] lists plan milestones, not components with state; nothing equivalent to the reference 'Components status' list.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/sistema/[zone].tsx",
+   "severity": "major",
+   "fixSketch": "Rows = StatusRow(title=component label, status word, detail='Faltan 2,600 km · último 02 JUN 2026 a 80,000 km') + WearBar, sorted by gravity, tap -> servicio/[componentId]. Optional AlertBanner tone='warn' at top for the worst component (the reference's warning card)."
+  },
+  {
+   "area": "Multi-position components",
+   "missing": "frenos anchor points at the front-left wheel only; pads exist per axle, tires per corner. Mock plan tracks 'delanteras' while history has 'traseras'.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/lib/zones.ts",
+   "severity": "major",
+   "fixSketch": "ComponentDef.positions?: ('DI'|'DD'|'TI'|'TD'|'del'|'tras')[] and anchors[]; records can carry position; the diagram highlights all anchors of the component."
+  },
+  {
+   "area": "Screens ignore vehicle state",
+   "missing": "mapa, sistema and servicio import maintenancePlan directly and never call useVehicle(), so mileage edits do not propagate.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/mapa.tsx",
+   "severity": "major",
+   "fixSketch": "Expose useMaintenance() (context or hook over useVehicle + schedule) returning computed states; every screen reads from it."
+  },
+  {
+   "area": "car-svg content",
+   "missing": "No engine-bay, underbody, cooling, transmission or electrical drawing; no ids/groups; baked colours; ~80 decorative tread lines dominate node count. Nothing exists to point at for spark plugs, coolant, gearbox oil, timing belt, filters.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/car-svg.ts",
+   "severity": "major",
+   "fixSketch": "See carSvgAssessment: re-author as layered JSX (silhouette layer kept, new engine-bay/underbody/component layers), strokes via props, <= 250 nodes, per-system close-up drawings crossfaded during the reveal."
+  },
+  {
+   "area": "Colour-only status markers",
+   "missing": "CarDiagram dots and estado document rows (8px dot, line 123) communicate status by colour alone; DESIGN.md forbids this and the persona (sun, dirty screen) needs the word.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/CarDiagram.tsx",
+   "severity": "minor",
+   "fixSketch": "Marker = small chip with the status word (or a count badge '2') next to the dot; on estado use StatusChip instead of the dot. Marker halo `${color}33` (line 36) -> StatusMeta.soft token (string concat breaks with rgba and reads as a forbidden glow)."
+  },
+  {
+   "area": "Reading-size text",
+   "missing": "bodySmall 13px is used for reading text (IconRow subtitle, AlertBanner description, StatTile label); DESIGN.md hard rule is >= 14px.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/theme/tokens.ts",
+   "severity": "minor",
+   "fixSketch": "For the new details view use body (15) for any sentence; keep 13 only for non-reading metadata; consider bumping bodySmall to 14/19."
+  },
+  {
+   "area": "Data typography",
+   "missing": "Type.mono is not monospaced (system sans 13/500); km, dates and prices are not tabular by default, so wear numbers will jitter as they animate.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/Txt.tsx",
+   "severity": "minor",
+   "fixSketch": "Without loading fonts: fontFamily Platform.select({ ios:'Menlo', android:'monospace' }) on mono roles, and tabularNums by default on mono/bigNumber."
+  },
+  {
+   "area": "Notifications",
+   "missing": "notificationSettings.mantenimiento leadTimeDays exists but expo-notifications is not installed and nothing schedules from computed due dates.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/mock/data.ts",
+   "severity": "minor",
+   "fixSketch": "Later phase: expo-notifications local scheduling from dueAtDate - leadTimeDays and from projected km date; out of scope for the visual iteration."
+  },
+  {
+   "area": "Skeleton motion",
+   "missing": "Skeleton shimmer uses Easing.linear repeating 1100 ms; DESIGN.md forbids linear and only 'indicadores de estado activo respiran'.",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/Skeleton.tsx",
+   "severity": "minor",
+   "fixSketch": "Keep (loading state is an exception in spirit) but do not reuse this pattern for the diagram; no idle animation on the car."
+  }
+ ],
+ "reusable": [
+  {
+   "what": "StatusRow (left colour bar + status word chip + mono detail line)",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/StatusRow.tsx",
+   "howToReuse": "It is already the exact 'never colour alone' pattern; use it for each component row with title=component label, status from ComponentStatusMeta (needs a meta prop instead of the hard-coded document StatusMeta), detail='Faltan 2,600 km · último 02 JUN 2026'. Drop the fineAmount branch or repurpose it for 'pasaste 2,400 km' as the big number when overdue."
+  },
+  {
+   "what": "StatusChip",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/StatusChip.tsx",
+   "howToReuse": "Keep the shape; add a `meta` prop (or a sibling ComponentChip) so the label can be 'Al día / Pronto / Toca ya / Sin registro'."
+  },
+  {
+   "what": "Surface, Screen (footer slot), DetailHeader, HairlineRow, IconRow",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/Screen.tsx",
+   "howToReuse": "Containers for the new CarHealthCard, the system sheet and the record form; Screen footer holds the 'Registrar que ya lo hice' Button."
+  },
+  {
+   "what": "AlertBanner tone='warn'|'expired'",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/AlertBanner.tsx",
+   "howToReuse": "The reference's warning card ('Heat pump running warm... consider a service within 30 days') maps to AlertBanner with title='Aceite de motor · toca ya' description='Pasaste 2,400 km del cambio. Con uso de taxi el aceite se degrada más rápido.' actionLabel='Registrar'."
+  },
+  {
+   "what": "StatTile",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/StatTile.tsx",
+   "howToReuse": "Home tiles: 'Kilometraje' and 'Próximo: aceite' value 'en 2,600 km' caption '≈ 3 semanas', valueColor by status (not accent)."
+  },
+  {
+   "what": "Button (Reanimated scale press, 56px TouchTarget, android_ripple)",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/Button.tsx",
+   "howToReuse": "CTA for record/registrar; its useSharedValue/withTiming(Motion.duration, Motion.easing) idiom is the template for the diagram zoom animation (mutate shared values only in handlers because of the React Compiler lint)."
+  },
+  {
+   "what": "Skeleton + useMockQuery",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/Skeleton.tsx",
+   "howToReuse": "Loading shape for the CarHealthCard while persisted records hydrate (DESIGN: never a spinner)."
+  },
+  {
+   "what": "EmptyState",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/EmptyState.tsx",
+   "howToReuse": "System with zero records: icon 'edit-3', title 'Sin registros de motor', description 'Anota tu último cambio de aceite para calcular cuándo toca', action 'Registrar'."
+  },
+  {
+   "what": "format.ts (formatKm es-PE, formatPEN, formatShortDate/LongDate uppercase ES months, daysUntil, dueLabel)",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/lib/format.ts",
+   "howToReuse": "Extend with remainingKmLabel(km) -> 'Faltan 2,600 km' | 'Pasaste 2,400 km' and approxWeeks(days) -> '≈ 3 semanas'; reuse dueLabel for time-based components."
+  },
+  {
+   "what": "Motion tokens (100/140/160/200/60/240 ms, arrive & change beziers)",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/theme/tokens.ts",
+   "howToReuse": "Zoom = cardArrive 200 (ceiling 240) with arrive easing; unzoom = disappear 140; wear-bar fill change = colorChange 160; row stagger = 60."
+  },
+  {
+   "what": "car-svg.ts silhouette geometry (body outline path, glass/roof panel, mirrors, wheel rects, grille)",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/ui/car-svg.ts",
+   "howToReuse": "Copy the body path (line 12), windshield/roof (139-140, 168-169), rear glass (180-182), mirrors (163-164) and 4 wheel rects into a JSX <G id='silhouette'>; discard the 80+ tread hatch lines and the 0.3-opacity seats/steering wheel; treat as the base layer under new component layers."
+  },
+  {
+   "what": "ZONE_META anchor idea (percent anchors) and CarDiagram Pressable-marker overlay",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/lib/zones.ts",
+   "howToReuse": "Keep the concept, move anchors into viewBox units inside SYSTEM_META/COMPONENTS so the drawing and the markers share one coordinate space."
+  },
+  {
+   "what": "vehicle-context (VehicleProvider/useVehicle, updateMileage)",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/state/vehicle-context.tsx",
+   "howToReuse": "Extend the same provider with odometerLog, serviceRecords, addRecord, addOdometer, usage profile and a persistence effect; expose useMaintenance() selectors on top."
+  },
+  {
+   "what": "Root Stack + react-native-screens 4.26",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/_layout.tsx",
+   "howToReuse": "Register sistema/[system] with presentation:'formSheet', sheetAllowedDetents:[0.55,1] to get a native bottom sheet without adding @gorhom/bottom-sheet."
+  },
+  {
+   "what": "servicio/[id] content blocks (Fact card, description, 'Si no lo haces', checklist)",
+   "file": "/Users/victorgalvez/Documents/me/fixly-mod/.claude/worktrees/car-maintenance-details-ui-8f777d/mobile/src/app/servicio/[id].tsx",
+   "howToReuse": "Keep all of it as the component detail; insert WearBar + 'Última vez: 02 JUN 2026 a 80,000 km' + 'Toca: 85,000 km o 02 DIC 2026' above the description; wire the footer CTA."
+  }
+ ],
+ "designSystemConflicts": [
+  "Theme: DESIGN.md §2 is dark (Tinta #121416 background, Superficie #1c2023, Papel #f4f6f4 text). tokens.ts is light (#ffffff background, #f5f6f8 surface, #111827 text); app.json userInterfaceStyle 'light', StatusBar 'dark'. Mobile tokens are what renders; any mockup/prototype for the app must be light or it will not match the shipped screens.",
+  "Accent: DESIGN.md single accent is gold #d8b24c and the load-bearing rule is 'gold never inside a status; amber/coral never in a button'. tokens.ts accent #16a34a is the SAME hex as statusOk #16a34a, so the primary Button, tertiary links, plate stripe, 'Hoy' marker and the 'Próximo servicio' tile all read as 'vigente/ok'. For the details view this is harmful: an overdue oil headline coloured accent-green would say 'fine'. Minimum fix: never use Colors.accent to colour a value that carries state; use ComponentStatusMeta colours.",
+  "Status palette: DESIGN.md sage #86d2b0 / amber #e8a65b / coral #f08c83 (tuned for dark surfaces). tokens.ts #16a34a / #f59e0b / #ef4444 (Tailwind green-600/amber-500/red-500). Amber #f59e0b as 11px uppercase text on the #fef3c7 chip is roughly 2.3:1 contrast; for the sun/dirty-screen persona status words need >= 4.5:1 (use a darker amber like #b45309 for text, keep #f59e0b for bars).",
+  "Fonts: DESIGN.md §3 mandates Barlow Semi Condensed (display), Atkinson Hyperlegible (body), IBM Plex Mono (data) and §7 explicitly forbids 'Inter, Roboto, Arial o tipografías de sistema'. Txt.tsx/tokens.ts use the system font exclusively (deliberate Android cold-start decision, documented in tokens.ts:45-49). Additionally Type.mono is not monospaced at all, so 'datos' (km, dates, prices) lose the DESIGN.md mono treatment; Platform monospace (Menlo/'monospace') is a no-download compromise.",
+  "Type scale: DESIGN.md body 16-18px and a hard floor of 14px for reading text. tokens.ts body 15, bodySmall 13, mono 13, monoSmall 12, label 11; bodySmall 13 is used for reading sentences (IconRow subtitle, AlertBanner description). New details copy should use body (15) or larger.",
+  "Motion: aligned (tokens.ts Motion copies DESIGN.md §6 durations/easings). Conflicts only at the edges: Skeleton uses Easing.linear (forbidden), and DESIGN.md's 'nada pulsa' rules out any idle breathing/pulsing marker on the car — the reference's animated orange dot must be static.",
+  "Gestures: DESIGN.md §6 allows tap + vertical scroll only (no swipe between cards, no long-press, no pull-to-refresh). The reference's stacked card carousel and its replay/pause pill are out; the reveal must be tap-driven and the component list vertical.",
+  "Overlap: DESIGN.md §7 forbids 'elementos superpuestos'. The reference's floating tooltip over the drawing conflicts; use anchored callouts that sit beside the drawing or a list below it, not cards floating over strokes.",
+  "Colour-only status: DESIGN.md §7 'estado comunicado solo con color' is forbidden; CarDiagram markers and the estado document dots (estado.tsx:123) are colour-only today.",
+  "Glow: DESIGN.md §7 forbids neon glows / outer-glow shadows; CarDiagram markerGlow (`${color}33` halo) is borderline and should become the flat StatusMeta.soft disc or be removed.",
+  "Shadows/radius/cards: no conflict — CardShadow is a soft elevation, radii 14/20/28 are the app's own choice; DESIGN.md §4 was not audited for radius values.",
+  "Copy and numbers: aligned (Spanish sentence case, formatPEN 'S/2,475.00', es-PE thousands). Keep the DESIGN.md honesty rule: never show an interval that is not from the model's manual without saying 'genérico'."
+ ],
+ "stackConstraints": [
+  "Expo SDK 57 / expo-router 57 / react-native 0.86.3 / react 19.2.3; New Architecture (Fabric) is the only mode for Reanimated 4, so everything must be Fabric-safe. React Compiler is enabled (app.json experiments.reactCompiler) — do not hand-memoize, and mutate Reanimated shared values only in event handlers/worklets (the repo already carries eslint react-hooks/immutability disables in Button.tsx for this).",
+  "react-native-reanimated 4.5.1 + react-native-worklets 0.10.1: use useSharedValue/withTiming/useAnimatedStyle for transform+opacity on wrapper Animated.Views, Animated.createAnimatedComponent(Path|G) + useAnimatedProps for strokeDashoffset/opacity/stroke, and layout animations (FadeInDown.delay) for the stagger. Keep every animation <= 240 ms and cancellable.",
+  "react-native-svg 15.15.4 (installed): supports Svg/G/Path/Rect/Circle/ClipPath/Mask/LinearGradient/RadialGradient, onPress on elements, animatedProps via Reanimated; SVG filters (blur) are partial/experimental in 15.x and vector-effect non-scaling-stroke is not supported, so strokes thicken when a group is scaled — re-specify stroke width per zoom level or swap viewBox at the end of the zoom. SvgXml re-parses the string on every prop change; prefer JSX.",
+  "@shopify/react-native-skia NOT installed. Adding it: `npx expo install @shopify/react-native-skia` (pick the version expo's compatibility list pins for SDK 57; verify with `npx expo install --check`), works in Expo Go and dev builds; web needs CanvasKit wasm (~6-7 MB) via LoadSkiaWeb. Skia gives crisp path rendering, dash-based line-draw, RuntimeShaders and cheap offscreen rasterization, but the 2D technical drawing here does not require it; treat as optional phase 2 if react-native-svg node count or animation smoothness becomes a measured problem on the low-end Android target.",
+  "3D (expo-gl + three + @react-three/fiber/native, or expo-three) NOT installed: a GLB car model is 1-5 MB, R3F native adds JS bundle weight, low-end Android GPUs and battery are a risk for the persona, and a 3D view does not show 'when the oil is due' better than a 2D schematic. Feasible but not recommended for this iteration; if evaluated, use a static pre-rendered 3/4 view instead.",
+  "Lottie / Rive NOT installed: Rive would be the best tool for a designer-authored line-draw + state machine but adds a native dep and a .riv asset pipeline; Lottie cannot be driven by per-component data easily. Prefer SVG + Reanimated.",
+  "node_modules is NOT installed in this worktree: nothing can be run, type-checked or screenshot here; .expo/types for typed routes are absent, so new routes cannot be verified until `npm install` + `npx expo start` elsewhere.",
+  "Typed routes (experiments.typedRoutes) are on: any new route (sistema/[system], componente/[id], registrar) is a new file under src/app and must be registered in the root Stack if it needs presentation options; router.push({ pathname, params }) form is required.",
+  "react-native-screens 4.26 provides presentation:'formSheet' with sheetAllowedDetents/sheetGrabberVisible for a native bottom sheet; react-native-gesture-handler 2.32 is installed but only GestureHandlerRootView is used — avoid adding pan gestures (DESIGN forbids swipes).",
+  "No persistence, no notifications: expo-sqlite (SDK 57, includes kv-store) or async-storage must be added for records; expo-notifications later for reminders.",
+  "react-native-web 0.21 is a dependency and app.json has web output 'static': the drawing must render on web too (react-native-svg does; Skia needs wasm; expo-gl works). Decide explicitly whether web is a target for this feature.",
+  "Low-end Android persona: keep the diagram under ~250 SVG nodes, no filters/blur/shadows inside the Svg, animate a handful of paths via animatedProps rather than re-rendering the Svg tree, consider renderToHardwareTextureAndroid on the static layer during the zoom, and keep the 56 px touch targets (current markers are 52 px effective).",
+  "Fonts are deliberately system-only (no expo-font, no splash hold) — a custom-font change to match DESIGN.md is a separate decision with a cold-start cost.",
+  "DESIGN rules that bind the implementation: status = word + bar + explanation (never colour alone), 240 ms ceiling, transform+opacity only, reveal-with-stagger is the only choreography, no pulsing, tap + vertical scroll only, no overlapping elements, Peruvian number format, Spanish sentence case, no emojis, never promise intervals the manual base does not have for that model."
+ ],
+ "carSvgAssessment": "Facts: a template string, viewBox 0 0 240 400, ~185 sibling elements, single stroke colour #c3c9d1 with opacity 0.3-1.0 and widths 0.8-1.3, body fill #f5f6f8. Content: body outline path (line 12), 4 wheels as nested rounded rects with ~80 tiny tread hatch <line>s (lines 19-58, 65-104 — about 45% of all nodes), hood crease lines, grille slats + badge circle, windshield/roof/sunroof rects, rear glass, mirrors, door seams, door handles, side skirts, 2 seats + steering wheel at 0.32-0.35 opacity, rear bumper/plate/exhaust tips. Proportions 183 x 372 units (W/L 0.49 vs ~0.41 for a real Yaris — slightly stubby but acceptable). Quality as a base for a sharp technical drawing: it succeeds at the 'thin gray technical line on light surface' mood of the reference and has a clean, consistent hairline weight, so the silhouette layer (body, glass, mirrors, wheel rects, grille) is worth keeping. It fails as a base for the requested interaction in six ways. (1) No engine-bay detail: the hood area (y 26-104) contains only four crease lines; there is no engine block, oil filler/dipstick, battery, coolant reservoir, radiator, air box, belts or plugs, so there is nothing to highlight for oil, spark plugs, coolant, timing belt or air filter. (2) No underbody/drivetrain/brake layer: no gearbox, exhaust, discs, calipers, suspension — the elaborate wheel tread hatching is decoration and becomes the most detailed part of the car when zoomed, the opposite of what the feature needs. (3) No layers, groups or ids: a flat list of siblings inside an opaque SvgXml string, so nothing can be targeted, faded, recoloured or animated per zone; every status/theme change would be a string replace and SvgXml re-parses on each change. (4) Baked-in colours and a fixed 240x400 pixel size (CarDiagram passes width/height, not '100%'), with markers living in a separate percent coordinate system (ZONE_META) that drifts if the drawing changes. (5) Stroke widths are viewBox-relative and react-native-svg has no non-scaling-stroke, so scaling the group 2-3x during a reveal thickens every line and softens the 'sharp technical' look; the near-invisible 0.3-opacity interior lines vanish for the sun/dirty-screen persona at 1x. (6) Not 'realistic': symbolic flat top-down silhouette with no interior structure; it cannot carry the reference's schematic-over-wireframe reveal. Recommended base and viewBox strategy: author a layered master drawing in Figma/Illustrator (top-down, optionally a second 3/4 'ghosted' view for the hero) with named groups #silhouette, #glass, #wheels, #engine-bay (block, head cover with plug wells, oil cap, dipstick, air box, battery, coolant reservoir, radiator, belt), #underbody (gearbox, exhaust, brake discs/calipers per wheel, dampers), #cabin (cabin filter, wipers), each component as its own <G id> with a centroid anchor exported to a JSON table; export SVG and convert to react-native-svg JSX (svgr) so colours/opacity/strokeWidth are props and animatedProps can drive them; cap at ~250 nodes by dropping tread hatches. Use one master viewBox (e.g. 0 0 1000 1667 for precision) rendered at width 100% with aspectRatio; for the reveal animate a wrapper Animated.View transform (translate/scale toward the system anchor, <= 240 ms, transform+opacity only) while cross-fading the silhouette to 25% and the system layer to 100%; at the end (or instead of the transform, for crispness) re-render the Svg with the system's own viewBox rectangle (e.g. engine bay 0 0 1000 420) and stroke widths re-specified for that zoom so lines stay 1-1.5 dp. If Skia is adopted later the same path data ports directly (Skia.Path.MakeFromSVGString) and the line-draw becomes a dash-path effect; if 3D is evaluated, use a pre-rendered static 3/4 PNG/SVG hero rather than a live GL scene.",
+ "zoneModelAssessment": "Why motor|frenos is insufficient: it is a two-value enum that mixes a system (motor) with a component (frenos); it has no slot for cooling, transmission, tires/suspension, electrical, cabin/visibility or fuel/exhaust, so spark plugs, coolant, gearbox oil, timing belt, air/cabin filters, battery, brake fluid, tires and wipers have nowhere to live; a zone owns one point anchor while brakes and tires need per-axle/per-corner anchors; zone status collapses to a hand flag and a zone screen lists plan milestones instead of components, so the user cannot see WHICH component is due or how worn it is. Proposed taxonomy — three levels: System (what the drawing highlights; 8 max so the chip row still fits) -> Component (what the manual schedules and the user records) -> Action (cambiar / revisar / rellenar / rotar), with optional Position (DI/DD/TI/TD or del/tras). Systems and components: 1 motor (Motor; anchor engine-bay centre): aceite-motor (oil + oil filter, one record), filtro-aire, bujias, correa-distribucion (or cadena: inspect-only), correa-accesorios, bomba-agua (usually with the belt). 2 refrigeracion (Refrigeración; anchor radiator, front): refrigerante, termostato (revisar), mangueras (revisar). 3 transmision (Transmisión; anchor between engine and cabin): aceite-caja (manual/automática/CVT — the schedule item carries which), embrague (revisar, manual only), aceite-diferencial (RWD/4WD only). 4 frenos (Frenos; anchors 4 wheels or 2 axles): pastillas-del, pastillas-tras (or zapatas), discos (revisar/cambiar), liquido-frenos (time-based 24 months), freno-mano (revisar). 5 llantas (Llantas y suspensión; anchors 4 corners): rotacion, alineamiento-balanceo, llantas (by wear or age 5-6 years), amortiguadores (revisar), rotulas-terminales (revisar). 6 electrico (Eléctrico; anchor battery, front-left bay): bateria (24-36 months), luces (revisar), alternador (revisar). 7 cabina (Cabina y visibilidad; anchor windshield/cabin): filtro-cabina, plumillas (6-12 months), aire-acondicionado (servicio 24 months). 8 combustible (Combustible y escape; anchor tank/rear underbody, can fold into motor): filtro-combustible, escape (revisar). Entities (TypeScript sketch): SystemId union of the 8 ids; SystemMeta { id, label, icon, anchors: {x,y}[] in drawing units, order }; ComponentDef { id, system, label, shortLabel, action, positions?, anchor, criticality: 'seguridad'|'motor'|'confort', description, whatIfSkipped, checklist, priceRange? }; MaintenanceSchedule { vehicleKey {brand, model, yearFrom, yearTo, engine?, gearbox?}, source {manual, edition, page?}, generic: boolean, items: ScheduleItem[] }; ScheduleItem { componentId, intervalKm?, intervalMonths?, severeIntervalKm?, severeIntervalMonths?, action, notes? }; ServiceRecord { id, componentIds[], date, km, position?, cost?, workshop?, note? }; OdometerReading { km, date }; Vehicle gains usage: 'normal'|'severo' (ride-hailing defaults to severo). Derived ComponentState { componentId, status: 'ok'|'soon'|'due'|'overdue'|'unknown', progress 0..1+, remainingKm?, remainingDays?, dueAtKm?, dueAtDate?, basis: 'km'|'tiempo'|'ambos', lastRecord? }; SystemState = worst component (gravity order overdue > due > soon > unknown > ok) plus counts per status for the marker badge. Mapping of today's 4 mock items: aceite-80k -> aceite-motor (record 2026-06-02 @ 80,000), filtro-aire-85k -> filtro-aire (2026-07-18 @ 85,000), pastillas-90k -> pastillas-del (2023-11-10, km to be estimated), correa-100k -> correa-distribucion + bomba-agua (no record -> unknown). Marker rule on the drawing: one marker per system carrying the status word or a count badge; components appear only after the reveal, each with WearBar + word + 'faltan/pasaste' number; inspect-only components show 'Revisar en el próximo servicio' instead of a bar so the app never fakes a wear value it cannot know."
+}

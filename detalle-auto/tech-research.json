@@ -1,0 +1,617 @@
+{
+ "options": [
+  {
+   "name": "1. react-native-svg + Reanimated 4 (already installed)",
+   "packages": [
+    "react-native-svg@15.15.4 (installed)",
+    "react-native-reanimated@4.5.1 (installed)",
+    "react-native-worklets@0.10.1 (installed)",
+    "react-native-gesture-handler@~2.32.0 (installed)",
+    "optional build-time only: svg-path-properties@2.1.0 (path lengths), flubber@0.4.2 (morph between different command structures), svgo@4.1.0"
+   ],
+   "versionForExpo57": "react-native-svg 15.15.4 is exactly what Expo SDK 57 bundles and what Expo Go SDK 57 ships (C03, C04). npm latest is 15.15.5 (2026-05-11) but stay on 15.15.4 for Expo Go parity. Reanimated 4.5.x is listed compatible with RN 0.86 and worklets 0.10.x (C08).",
+   "expoGoCompatible": "YES, no changes (C04, C05).",
+   "needsDevClient": false,
+   "newArchOk": "YES. react-native-svg has Fabric support since 13.0.0 (C14); Reanimated 4 is New-Arch-only by design (C07); SDK 55+ is always New Arch (C06).",
+   "sharpness": "Vector, rasterised natively per device at its own DPI; no blur at any scale. Strokes must be >= 1.5 viewBox units at 240-wide viewBox (~2.2 px on a 360 px-wide 2x screen) to survive sun + dirty screen (persona constraint, not a library limit).",
+   "realismCeiling": "Medium: technical line drawing + flat fills + LinearGradient/RadialGradient are reliable. Blur/glow via FeGaussianBlur is NOT reliable on Android (plateau ~stdDeviation 15, issue #2636 open; 'Not all filters have been implemented on native platforms yet', C12, C13). Drop shadows via FeDropShadow: implemented but treat as untested on Android (UNVERIFIED). Realism therefore comes from the drawing quality (asset), not from effects.",
+   "perfLowEndAndroid": "Good for a static/lightly animated diagram of ~100-300 paths if you (a) memoize the tree, (b) only touch animated elements via useAnimatedProps (UI thread), (c) never re-render the whole <Svg> on state change. Each SVG element is a React component and a shadow node, so re-rendering the tree is the cost centre (C16). No official benchmark on low-end Android (UNVERIFIED). Line-draw of ~15-25 strokes concurrently with stagger is well within budget; avoid animating `d` on many paths at once.",
+   "bundleImpact": "0 MB (already in the app and in Expo Go).",
+   "lineDrawAnimation": "Supported: animate strokeDashoffset (and strokeDasharray) with useAnimatedProps on Animated.createAnimatedComponent(Path) (C09). Needs the path length L: react-native-svg exposes no getTotalLength on native as far as verified (UNVERIFIED, code search inconclusive) -> precompute L per path at build time with svg-path-properties and store it next to the `d` string. Set strokeDasharray=[L,L], animate offset L->0 with withTiming(<=240 ms per stroke) + withDelay(stagger 60 ms). Path morph only when both `d` share the same command sequence (C10); otherwise pre-normalise with flubber offline and ship both paths.",
+   "gaugesAndFills": "Arc gauge = <Circle>/<Path> with strokeDasharray, animated strokeDashoffset; or a clipped <Rect> fill for level-type gauges (oil level). Colour + word + number always together (design rule). Text via <Text>/<TSpan> or, better, RN <Txt> overlays for accessibility and font control.",
+   "hitTestingPerRegion": "Native per-element: onPress/onPressIn/onPressOut/onLongPress on any element (C11). Requires rendering each region as a JSX <Path> (not an opaque SvgXml string). Add invisible fill polygons (fill='transparent', >=56 px effective) per zone as the hit layer; the current CarDiagram uses SvgXml + absolutely-positioned Pressables, which must be replaced by codegen'd JSX paths.",
+   "textRendering": "<Text>/<TSpan> supported (C12); system fonts by fontFamily. Recommended: keep labels/values as React Native <Text> overlays positioned from precomputed anchors (accessibility, Dynamic Type, Spanish copy changes without touching the drawing).",
+   "learningCurve": "Low; the team already uses it. Reanimated animatedProps + createAnimatedComponent is the only new idiom.",
+   "effort": "S-M: 1) asset + codegen script (SVG -> carPaths.ts with id, d, length, anchor, zone); 2) CarMap component with per-zone hit layer; 3) reveal choreography hook (stagger, reduce-motion fallback); 4) OilGauge component. Roughly 3-5 dev days after the asset exists.",
+   "risks": [
+    "No native blur/glow on Android -> do not design around glow effects",
+    "Whole-tree re-render on state change kills frame rate on low-end Android; must memoize and drive animation only through shared values",
+    "Web: Reanimated drives SVG via CSS, some attributes (points, line endpoints) need useAnimatedProps (guide)",
+    "Path morphing constrained to identical command structure",
+    "Filters behave differently iOS vs Android (#2636 open)"
+   ],
+   "bestFor": "The v1 car map + engine-bay map + oil gauge: fastest path, zero bundle cost, works in Expo Go today, meets the 240 ms rule with the reveal exception.",
+   "sources": [
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json",
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/apps/expo-go/package.json",
+    "https://docs.expo.dev/versions/v57.0.0/sdk/svg/",
+    "https://docs.swmansion.com/react-native-reanimated/docs/guides/animating-svg/",
+    "https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/",
+    "https://github.com/software-mansion/react-native-svg/blob/main/USAGE.md",
+    "https://raw.githubusercontent.com/software-mansion/react-native-svg/main/README.md",
+    "https://github.com/software-mansion/react-native-svg/issues/2636",
+    "https://swmansion.com/blog/you-might-not-need-react-native-svg-b5c65646d01f",
+    "https://registry.npmjs.org/react-native-svg",
+    "https://registry.npmjs.org/svg-path-properties",
+    "https://registry.npmjs.org/flubber"
+   ]
+  },
+  {
+   "name": "2. @shopify/react-native-skia (Canvas) + Reanimated 4",
+   "packages": [
+    "@shopify/react-native-skia@2.6.2 (Expo Go / SDK 57 bundled) or 2.11.2 (npm latest, dev client only)",
+    "react-native-reanimated@4.5.1 (installed)",
+    "react-native-worklets@0.10.1 (installed)",
+    "react-native-gesture-handler@~2.32.0 (installed)"
+   ],
+   "versionForExpo57": "Install with `npx expo install @shopify/react-native-skia` -> 2.6.2, the version pinned in bundledNativeModules and compiled into Expo Go SDK 57 (C03, C04). npm latest 2.11.2 (2026-09-01) has peers react>=19, react-native>=0.78, reanimated>=4.0.0 (C17); install docs say RN>=0.79, react>=19, reanimated>=4 with worklets>=0.7 (C18) — RN 0.86.3/React 19.2.3/Reanimated 4.5.1 satisfy both. Skia >=2.10 requires Reanimated v4 (C22) — satisfied.",
+   "expoGoCompatible": "YES only at exactly 2.6.2 (the native binary inside Expo Go). Any other version (e.g. 2.11.2) needs a development build (C04, C05, C18 — Expo Go is 'a playground… does not include all of the native code').",
+   "needsDevClient": false,
+   "newArchOk": "YES (peers RN>=0.78 with react>=19; SDK 57 is New Arch only; Skia 2.x docs do not mention an old-arch mode — C06, C17).",
+   "sharpness": "Vector, GPU-rasterised at device resolution; AA on by default. Same sharpness as react-native-svg; additionally allows highBitDepth (Graphite only on Android, falls back to 8-bit on the default OpenGL backend — C31, C32).",
+   "realismCeiling": "High for 2D: linear/radial/two-point-conical/sweep gradients (C30), BlurMask normal/solid/outer/inner (C28), DropShadow/inner shadow image filters (C29), blend modes, image textures, runtime shaders. This is the option that can make the engine-bay 'glow' and look like the reference video without a designer tool.",
+   "perfLowEndAndroid": "GPU-backed (Ganesh/OpenGL on Android by default — C31); animations run on the UI thread with shared values (C22). Known cost: first-mount latency historically reported on Android (issue #610, 2022, closed — C33) — mitigate with `androidWarmup` for static/opaque canvases (C32) and by mounting the Canvas early (skeleton). No official low-end benchmark (UNVERIFIED). Keep static layers as a Picture or an offscreen texture and animate only the reveal layer (C34). Blur is the most expensive effect; keep blur sigma small and area small.",
+   "bundleImpact": "~4 MB Android download with App Bundles (41.3 MB APK if you ship all ABIs in one APK), ~6 MB iOS, 2.9 MB web CanvasKit (C19). Relevant for low-end phones with little storage but acceptable.",
+   "lineDrawAnimation": "Best in class: <Path start={0} end={sv}/> trims by normalised [0,1] (C20); no path-length precomputation. Path morph via usePathInterpolation requires same number and type of commands; otherwise flubber (C21).",
+   "gaugesAndFills": "Arc gauge = Path with `end` trim or Circle with stroke; fills with gradients; oil level = Rect with clip + gradient; markers with BlurMask glow. Everything drives from one shared value.",
+   "hitTestingPerRegion": "Skia does NOT hit-test elements. Two patterns: (a) official docs: react-native-gesture-handler + an overlay Animated.View per element mirroring transforms (C23); (b) one Gesture.Tap on the Canvas, then `path.contains(x,y)` on each region's SkPath (API exists, C24) after mapping the touch into canvas coordinates; region paths must be filled polygons (>=56 px). Pattern (a) keeps native accessibility; pattern (b) needs manual accessibility overlays.",
+   "textRendering": "<Text> needs a font object: useFont(require ttf) or matchFont({fontFamily,...}) from system fonts (Skia.FontMgr.System(), listFontFamilies) (C27); Paragraph API for wrapped text, system fonts by default (C26). Skia text is not in the accessibility tree; keep labels/values as RN <Text> overlays; draw only decorative text in Skia.",
+   "learningCurve": "Medium: declarative canvas, no layout/flex, coordinates by hand, font loading, manual hit-testing, understanding of UI-thread worklets. The repo already has a reanimated-skia-performance skill available to the agents.",
+   "effort": "M: same asset/codegen work as SVG plus 1-2 days for Canvas scene, hit-test layer, fonts, and Android warm-up/first-frame handling. Add ~1 day for measuring on a real low-end Android.",
+   "risks": [
+    "Version pin: Expo Go requires exactly 2.6.2; upgrading beyond forces a dev client",
+    "+4 MB download; storage-poor phones",
+    "First-frame latency on Android (historic); needs skeleton/warmup",
+    "No element hit-testing or accessibility tree out of the box",
+    "SVG import through ImageSVG drops <text>, CSS and rgba() (C25) — must convert paths to <Path> components instead",
+    "Graphite/Vulkan backend still experimental (@next), do not depend on it"
+   ],
+   "bestFor": "The 'reveal' engine-bay scene with glow/gradients/shadows and the animated gauge when the SVG version does not look realistic enough; a later phase after the SVG map is validated with users.",
+   "sources": [
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json",
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/apps/expo-go/package.json",
+    "https://docs.expo.dev/versions/v57.0.0/sdk/skia/",
+    "https://registry.npmjs.org/@shopify%2Freact-native-skia/latest",
+    "https://shopify.github.io/react-native-skia/docs/getting-started/installation/",
+    "https://shopify.github.io/react-native-skia/docs/getting-started/bundle-size/",
+    "https://shopify.github.io/react-native-skia/docs/shapes/path",
+    "https://shopify.github.io/react-native-skia/docs/animations/animations",
+    "https://shopify.github.io/react-native-skia/docs/animations/hooks",
+    "https://shopify.github.io/react-native-skia/docs/animations/gestures",
+    "https://raw.githubusercontent.com/Shopify/react-native-skia/main/packages/skia/src/skia/types/Path/Path.ts",
+    "https://shopify.github.io/react-native-skia/docs/images-svg/",
+    "https://shopify.github.io/react-native-skia/docs/text/paragraph",
+    "https://raw.githubusercontent.com/Shopify/react-native-skia/main/apps/docs/docs/text/text.md",
+    "https://shopify.github.io/react-native-skia/docs/mask-filters",
+    "https://shopify.github.io/react-native-skia/docs/image-filters/shadows",
+    "https://shopify.github.io/react-native-skia/docs/shaders/gradients",
+    "https://shopify.github.io/react-native-skia/docs/canvas/overview/",
+    "https://raw.githubusercontent.com/Shopify/react-native-skia/main/README.md",
+    "https://github.com/Shopify/react-native-skia/issues/610",
+    "https://github.com/Shopify/react-native-skia/releases"
+   ]
+  },
+  {
+   "name": "3. lottie-react-native (After Effects / LottieFiles export)",
+   "packages": [
+    "lottie-react-native@~7.3.8 (Expo SDK 57 bundled; Expo Go ships ^7.3.8)",
+    "(npm latest 7.5.0, 2026-08-22, requires RN>=0.84 + New Arch; peers react>=19.2, RN>=0.84)"
+   ],
+   "versionForExpo57": "Bundled ~7.3.8 (C03) and present in Expo Go SDK 57 as ^7.3.8 (C04). 7.4.0/7.5.0 declare RN>=0.84 and New Arch (C35) so they are technically compatible with RN 0.86, but Expo Go carries the 7.3.x native side — use 7.3.8 in Expo Go, 7.5.0 only with a dev client. NOTE: docs.expo.dev has no reachable Lottie page (4 URLs return 404 on 2026-09-02, C39) — inclusion is verified from the Expo Go package.json, not from docs.",
+   "expoGoCompatible": "YES at 7.3.x (C04). UNVERIFIED for 7.5.0 inside Expo Go.",
+   "needsDevClient": false,
+   "newArchOk": "YES (7.4+ is New-Arch-only; 7.3.x supports it — C35).",
+   "sharpness": "Vector (bodymovin JSON) rendered natively; sharp at any size. Raster layers inside the .json/.lottie are not.",
+   "realismCeiling": "High if a motion designer authors it in After Effects (gradients, masks, mattes). But 'Not all After Effects features are supported by Lottie' (C38) and effects like blur/glow are typically unsupported or platform-divergent (UNVERIFIED per feature).",
+   "perfLowEndAndroid": "lottie-android renders on the main thread with hardware/software renderMode selectable (C37); fine for one animation per screen. Complex mattes/masks are expensive on low-end devices (general Lottie guidance, UNVERIFIED benchmark).",
+   "bundleImpact": "Native lib already in Expo Go; standalone size increase UNVERIFIED (typically low-single-digit MB). JSON assets ~50-500 KB each.",
+   "lineDrawAnimation": "Only what the designer pre-authored (trim paths in AE). Runtime control = progress 0..1 scrub, speed, play/pause/reset (C37). You cannot add or remove strokes at runtime.",
+   "gaugesAndFills": "Data-driven gauge only via the `progress` scrub trick (author a 0->100% animation, set progress = value). Numbers/text must be RN overlays or textFiltersAndroid/textFiltersIOS (platform-split, C37).",
+   "hitTestingPerRegion": "None per layer. Whole LottieView is one view; you need overlay Pressables positioned on top of known coordinates.",
+   "textRendering": "Text layers replaceable via textFiltersIOS / textFiltersAndroid (separate props per platform, C37); practical answer: no text in the animation, RN <Text> overlays.",
+   "learningCurve": "Low for developers, but requires an After Effects/LottieFiles author for every visual change; every new car component or brand-specific drawing is a designer round-trip.",
+   "effort": "S dev / M-L design: each of the car map and the engine-bay reveal is an AE project; dynamic states (ok/warn/expired per zone) multiply into colorFilters keypaths (C37).",
+   "risks": [
+    "Dependence on an external designer tool for a data-driven UI",
+    "Dynamic properties limited to colorFilters, text filters and progress",
+    "Platform-divergent rendering of unsupported AE features",
+    "No per-region hit testing, no accessibility of internal elements",
+    "Expo docs page missing; check Expo Go inclusion per SDK before relying on it"
+   ],
+   "bestFor": "A one-off pre-authored 'scan' flourish or onboarding illustration, not for the data-driven component map or the gauge.",
+   "sources": [
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json",
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/apps/expo-go/package.json",
+    "https://github.com/lottie-react-native/lottie-react-native/blob/master/README.md",
+    "https://github.com/lottie-react-native/lottie-react-native/blob/master/docs/api.md",
+    "https://github.com/lottie-react-native/lottie-react-native/releases",
+    "https://registry.npmjs.org/lottie-react-native"
+   ]
+  },
+  {
+   "name": "4. Rive (rive-react-native legacy or @rive-app/react-native Nitro runtime)",
+   "packages": [
+    "@rive-app/react-native@0.4.20 (new runtime, Nitro) + react-native-nitro-modules@0.35.x (peer '>=0.35.10 <0.36')",
+    "or rive-react-native@9.8.5 (legacy, README points to the new runtime)"
+   ],
+   "versionForExpo57": "New runtime 0.4.20 (2026-08-19) requires RN 0.78+, Expo SDK 53+, iOS 15.1+, Android SDK 24+, Nitro 0.33.2+, Xcode 16.4+ (C41). Peer nitro range is '>=0.35.10 <0.36' while nitro latest is 0.37.1 (C42) — you must pin nitro 0.35.x. Compatibility with RN 0.86 specifically is not stated anywhere (UNVERIFIED). Legacy 9.8.5 (2026-07-17) has no RN peer constraint (C40); its Expo Android guidance is written for SDK 52-53 (expo-custom-agp 8.9.2 + compileSdk 36) (C44); SDK 57 guidance UNVERIFIED.",
+   "expoGoCompatible": "NO. 'Because this package contains custom native code, it's not compatible with Expo Go' (C43); neither package is in Expo Go's dependency list (C04). Nitro modules also need a development build (C47).",
+   "needsDevClient": true,
+   "newArchOk": "New runtime is Nitro-based and Nitro requires the New Architecture (C47, secondary sources); explicit New Arch statement missing from Rive docs (UNVERIFIED wording). Legacy 9.x: UNVERIFIED.",
+   "sharpness": "Vector (Rive renderer), sharp at any size.",
+   "realismCeiling": "High: vector with gradients, feathers, meshes, raster embeds; authored in the Rive editor. Best-in-class for state-machine-driven illustrations.",
+   "perfLowEndAndroid": "Rive's renderer is designed for real-time vector; no low-end Android numbers found (UNVERIFIED).",
+   "bundleImpact": "UNVERIFIED (native runtime iOS 6.23.1 / Android 11.9.1 per npm metadata; expect several MB).",
+   "lineDrawAnimation": "Author trim-path animations in the editor; drive them by state machine inputs or data binding numbers (C46). Not code-defined.",
+   "gaugesAndFills": "Excellent via data binding: expose a `progress` number ViewModel property and set it from JS with useRiveNumber; triggers with useRiveTrigger (C46).",
+   "hitTestingPerRegion": "Rive listeners (pointer events inside the .riv state machine) exist in Rive runtimes generally; whether the RN Nitro runtime forwards touch hit-areas per shape is UNVERIFIED — plan overlay Pressables as fallback.",
+   "textRendering": "Rive text runs / data-bound strings with embedded fonts (fonts free on all editor plans since 2025-10-20 blog, C45); no accessibility tree — keep critical text in RN.",
+   "learningCurve": "Medium-high: Rive editor + state machines + data binding + Nitro/dev-client toolchain.",
+   "effort": "M-L: design in Rive editor (paid seat to export), dev build setup, config plugin; every drawing change is an editor round-trip.",
+   "risks": [
+    "Dev client required (no Expo Go)",
+    "Editor exports require a paid plan (Cadet $9/seat/mo) since 2025-10-20; runtimes stay MIT (C45)",
+    "Runtime split: legacy package in maintenance, new package 0.4.x pre-1.0",
+    "Nitro peer range narrower than nitro latest",
+    "Android build requirements (compileSdk 36 / AGP 8.9.1+) documented only up to SDK 53-54",
+    "RN 0.86 support not stated"
+   ],
+   "bestFor": "If Fixly hires a motion designer and commits to a dev-client workflow; overkill for v1.",
+   "sources": [
+    "https://registry.npmjs.org/@rive-app/react-native",
+    "https://registry.npmjs.org/rive-react-native",
+    "https://raw.githubusercontent.com/rive-app/rive-nitro-react-native/main/README.md",
+    "https://raw.githubusercontent.com/rive-app/rive-react-native/main/README.md",
+    "https://rive.app/docs/runtimes/react-native",
+    "https://rive.app/docs/runtimes/react-native/adding-rive-to-expo",
+    "https://rive.app/blog/rive-s-new-9-mo-plan",
+    "https://rive.app/pricing",
+    "https://registry.npmjs.org/react-native-nitro-modules"
+   ]
+  },
+  {
+   "name": "5a. Real-time 3D: @react-three/fiber/native + three + expo-gl (+ @react-three/drei/native for useGLTF)",
+   "packages": [
+    "@react-three/fiber@9.7.0",
+    "three@0.185.1",
+    "expo-gl@~57.0.2 (bundled)",
+    "expo-asset@~57.0.16, expo-file-system@~57.0.6 (bundled)",
+    "@react-three/drei@10.7.8 (optional, /native entry exists)",
+    "NOT expo-three (8.0.0 from 2024-07-28 pins three ^0.166.0 — stale vs three 0.185.1)"
+   ],
+   "versionForExpo57": "R3F 9.7.0 (2026-07-31) peers: react >=19 <19.3 (19.2.3 OK), three >=0.156, react-native >=0.78 (optional), expo-gl >=11.0 (optional) (C48). expo-gl 57.0.2 bundled (C03). New Arch GLView re-render crash was fixed in R3F 9.1.3 (PR #3539 merged 2025-06-29) (C49). drei 10.7.8 peers fiber ^9, three >=0.159 (C51). expo-three 8.0.0 is stale (C54) — do not use.",
+   "expoGoCompatible": "YES for expo-gl (Included in Expo Go, C52); three/R3F are pure JS. So the stack runs in Expo Go.",
+   "needsDevClient": false,
+   "newArchOk": "Works since R3F 9.1.3 per the merged fix (C49); expo-gl 55.0.0 added RN 0.82 support and 56 bumped min iOS 16.4 (C53). Ongoing community reports exist; treat as 'works, less battle-tested' (UNVERIFIED breadth).",
+   "sharpness": "Rasterised per frame at GLView resolution; edges alias unless msaaSamples (iOS only) or post AA; thin technical lines in 3D look worse than 2D vector on a 1x/1.5x low-end display.",
+   "realismCeiling": "Highest interactive realism (PBR materials, lighting, exploded views) — but only with a good GLB per car body style; Fixly cannot afford per-model 3D assets, so a generic sedan/SUV/hatch trio is the realistic ceiling.",
+   "perfLowEndAndroid": "Weakest option. Historic reports: stutter on lower-end Android with expo-gl rAF (expo#12030, 2021, stale), ~half the frame rate of native Unity for the same scene (expo-three#258, 2022, open) (C55). No 2026 benchmark on low-end devices (UNVERIFIED). JS-thread render loop competes with React; worklet mode is experimental and Three.js cannot run inside worklets (C52). Expect 20-40 fps and thermal throttling on a 2-3 GB RAM phone in the sun.",
+   "bundleImpact": "three ~ hundreds of KB of JS (UNVERIFIED exact), GLB 1-10 MB per car plus decoders; expo-gl native already in Expo Go.",
+   "lineDrawAnimation": "Not natural: fake with animated dash materials, LineSegments2 with dash offset, or shader-driven reveal; effort high.",
+   "gaugesAndFills": "Do the gauge in 2D anyway (SVG/Skia). 3D gauges add nothing.",
+   "hitTestingPerRegion": "Raycast picking on meshes via R3F pointer events works cross-platform ('completely x-platform' events — C50); touch precision on small components is poor for a 45-year-old user with a dirty screen.",
+   "textRendering": "No DOM text; drei <Text> (troika) on native UNVERIFIED; use RN overlays anchored via projected coordinates.",
+   "learningCurve": "High (three.js, materials, lights, GLB pipeline, Metro asset config, simulator crashes on iOS — C50).",
+   "effort": "L-XL: asset production (Blender), material tuning for legibility, perf tuning, fallback UI for weak GPUs.",
+   "risks": [
+    "Low-end Android performance",
+    "Per-model asset cost; a generic car contradicts 'realistic' for the user's own 8-15-year-old car",
+    "Legibility outdoors (shading, thin lines)",
+    "Motion budget: any orbit/turntable exceeds 240 ms and is not a 'reveal'",
+    "iOS simulator EXC_BAD_ACCESS with OpenGL ES (test on device)",
+    "Ecosystem churn (expo-three stale; R3F v10 alpha in progress)"
+   ],
+   "bestFor": "Not v1. Possibly a marketing/hero moment later, or if Fixly pivots to a premium segment with modern phones.",
+   "sources": [
+    "https://registry.npmjs.org/@react-three%2Ffiber/latest",
+    "https://registry.npmjs.org/@react-three/fiber",
+    "https://github.com/pmndrs/react-three-fiber/pull/3539",
+    "https://github.com/pmndrs/react-three-fiber/issues/3399",
+    "https://r3f.docs.pmnd.rs/getting-started/installation",
+    "https://raw.githubusercontent.com/pmndrs/react-three-fiber/master/docs/getting-started/installation.mdx",
+    "https://registry.npmjs.org/@react-three/drei",
+    "https://unpkg.com/@react-three/drei@10.7.8/native/index.js",
+    "https://docs.expo.dev/versions/v57.0.0/sdk/gl-view/",
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo-gl/CHANGELOG.md",
+    "https://registry.npmjs.org/expo-three",
+    "https://registry.npmjs.org/three/latest",
+    "https://github.com/expo/expo/issues/12030",
+    "https://github.com/expo/expo-three/issues/258"
+   ]
+  },
+  {
+   "name": "5b. Pre-rendered 3D turntable / exploded-view frames via expo-image (cheap '3D')",
+   "packages": [
+    "expo-image@~57.0.4 (bundled, Included in Expo Go)",
+    "react-native-reanimated@4.5.1 (installed) for scrubbing",
+    "offline: Blender (a blender-mcp server is present in Victor's environment) to render frames; cwebp/sharp to encode WebP"
+   ],
+   "versionForExpo57": "expo-image 57.0.4 (2026-09-01) bundled (C03, C56). Supports WebP/AVIF/SVG, animated formats with `autoplay`, `transition`, memory-disk cache, `priority`, `recyclingKey` (C56).",
+   "expoGoCompatible": "YES (C56).",
+   "needsDevClient": false,
+   "newArchOk": "YES (expo-* packages support New Arch; SDK 57).",
+   "sharpness": "Raster: ship @2x/@3x frames or one 1080-px-wide frame set; sharp on low-end 1x-2x screens if rendered at >= 2x the display size; text must never be baked into frames.",
+   "realismCeiling": "Highest visual realism (ray-traced Blender render) with zero runtime cost; but not the user's exact car and not editable per component.",
+   "perfLowEndAndroid": "Excellent: decoding one WebP per frame via Glide; a 36-72 frame sequence at ~40-80 KB each = 3-6 MB disk (UNVERIFIED estimate). Scrub by swapping `source` on a shared value -> setState throttled to ~30 fps; prefetch all frames first (Image.prefetch).",
+   "bundleImpact": "Assets only (3-6 MB per car body style per sequence; keep 1-2 styles).",
+   "lineDrawAnimation": "Not possible at runtime; a pre-rendered 'x-ray reveal' sequence (opacity/emission animated in Blender) is possible but fixed.",
+   "gaugesAndFills": "Do in SVG/Skia on top.",
+   "hitTestingPerRegion": "Overlay Pressables with per-frame anchor tables (precomputed 2D projections of component centres for each frame index).",
+   "textRendering": "RN overlays only.",
+   "learningCurve": "Low in app; medium in Blender.",
+   "effort": "M for assets (modelling/sourcing a generic car, materials, 36-72 renders, exploded-view variant), S in app.",
+   "risks": [
+    "Generic car vs the user's real car ('realistic' cuts both ways)",
+    "Asset size and memory on 2 GB phones if too many frames/resolutions",
+    "Motion budget: a turntable is a decoration, not a reveal; keep it user-driven (drag) or skip"
+   ],
+   "bestFor": "If Victor wants a '3D' look for the vehicle hero without paying runtime costs; the component map still needs the 2D vector layer.",
+   "sources": [
+    "https://docs.expo.dev/versions/v57.0.0/sdk/image/",
+    "https://registry.npmjs.org/expo-image/latest",
+    "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json"
+   ]
+  },
+  {
+   "name": "6. expo-image static PNG/WebP/SVG layers (no-vector baseline)",
+   "packages": [
+    "expo-image@~57.0.4 (bundled)",
+    "react-native-reanimated@4.5.1 (installed) for opacity/transform of whole layers"
+   ],
+   "versionForExpo57": "expo-image 57.0.4 (C56). Renders SVG sources natively (SDWebImage/Glide); iOS decoder mishandles some elliptical-arc syntax — docs recommend react-native-svg for broad SVG coverage (C56).",
+   "expoGoCompatible": "YES.",
+   "needsDevClient": false,
+   "newArchOk": "YES.",
+   "sharpness": "PNG/WebP: only as sharp as the shipped density (needs 1x/2x/3x variants or oversized single asset). SVG source: rasterised at view size by the platform decoder — sharp, but with the iOS arc caveat.",
+   "realismCeiling": "Whatever a designer paints (can be photo-real), but static; per-state variants multiply assets (ok/warn/expired x zones).",
+   "perfLowEndAndroid": "Excellent (decoded bitmaps, GPU composited); layer opacity/transform animations on the UI thread.",
+   "bundleImpact": "Assets only.",
+   "lineDrawAnimation": "Not possible (only cross-dissolve/opacity/transform).",
+   "gaugesAndFills": "Not possible natively; needs SVG/Skia anyway.",
+   "hitTestingPerRegion": "Overlay Pressables on fixed anchors.",
+   "textRendering": "RN overlays.",
+   "learningCurve": "Lowest.",
+   "effort": "S in app, M in design per state.",
+   "risks": [
+    "State explosion of static assets",
+    "No draw-in reveal, weaker interaction story than the reference",
+    "Blurry at odd densities if not oversized"
+   ],
+   "bestFor": "Fallback for devices where the animated layer is disabled (reduce motion / very old phones): show the same drawing as a static image.",
+   "sources": [
+    "https://docs.expo.dev/versions/v57.0.0/sdk/image/",
+    "https://registry.npmjs.org/expo-image/latest"
+   ]
+  }
+ ],
+ "claims": [
+  {
+   "id": "C01",
+   "claim": "Expo SDK 57 (released 2026-06-30) upgrades React Native from 0.85 to 0.86; React stays at 19.2 (same as SDK 56).",
+   "source": "https://expo.dev/changelog/sdk-57"
+  },
+  {
+   "id": "C02",
+   "claim": "SDK 57 bumps react-native-reanimated 4.3->4.5, react-native-worklets 0.8->0.10, react-native-gesture-handler 2.31->2.32; Hermes V1 memory regression fixed in expo@57.0.9; dev startup regression fixed in expo@57.0.17.",
+   "source": "https://expo.dev/changelog/sdk-57"
+  },
+  {
+   "id": "C03",
+   "claim": "bundledNativeModules.json on the expo/expo sdk-57 branch pins: react-native-svg 15.15.4, @shopify/react-native-skia 2.6.2, lottie-react-native ~7.3.8, react-native-reanimated 4.5.1, react-native-worklets 0.10.1, react-native-gesture-handler ~2.32.0, expo-gl ~57.0.2, expo-image ~57.0.4, expo-asset ~57.0.16, expo-file-system ~57.0.6, react-native 0.86.3, react 19.2.3; three/expo-three/rive/@react-three/fiber are not present.",
+   "source": "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json"
+  },
+  {
+   "id": "C04",
+   "claim": "The Expo Go SDK 57 app (apps/expo-go/package.json on sdk-57) depends on @shopify/react-native-skia 2.6.2, lottie-react-native ^7.3.8, react-native-svg 15.15.4, react-native-reanimated 4.5.1, react-native-worklets 0.10.1, react-native-gesture-handler ~2.32.0, expo-gl and expo-image (workspace); no rive, no three.",
+   "source": "https://raw.githubusercontent.com/expo/expo/sdk-57/apps/expo-go/package.json"
+  },
+  {
+   "id": "C05",
+   "claim": "Expo docs v57 mark react-native-svg and @shopify/react-native-skia as 'Included in Expo Go' (Skia web needs CanvasKit setup).",
+   "source": "https://docs.expo.dev/versions/v57.0.0/sdk/svg/ and https://docs.expo.dev/versions/v57.0.0/sdk/skia/"
+  },
+  {
+   "id": "C06",
+   "claim": "'SDK 55 and later run entirely on the New Architecture. The New Architecture is always enabled and cannot be disabled.' and 'Expo Go only supports the New Architecture.'",
+   "source": "https://docs.expo.dev/guides/new-architecture/"
+  },
+  {
+   "id": "C07",
+   "claim": "'Reanimated 4 works only with the React Native New Architecture.'",
+   "source": "https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/"
+  },
+  {
+   "id": "C08",
+   "claim": "Reanimated 4.5.x is compatible with React Native 0.83-0.86 (not 0.87) and with react-native-worklets 0.10.x-0.11.x.",
+   "source": "https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/"
+  },
+  {
+   "id": "C09",
+   "claim": "Reanimated animates react-native-svg by wrapping components with Animated.createAnimatedComponent and driving attributes through useAnimatedProps; animatable props include cx, r, d, points, fill, stroke, strokeWidth, strokeDasharray, strokeDashoffset, opacity.",
+   "source": "https://docs.swmansion.com/react-native-reanimated/docs/guides/animating-svg/"
+  },
+  {
+   "id": "C10",
+   "claim": "'A Path morphs between two shapes when both use the same sequence of commands'; on Web mismatched structures snap; on Web Reanimated drives SVG through CSS so Polygon/Polyline points and Line endpoints need useAnimatedProps.",
+   "source": "https://docs.swmansion.com/react-native-reanimated/docs/guides/animating-svg/"
+  },
+  {
+   "id": "C11",
+   "claim": "react-native-svg supports touch events on individual elements: disabled, onPress, onPressIn, onPressOut, onLongPress, delayPressIn, delayPressOut, delayLongPress.",
+   "source": "https://github.com/software-mansion/react-native-svg/blob/main/USAGE.md"
+  },
+  {
+   "id": "C12",
+   "claim": "react-native-svg supports strokeDasharray/strokeDashoffset, Text/TSpan, and filters FeBlend, FeComposite, FeColorMatrix, FeDropShadow, FeFlood, FeGaussianBlur, FeMerge, FeOffset, with the caveat 'Not all filters have been implemented on native platforms yet. However, they do work on the Web.' CSS in <style> needs SvgCss/SvgCssUri.",
+   "source": "https://github.com/software-mansion/react-native-svg/blob/main/USAGE.md"
+  },
+  {
+   "id": "C13",
+   "claim": "Issue #2636 (open, labels 'Missing info'/'Missing repro'): FeGaussianBlur on Android barely blurs and plateaus around stdDeviation 15, unlike iOS (react-native-svg 15.8.0, RN 0.76.3, Fabric).",
+   "source": "https://github.com/software-mansion/react-native-svg/issues/2636"
+  },
+  {
+   "id": "C14",
+   "claim": "react-native-svg README: Fabric supported since version 13.0.0 for react-native 0.69.0+; 'The Expo client app comes with the native code installed'.",
+   "source": "https://raw.githubusercontent.com/software-mansion/react-native-svg/main/README.md"
+  },
+  {
+   "id": "C15",
+   "claim": "npm: react-native-svg 15.15.4 published 2026-03-18, 15.15.5 published 2026-05-11 (latest); peers react * / react-native *.",
+   "source": "https://registry.npmjs.org/react-native-svg"
+  },
+  {
+   "id": "C16",
+   "claim": "Software Mansion blog (2025-04-14) argues react-native-svg builds full React component trees that reconcile and re-render; it is worth it only when you need 'control over parts of your SVG (as long as you're using the components directly)'; alternatives: expo-image for static SVG, Lottie/Rive for animation, Skia for complex graphics.",
+   "source": "https://swmansion.com/blog/you-might-not-need-react-native-svg-b5c65646d01f"
+  },
+  {
+   "id": "C17",
+   "claim": "npm latest @shopify/react-native-skia is 2.11.2 (published 2026-09-01); peerDependencies react >=19.0, react-native >=0.78, react-native-reanimated >=4.0.0; 2.6.2 was published 2026-04-04; dist-tag next = 2.11.2-next.1.",
+   "source": "https://registry.npmjs.org/@shopify%2Freact-native-skia/latest and https://registry.npmjs.org/@shopify/react-native-skia"
+  },
+  {
+   "id": "C18",
+   "claim": "Skia installation docs: 'react-native@>=0.79 and react@>=19 are required'; 'react-native-reanimated@>=4.0.0 (with react-native-worklets@>=0.7.0) is required'; iOS 14+, Android API 21+ (26+ for video); for RN<=0.78/react<=18 use Skia 1.12.4.",
+   "source": "https://shopify.github.io/react-native-skia/docs/getting-started/installation/"
+  },
+  {
+   "id": "C19",
+   "claim": "Skia bundle size: ~6 MB iOS download (5.8 MB native + ~220 KB JS); Android release APK for all architectures +41.3 MB but ~4 MB download with App Bundles; web 2.9 MB gzipped CanvasKit.",
+   "source": "https://shopify.github.io/react-native-skia/docs/getting-started/bundle-size/"
+  },
+  {
+   "id": "C20",
+   "claim": "Skia <Path> has `start` and `end` props that trim the path, values in [0,1] (defaults 0 and 1), plus `stroke` options and fillType.",
+   "source": "https://shopify.github.io/react-native-skia/docs/shapes/path"
+  },
+  {
+   "id": "C21",
+   "claim": "Skia usePathInterpolation: 'Paths need to be interpolatable, meaning they must contain the same number and types of commands'; for incompatible paths the docs recommend flubber; usePathValue exists for efficient path animation.",
+   "source": "https://shopify.github.io/react-native-skia/docs/animations/hooks"
+  },
+  {
+   "id": "C22",
+   "claim": "'React Native Skia supports the direct usage of Reanimated's shared and derived values as properties. There is no need for functions like createAnimatedComponent or useAnimatedProps'; 'Starting version 2.10 and above, this integration requires Reanimated v4 or above.'",
+   "source": "https://shopify.github.io/react-native-skia/docs/animations/animations"
+  },
+  {
+   "id": "C23",
+   "claim": "Skia gestures docs: 'When integrating with reanimated, we recommend using react-native-gesture-handler' and 'To track each element, overlay an animated view on it, ensuring that the same transformations applied to the canvas element are mirrored on the animated view' — i.e. Skia does no per-element hit testing.",
+   "source": "https://shopify.github.io/react-native-skia/docs/animations/gestures"
+  },
+  {
+   "id": "C24",
+   "claim": "The SkPath interface exposes `contains(x: number, y: number): boolean` ('Returns true if the point (x, y) is contained by Path, taking into account FillType').",
+   "source": "https://raw.githubusercontent.com/Shopify/react-native-skia/main/packages/skia/src/skia/types/Path/Path.ts"
+  },
+  {
+   "id": "C25",
+   "claim": "Skia SVG module (ImageSVG/useSVG/Skia.SVG.MakeFromString): 'Text elements currently won't render and any external XML elements such as XLink or CSS won't render'; 'CSS styles included in SVG are not supported'; 'The RGBA color syntax is not supported'; absolute root dimensions ignore width/height; on Web CTM is not applied and fontMgr/resources are ignored.",
+   "source": "https://shopify.github.io/react-native-skia/docs/images-svg/"
+  },
+  {
+   "id": "C26",
+   "claim": "Skia Paragraph API: 'By default, the paragraph API will use the system fonts'; custom fonts via useFonts; on Web you must provide an emoji font; getPath()/extendedVisit() not on Web.",
+   "source": "https://shopify.github.io/react-native-skia/docs/text/paragraph"
+  },
+  {
+   "id": "C27",
+   "claim": "Skia Text requires a font object: useFont(require('./font.ttf'), size), or matchFont(fontStyle[, fontMgr]) which by default matches system fonts; system fonts via Skia.FontMgr.System(); listFontFamilies() lists available families.",
+   "source": "https://raw.githubusercontent.com/Shopify/react-native-skia/main/apps/docs/docs/text/text.md"
+  },
+  {
+   "id": "C28",
+   "claim": "Skia BlurMask props: blur (Gaussian sigma > 0), style normal|solid|outer|inner, respectCTM.",
+   "source": "https://shopify.github.io/react-native-skia/docs/mask-filters"
+  },
+  {
+   "id": "C29",
+   "claim": "Skia Shadow image filter (DropShadow equivalent): dx, dy, blur, color, inner, shadowOnly; docs note box shadows are faster for inner shadows on rounded rects.",
+   "source": "https://shopify.github.io/react-native-skia/docs/image-filters/shadows"
+  },
+  {
+   "id": "C30",
+   "claim": "Skia gradient shaders: LinearGradient, RadialGradient, TwoPointConicalGradient, SweepGradient.",
+   "source": "https://shopify.github.io/react-native-skia/docs/shaders/gradients"
+  },
+  {
+   "id": "C31",
+   "claim": "Skia README: 'Skia has two backends: Ganesh and Graphite. Ganesh is the default backend. Graphite is available as an experimental preview in the @next distribution channel'; 'Skia Graphite requires Android API Level 26 or above'. Canvas docs: on Android highBitDepth 'requires the Graphite backend; with the default OpenGL backend the canvas falls back to 8-bit' (i.e. default Android backend is OpenGL). Third-party (notjust.dev, 2024-06-17): OpenGL on Android, Metal on iOS.",
+   "source": "https://raw.githubusercontent.com/Shopify/react-native-skia/main/README.md ; https://shopify.github.io/react-native-skia/docs/canvas/overview/ ; https://www.notjust.dev/blog/react-native-skia-webgpu"
+  },
+  {
+   "id": "C32",
+   "claim": "Skia Canvas props include onSize (SharedValue<Size>), highBitDepth, and androidWarmup ('Draw the first frame directly on the Android compositor. Use it for static icons or fully opaque drawings'); makeImageSnapshot/makeImageSnapshotAsync exist.",
+   "source": "https://shopify.github.io/react-native-skia/docs/canvas/overview/"
+  },
+  {
+   "id": "C33",
+   "claim": "Skia issue #610 (opened 2022-06-17, closed) reported 'noticeable delay between component mount and when it actually renders anything', more pronounced on Android; referenced fixes in PRs #1027/#1788.",
+   "source": "https://github.com/Shopify/react-native-skia/issues/610"
+  },
+  {
+   "id": "C34",
+   "claim": "Skia Picture: 'A Picture contains a list of drawing operations to be drawn on a canvas. The picture is immutable' and 'can be used multiple times in any canvas' (record via Skia.PictureRecorder).",
+   "source": "https://shopify.github.io/react-native-skia/docs/shapes/pictures"
+  },
+  {
+   "id": "C35",
+   "claim": "lottie-react-native README: 'Requires React Native 0.84 or newer and the New Architecture. For older React Native versions, use lottie-react-native 7.3.x.' npm latest 7.5.0 (2026-08-22) peers react >=19.2, react-native >=0.84; license Apache-2.0; 7.4.0 (2026-08-05) introduced the RN 0.84 requirement.",
+   "source": "https://github.com/lottie-react-native/lottie-react-native/blob/master/README.md ; https://registry.npmjs.org/lottie-react-native ; https://github.com/lottie-react-native/lottie-react-native/releases"
+  },
+  {
+   "id": "C36",
+   "claim": "lottie-react-native 7.3.8 was published 2026-05-14 with peer react-native >=0.46 (no New Arch requirement).",
+   "source": "https://registry.npmjs.org/lottie-react-native"
+  },
+  {
+   "id": "C37",
+   "claim": "lottie-react-native runtime controls: renderMode HARDWARE|SOFTWARE|AUTOMATIC, cacheComposition (Android, default true), colorFilters (KeyPath -> hex), textFiltersAndroid, textFiltersIOS, progress (0-1), speed (negative reverses), imperative play/pause/reset.",
+   "source": "https://github.com/lottie-react-native/lottie-react-native/blob/master/docs/api.md"
+  },
+  {
+   "id": "C38",
+   "claim": "'Not all After Effects features are supported by Lottie.'",
+   "source": "https://github.com/lottie-react-native/lottie-react-native/blob/master/README.md"
+  },
+  {
+   "id": "C39",
+   "claim": "UNVERIFIED/NEGATIVE: docs.expo.dev returned HTTP 404 on 2026-09-02 for /versions/v57.0.0/sdk/lottie/, /versions/v57.0.0/sdk/lottie-react-native/, /versions/latest/sdk/lottie/ and /versions/v55.0.0/sdk/lottie/ — Expo Go inclusion of Lottie is verified only via the Expo Go package.json (C04).",
+   "source": "curl HEAD checks against docs.expo.dev on 2026-09-02"
+  },
+  {
+   "id": "C40",
+   "claim": "rive-react-native (legacy) latest 9.8.5 published 2026-07-17, MIT, not flagged deprecated on npm; README: 'The new Rive React Native runtime is now available. Built with Nitro' with a stated long-term 'full migration to the new package'.",
+   "source": "https://registry.npmjs.org/rive-react-native ; https://raw.githubusercontent.com/rive-app/rive-react-native/main/README.md"
+  },
+  {
+   "id": "C41",
+   "claim": "@rive-app/react-native latest 0.4.20 published 2026-08-19, MIT, peer react-native-nitro-modules '>=0.35.10 <0.36'; README requirements: React Native 0.78+, Expo SDK 53+, iOS 15.1+, Android SDK 24+, Nitro Modules 0.33.2+, Xcode 16.4+, JDK 17+.",
+   "source": "https://registry.npmjs.org/@rive-app/react-native ; https://raw.githubusercontent.com/rive-app/rive-nitro-react-native/main/README.md"
+  },
+  {
+   "id": "C42",
+   "claim": "react-native-nitro-modules latest is 0.37.1 (2026-08-27), outside @rive-app/react-native's peer range, so nitro must be pinned to 0.35.x.",
+   "source": "https://registry.npmjs.org/react-native-nitro-modules"
+  },
+  {
+   "id": "C43",
+   "claim": "Rive docs: 'Because this package contains custom native code, it's not compatible with Expo Go'; running in Expo Go yields 'requireNativeComponent: RiveReactNativeView was not found in the UIManager'.",
+   "source": "https://rive.app/docs/runtimes/react-native/adding-rive-to-expo"
+  },
+  {
+   "id": "C44",
+   "claim": "Rive Expo guide (legacy runtime) covers Expo SDK 52-54: on SDK 53 Android add expo-custom-agp 8.9.2 and expo-build-properties compileSdkVersion 36, then prebuild --clean; Rive Android SDK needs compileSdk 36 and AGP 8.9.1+. Guidance for SDK 57 is UNVERIFIED.",
+   "source": "https://rive.app/docs/runtimes/react-native/adding-rive-to-expo"
+  },
+  {
+   "id": "C45",
+   "claim": "Rive blog (2025-10-20): 'Runtimes remain open-source under MIT', 'No runtime fee', 'Exports now move to paid plans' — shipping a .riv into an app requires a paid plan (Cadet $9/seat/mo, Voyager $32, Enterprise $120); the Free editor is for learning.",
+   "source": "https://rive.app/blog/rive-s-new-9-mo-plan ; https://rive.app/pricing"
+  },
+  {
+   "id": "C46",
+   "claim": "Rive React Native new runtime data binding: useViewModelInstance, useRiveNumber, useRiveTrigger, dataBind prop on RiveView; state-machine inputs/text runs/events are described as legacy approaches.",
+   "source": "https://rive.app/docs/runtimes/react-native ; https://raw.githubusercontent.com/rive-app/rive-nitro-react-native/main/README.md"
+  },
+  {
+   "id": "C47",
+   "claim": "PARTIALLY VERIFIED: Nitro modules require the New Architecture and do not run in Expo Go (need a dev build). Stated in secondary sources (GeekyAnts/Nitro community guides); the nitro.margelo.com 'for-users' page fetched did not contain the sentence.",
+   "source": "https://geekyants.com/blog/building-high-performance-native-modules-for-react-native-with-nitro ; https://nitro.margelo.com/docs/for-users"
+  },
+  {
+   "id": "C48",
+   "claim": "@react-three/fiber latest 9.7.0 published 2026-07-31; peers react >=19 <19.3, react-dom >=19 <19.3 (optional), three >=0.156, react-native >=0.78 (optional), expo >=43.0 (optional), expo-gl >=11.0 (optional), expo-asset >=8.4 (optional), expo-file-system >=11.0 (optional).",
+   "source": "https://registry.npmjs.org/@react-three%2Ffiber/latest ; https://registry.npmjs.org/@react-three/fiber"
+  },
+  {
+   "id": "C49",
+   "claim": "R3F PR #3539 'fix(native) fix crash on rerendering GLView with new arch' was merged 2025-06-29 and 'Released in v9.1.3' (9.1.3 published 2025-06-29), closing issue #3399 (nothing rendered under Expo 52 New Arch on iOS).",
+   "source": "https://github.com/pmndrs/react-three-fiber/pull/3539 ; https://github.com/pmndrs/react-three-fiber/issues/3399"
+  },
+  {
+   "id": "C50",
+   "claim": "R3F docs: uses expo-gl and expo-asset under the hood; install `expo install expo-gl` + `three @react-three/fiber`; metro.config.js assetExts ['glb','gltf','png','jpg']; import from '@react-three/fiber/native' and '@react-three/drei/native' (useGLTF); 'iOS simulators often have incomplete or unreliable OpenGL ES support, which can cause EXC_BAD_ACCESS crashes'.",
+   "source": "https://r3f.docs.pmnd.rs/getting-started/installation ; https://raw.githubusercontent.com/pmndrs/react-three-fiber/master/docs/getting-started/installation.mdx"
+  },
+  {
+   "id": "C51",
+   "claim": "@react-three/drei latest 10.7.8 (2026-08-05), peers react ^19, three >=0.159, @react-three/fiber ^9.0.0; the file native/index.js exists in the published package (unpkg HTTP 200).",
+   "source": "https://registry.npmjs.org/@react-three/drei ; https://unpkg.com/@react-three/drei@10.7.8/native/index.js"
+  },
+  {
+   "id": "C52",
+   "claim": "expo-gl 57.0.2 (published 2026-07-15) is 'Included in Expo Go'; GLView has enableExperimentalWorkletSupport ('interacting with a gl object from code running on the Reanimated worklet thread') but 'Third-party libraries like Pixi.js or Three.js won't work inside the worklet'; msaaSamples is iOS; 'This API does not function as intended with remote debugging enabled'; several WebGL methods unimplemented.",
+   "source": "https://docs.expo.dev/versions/v57.0.0/sdk/gl-view/ ; https://registry.npmjs.org/expo-gl/latest"
+  },
+  {
+   "id": "C53",
+   "claim": "expo-gl CHANGELOG: 56.0.0 (2026-05-05) 'Bumped minimum iOS/tvOS version to 16.4, macOS to 13.4'; 55.0.0 (2026-01-21) 'Added support for React Native 0.82.x'; 57.x entries have no user-facing changes besides docs.",
+   "source": "https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo-gl/CHANGELOG.md"
+  },
+  {
+   "id": "C54",
+   "claim": "expo-three latest 8.0.0 was published 2024-07-28 with peer three ^0.166.0, while three latest is 0.185.1 (2026-07-01); expo-three marks loadObjAsync/loadTextureAsync/loadMtlAsync/loadDaeAsync deprecated and recommends loading with three.js modules directly.",
+   "source": "https://registry.npmjs.org/expo-three ; https://registry.npmjs.org/three/latest ; https://github.com/expo/expo-three"
+  },
+  {
+   "id": "C55",
+   "claim": "OLD EVIDENCE: expo/expo#12030 (2021-02-24, closed/stale) reported stuttery expo-gl rAF animations on lower-end Android vs smooth Chrome/PixiJS; expo/expo-three#258 (2022-04-27, open) reported 'about half the framerate' of a native Unity build for expo-three and Babylon RN. No 2026 low-end benchmark found (UNVERIFIED for current devices).",
+   "source": "https://github.com/expo/expo/issues/12030 ; https://github.com/expo/expo-three/issues/258"
+  },
+  {
+   "id": "C56",
+   "claim": "expo-image 57.0.4 (published 2026-09-01) is 'Included in Expo Go'; uses SDWebImage and Glide; supports WebP, AVIF, SVG and animated formats (autoplay prop), transition (e.g. cross-dissolve), contentFit, priority, recyclingKey, memory/disk cache with writeToCacheAsync/readFromCacheAsync (SDK 57); iOS SVG decoder mishandles elliptical arcs with packed flags — docs recommend react-native-svg for broader SVG coverage.",
+   "source": "https://docs.expo.dev/versions/v57.0.0/sdk/image/ ; https://registry.npmjs.org/expo-image/latest ; https://expo.dev/changelog/sdk-57"
+  },
+  {
+   "id": "C57",
+   "claim": "UNVERIFIED (negative): Spline documents code exports for React (web), Vanilla JS, Swift and Kotlin, and a web Runtime API; no official React Native runtime was found; the third-party 'react-native-spline' repo README only documents the web @splinetool/react-spline usage.",
+   "source": "https://docs.spline.design/doc/exporting-as-code/docDdDWmkQri ; https://github.com/franz-fletcher/react-native-spline/blob/main/README.md"
+  },
+  {
+   "id": "C58",
+   "claim": "Figma SVG export options: 'Include \"id\" attribute' (adds id from layer names), 'Outline text' (converts text to glyph paths, not editable), 'Simplify stroke' (converts inside/outside strokes to center strokes for SVG compatibility), 'Include bounding box', 'Ignore overlapping layers'.",
+   "source": "https://help.figma.com/hc/en-us/articles/13402894554519"
+  },
+  {
+   "id": "C59",
+   "claim": "Tooling versions: svgo 4.1.0 (2026-08-24); react-native-svg-transformer 1.5.3 (2026-01-25), peers react-native >=0.59, react-native-svg >=12; svg-path-properties 2.1.0 (path length in JS); flubber 0.4.2 (last published 2018-03-01, pure JS shape interpolation); vtracer (visioncortex) MIT raster-to-SVG with desktop app and Rust/Python/JS bindings.",
+   "source": "https://registry.npmjs.org/svgo/latest ; https://registry.npmjs.org/react-native-svg-transformer/latest ; https://registry.npmjs.org/svg-path-properties ; https://registry.npmjs.org/flubber ; https://github.com/visioncortex/vtracer"
+  },
+  {
+   "id": "C60",
+   "claim": "react-native-redash latest 18.1.5 (2026-01-21), peer react-native-reanimated >=2.0.0 — usable as a helper library but not required.",
+   "source": "https://registry.npmjs.org/react-native-redash"
+  },
+  {
+   "id": "C61",
+   "claim": "npm latest react-native-reanimated is 4.6.0 and react-native-worklets 0.12.1 (both 2026-09-02) but SDK 57 pins 4.5.1 / 0.10.1 and Expo Go carries those; do not upgrade beyond the SDK pin while using Expo Go.",
+   "source": "https://registry.npmjs.org/react-native-reanimated ; https://registry.npmjs.org/react-native-worklets ; https://raw.githubusercontent.com/expo/expo/sdk-57/apps/expo-go/package.json"
+  },
+  {
+   "id": "C62",
+   "claim": "UNVERIFIED: react-native-svg does not expose getTotalLength()/getPointAtLength() on native Path refs (USAGE.md has no mention; unauthenticated GitHub code search returned no result). Treat path length as a build-time precomputation (svg-path-properties) regardless.",
+   "source": "https://github.com/software-mansion/react-native-svg/blob/main/USAGE.md ; https://api.github.com/search/code?q=getTotalLength+repo:software-mansion/react-native-svg"
+  },
+  {
+   "id": "C63",
+   "claim": "Expo Go page lists 'SDK 57 (latest)' as supported (checked 2026-09-02); the SDK 57 changelog of 2026-06-30 had said the store release was 'still waiting on approval' with `eas go` as the interim path.",
+   "source": "https://expo.dev/go ; https://expo.dev/changelog/sdk-57"
+  }
+ ],
+ "assetPipeline": "GOAL: two sharp vector drawings that share one visual language and one id scheme: (A) top-down car 'zone map' (viewBox 0 0 240 400 to stay compatible with the current CarDiagram) and (B) engine-bay schematic seen from above with the hood open (viewBox 0 0 360 300 or similar), each with a named path per component that Fixly's manual data can talk about (motor/aceite, bujias, filtro_aire, refrigerante, correa_distribucion, caja_cambios/aceite_caja, frenos_del/tras, bateria, neumaticos, escape, suspension, luces).\n\nWAYS TO GET THE DRAWING (pick one; A is recommended):\nA) Hand-draw in Figma (or Illustrator/Inkscape) — 1-2 days for a competent illustrator. Style spec: 1.5-2 px center strokes at 1x (thicker than the reference video, which is designed for OLED indoors; Fixly's persona reads in the sun on a dirty screen), 2 stroke weights only (outline 2, detail 1.25), round joins/caps, no hairlines under 1 px, no gradients in the SVG (do gradients/glow at runtime), no <text> in the SVG (labels are RN Text), no CSS/<style>, no filters, no masks, no clipPath if avoidable, no transforms on groups (flatten). One layer group per component, named exactly with the id. Add a separate hidden 'hit' group with filled polygons per component, generously larger than the drawn part (target >= 56 px on a 360-px-wide phone, i.e. >= 37 viewBox units in a 240-wide viewBox). Export SVG with 'Include id attribute' ON (layer names become ids), 'Outline text' irrelevant (no text), 'Simplify stroke' ON (center strokes), and do NOT run 'Outline stroke' (a line-draw needs real strokes, not filled outlines) (C58).\nB) Trace from a photo: photograph the top of a common Peruvian ride-hailing car (Chevrolet Sail, Kia Rio, Hyundai Accent, Chery, Changan) and its engine bay, or use a Wikimedia Commons CC image; trace by hand in Figma with the pen tool (best), or auto-trace with vtracer (MIT, desktop app) / Illustrator Image Trace and then clean up (auto-trace gives closed fills, not clean strokes — expect to redraw 60%). Photo-realistic detail is the enemy here: the map must read at a glance.\nC) Generate with AI then vectorise: prompt an image model for 'clean technical line drawing, top view, white background, uniform stroke, no text, no shading' for the car and the engine bay, upscale, then vectorise (vtracer / Recraft-style vectoriser) and re-layer by component in Figma. Fast for a first mockup, but the output is one unstructured blob: you still have to split it into named component paths by hand, and the geometry is often wrong (mirrored parts, invented components). Good for the HTML prototype, not for the shipped asset unless cleaned.\nD) Stock vector: search 'car top view line drawing vector' / 'car engine bay schematic vector' on Vecteezy, Freepik, Shutterstock, Adobe Stock; check the licence covers app use (many free tiers require attribution or forbid app embedding — verify each item, UNVERIFIED). Same re-layering work as C. Never use OEM manuals' drawings (layout/art is copyrighted; only the interval facts are free — NEGOCIO.md).\n\nPREP AND CODEGEN (same for any origin):\n1) svgo 4.1.0 with a custom config: keep ids (cleanupIds: false), convertShapeToPath: true, convertPathData with floatPrecision 2 and absolute coordinates (so paths are stable for morphing/trim), removeUselessStrokeAndFill, removeDimensions, no removeViewBox, no mergePaths (one path per component), no CSS (no inlineStyles output).\n2) A Node script (scripts/svg-to-paths.ts) that parses the optimised SVG (svgson or a tiny XML parser) and emits mobile/src/assets/car/topdown.ts and enginebay.ts exporting a typed array: { id, zone, d, stroke?, fill?, strokeWidth, length (from svg-path-properties 2.1.0), anchor {x,y} (bbox centre or an explicit anchor circle placed by the illustrator with id anchor_<id>), hit: d (from the hit group) }. This file is the single source of truth for both renderers: react-native-svg maps it to <AnimatedPath> components; Skia maps it to <Path path={d} start end/> components; the HTML prototype reads the same JSON. Do NOT use react-native-svg-transformer/SvgXml for the map (they give one opaque component; you lose per-path handlers and animatedProps) — keep SvgXml only for static icons.\n3) Density and sharpness: strokes are in viewBox units; render the Svg at width = screen width - 2*Spacing, height by aspect; on 1x/1.5x low-end displays a 1.25-unit stroke at 240->360 scaling is ~1.9 px, acceptable; never scale the Svg with a transform (rasterises at the pre-scale size on some Android versions; UNVERIFIED but avoid).\n4) Layers, back to front: L0 body silhouette + glass (static, muted stroke #9aa3ad), L1 wheels/axles (static), L2 components (colour by status, animated reveal), L3 markers/dots (56 px hit), L4 RN Text labels and the tooltip card (outside the Svg). In Skia, L0-L1 become a Picture/offscreen texture drawn once; L2-L3 are live.\n5) QA checklist for the asset: opens in Figma with all ids; every id in the manual's component list has a path or is explicitly 'sin dibujo' (never invent a component the manual does not list); contrast of strokes vs #ffffff >= 4.5:1 for component strokes; no path longer than ~2,000 units (reveal time budget); no self-overlapping hit polygons; anchors inside the phone's safe area when labels are attached.\n6) For the pre-rendered 3D turntable variant (5b): model or buy a generic sedan (Sketchfab/CGTrader licence check, UNVERIFIED), Blender EEVEE, 36 frames at 10 degrees, 1080x810 px, white background, export WebP q80 via cwebp/sharp, plus a per-frame anchor JSON exported from Blender (world->screen projection of empties named per component) so overlay Pressables follow the rotation. Victor's environment has a Blender MCP server that can script this.",
+ "threeDAssessment": "Honest verdict: 3D is technically possible in this stack today but is the wrong tool for this persona and this data, and should not be in v1.\n\nFeasibility (verified): @react-three/fiber 9.7.0 supports React 19.2/RN >=0.78 and the New-Arch GLView crash was fixed in 9.1.3 (C48, C49); expo-gl 57.0.2 is in Expo Go (C52); drei ships a /native entry (C51); GLB loads via metro assetExts + useGLTF (C50). So a dev could show a spinning GLB car in Expo Go in a day. expo-three is stale (2024, three ^0.166 vs 0.185.1) — skip it (C54).\n\nWhy it is still the wrong tool: (1) Performance on the target phone. The only evidence on low-end Android is old and negative (stutter with expo-gl rAF; about half the frame rate of Unity — C55), the render loop lives on the JS thread and Three.js cannot run inside worklets (C52); there is no 2026 benchmark, so any promise of 60 fps on a 2-3 GB RAM Android in the sun is UNVERIFIED and likely false. Thermal throttling and battery matter for a driver who runs Fixly between rides. (2) Legibility. A shaded 3D car under sunlight on a dirty screen has lower effective contrast than a 2-px line drawing; the reference video's own diagnostic screen is a 2D line drawing, and it only rotates the phone mock-up for the Dribbble shot, not the car. (3) Information value is zero. Fixly has no telemetry; 3D cannot show anything the 2D map cannot (the manual says 'bujías cada 40,000 km', not 'cylinder 3 is hot'). (4) Asset economics. 'Realistic' for this user means 'looks like MY 2012 Kia Rio'. One generic GLB contradicts that, and per-model GLBs for Changan/Jetour/Chery/Geely/JAC are unaffordable; the engine bay differs per model even more. (5) Motion rules. Any orbit/turntable is decoration that exceeds 240 ms and is not a 'reveal'; the design system forbids exactly this. (6) Interaction. Tapping small 3D components with a finger on a dirty screen is worse than 56-px 2D hit polygons; hit testing via raycast is fine technically but the ergonomics are not. (7) Ecosystem risk: R3F v10 alphas in flight, expo-three unmaintained, iOS simulator crashes (C50).\n\nCheap '3D' alternatives that keep the budget: (a) Pre-rendered turntable/exploded-view WebP frames in expo-image (5b) if Victor wants a hero image — zero runtime risk, highest realism, but generic car, 3-6 MB of assets, and still no per-component information; (b) '2.5D' in Skia/SVG: an isometric or three-quarter line drawing with gradients, BlurMask glow and a drop shadow gives 80% of the perceived depth of the reference at 2D cost. Spline has no official RN runtime (web/Swift/Kotlin exports only; C57) — usable only inside a WebView, which is worse on every axis here. Rive is 2D vector, not 3D.\n\nIf 3D is ever revisited: gate it behind a real-device test on Victor's slowest target phone (frame time during 5 s of orbit, cold start of the GLView, battery/thermal after 2 minutes), ship it only as an optional hero on capable devices with the 2D map as the always-present source of truth, and budget the GLB pipeline (Blender, Draco/meshopt, <1.5 MB per body style).",
+ "recommendationDraft": "Recommendation for the 'detalle del auto' iteration (Expo SDK 57, RN 0.86.3, Reanimated 4.5.1, react-native-svg 15.15.4, New Arch, Expo Go):\n\nPHASE 1 (build now, zero new native code, works in Expo Go): react-native-svg + Reanimated 4.\n- Replace the SvgXml + absolute Pressables in mobile/src/ui/CarDiagram.tsx with codegen'd JSX <Path> components from a typed asset module (see assetPipeline). One <Path> per component id, an invisible filled hit polygon per zone with onPress (C11), 56 px effective target, and status expressed by word + bar + colour, never colour alone.\n- Reveal choreography (the one allowed exception to the 240 ms ceiling): when the user opens a zone, each component stroke draws in with strokeDasharray=[L,L] and strokeDashoffset L->0 via useAnimatedProps on Animated.createAnimatedComponent(Path) (C09), withTiming <= 240 ms per stroke, withDelay stagger 60 ms, total sequence capped at ~900 ms, 'Saltar' available, and AccessibilityInfo.isReduceMotionEnabled -> render final state instantly. Fade the header and scale the drawing 1.0->1.06 with transform+opacity only (Motion.cardArrive 200 ms, easing arrive). No pulsing markers; the passed/warn markers land once (opacity+scale, 160 ms).\n- Oil gauge: an SVG arc (Circle/Path with strokeDasharray) driven by one shared value = clamp(kmSinceLastChange/intervalKm, 0, 1) and the same for months; show the binding constraint 'lo que ocurra primero' as text: 'Te faltan 2,400 km o 35 días'. Never invent data: if the manual lacks an interval for the model, show 'Sin dato del manual para este modelo' and let the user set a custom interval.\n- Precompute path lengths and anchors at build time; keep all labels and the tooltip card as RN Text/Surface outside the Svg; memoize the static layers; only animated props change per frame.\n- Bundle impact 0, Expo Go OK, learning curve minimal. This is the version to put in front of drivers first.\n\nPHASE 2 (optional, after Phase 1 is validated, still Expo Go if pinned to 2.6.2): @shopify/react-native-skia for the engine-bay 'x-ray' scene where realism matters: Path start/end trim for the line-draw (C20), LinearGradient/RadialGradient fills, BlurMask glow on the highlighted component (C28), Shadow for depth (C29), static layers pre-recorded as a Picture (C34), androidWarmup for the static canvas (C32), Canvas mounted early behind a Skeleton to hide first-frame latency on Android (C33), hit test via one Gesture.Tap on the Canvas + path.contains() on the region polygons (C24) or overlay Animated.Views (C23), labels as RN Text. Cost: ~4 MB Android download, ~6 MB iOS (C19), and the Expo Go pin at 2.6.2 (C04). Decision gate before adopting: measure on the slowest real Android Victor can borrow — first-frame time of the Canvas, frame time during the reveal, and outdoor legibility side by side with the SVG version. If the SVG version already looks sharp enough (it will be equally sharp; Skia only adds glow/gradient realism), stop at Phase 1.\n\nNOT RECOMMENDED for this product/persona: Lottie (dynamic properties limited to colorFilters/text filters/progress; designer round-trip per change; no per-region hit testing — C37), Rive (dev client required, paid editor export, pre-1.0 Nitro runtime, RN 0.86 unverified — C41-C45), real-time 3D (see threeDAssessment). Pre-rendered turntable frames in expo-image are acceptable as an optional hero image later.\n\nFeasibility of the data story without telemetry: fully feasible. The map is a projection of two tables Fixly already has: the manual's interval table per component (km and months) and the user's odometer/service log. Each component's state is a pure function: remainingKm = intervalKm - (currentKm - lastDoneKm), remainingMonths likewise, status = expired if either <= 0, next if either < 10% of the interval (or < 1,000 km / 30 days), ok otherwise; confidence = 'manual' | 'estimado' when lastDone is unknown and inferred from the car's age, always labelled as such. The reference video's 'diagnostic progress bar' becomes 'Revisando 8 componentes según tu manual' and the component cards cycle through what is due; the tooltip fields become interval / last done / next due; 'Rescan' becomes 'Actualizar kilometraje'; 'Get to fix' becomes 'Agendar este servicio'.\n\nPortable, tool-agnostic spec for other agents: ship (1) the typed path asset module + JSON, (2) the pure status function with unit tests, (3) the reveal-choreography hook (SVG version), (4) the OilGauge component, (5) the Skia variant behind a feature flag, and (6) an HTML prototype using the same JSON and inline SVG with CSS stroke-dashoffset so Victor can test the choreography in a browser without tokens."
+}

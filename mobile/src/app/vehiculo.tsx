@@ -9,20 +9,22 @@ import { DetailHeader } from '@/ui/DetailHeader';
 import { HairlineRow } from '@/ui/HairlineRow';
 import { Screen } from '@/ui/Screen';
 import { Surface } from '@/ui/Surface';
+import { Switch } from '@/ui/Switch';
 import { Txt } from '@/ui/Txt';
 
 export default function Vehiculo() {
-  const { vehicle, updateMileage, reset } = useVehicle();
+  const { vehicle, profile, updateMileage, setUsage, reset } = useVehicle();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(vehicle?.mileage ?? ''));
 
-  if (!vehicle) return null;
+  if (!vehicle || !profile) return null;
 
   const facts: [string, string][] = [
     ['Marca', vehicle.brand],
     ['Modelo', vehicle.model],
     ['Año', String(vehicle.year)],
     ['Motor', vehicle.engine],
+    ['Caja', profile.transmission === 'MT' ? 'Manual' : profile.transmission === 'unknown' ? 'Sin dato' : 'Automática'],
     ['Color', vehicle.color],
     ['Combustible', vehicle.fuel],
   ];
@@ -32,6 +34,13 @@ export default function Vehiculo() {
     if (!Number.isNaN(km) && km > 0) updateMileage(km);
     setEditing(false);
   }
+
+  const usageRows: { key: keyof typeof profile.usage; label: string; hint: string }[] = [
+    { key: 'rideHailing', label: 'Manejo para aplicativo o taxi', hint: 'Aplica la tabla de uso intensivo del manual cuando existe.' },
+    { key: 'mostlyCity', label: 'Mayormente ciudad', hint: 'Tráfico y paradas frecuentes.' },
+    { key: 'dustyRoads', label: 'Calles de tierra o polvo', hint: 'Los filtros se tapan antes.' },
+    { key: 'shortTrips', label: 'Viajes cortos', hint: 'Menos de 8 km seguidos.' },
+  ];
 
   return (
     <Screen>
@@ -76,16 +85,44 @@ export default function Vehiculo() {
             style={styles.mileageInput}
           />
         ) : (
-          <Pressable onPress={() => { setDraft(String(vehicle.mileage)); setEditing(true); }}>
+          <Pressable
+            onPress={() => {
+              setDraft(String(vehicle.mileage));
+              setEditing(true);
+            }}>
             <Txt variant="bigNumber" tabularNums color={Colors.accent}>
               {formatKm(vehicle.mileage)}
             </Txt>
           </Pressable>
         )}
         <Txt variant="mono" color={Colors.textTertiary}>
-          Actualizado el {formatLongDate(vehicle.mileageUpdatedAt)}
+          Registrado el {formatLongDate(vehicle.mileageUpdatedAt)}
+        </Txt>
+        <Txt variant="bodySmall" color={Colors.textTertiary}>
+          Cada lectura se guarda; con ellas estimamos cuántos km manejas por día.
         </Txt>
       </Surface>
+
+      <View>
+        <Txt variant="label" color={Colors.textTertiary} style={styles.sectionLabel}>
+          Cómo usas tu auto
+        </Txt>
+        <Surface size="md" style={styles.card}>
+          {usageRows.map((row, index) => (
+            <HairlineRow key={row.key} last={index === usageRows.length - 1}>
+              <View style={styles.usageRow}>
+                <View style={styles.usageText}>
+                  <Txt variant="body">{row.label}</Txt>
+                  <Txt variant="bodySmall" color={Colors.textTertiary}>
+                    {row.hint}
+                  </Txt>
+                </View>
+                <Switch value={profile.usage[row.key]} onValueChange={(v) => setUsage({ ...profile.usage, [row.key]: v })} />
+              </View>
+            </HairlineRow>
+          ))}
+        </Surface>
+      </View>
 
       <Pressable
         onPress={() => {
@@ -129,5 +166,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: Colors.accent,
   },
+  sectionLabel: { marginBottom: 8 },
+  usageRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  usageText: { flex: 1, gap: 2 },
   changeVehicle: { textDecorationLine: 'underline', textAlign: 'center', marginTop: 12 },
 });

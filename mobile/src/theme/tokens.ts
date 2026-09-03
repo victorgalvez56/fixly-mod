@@ -43,6 +43,21 @@ export const StatusMeta = {
 export type StatusKey = keyof typeof StatusMeta;
 
 /**
+ * Component (maintenance) status vocabulary — separate from the document
+ * vocabulary above. `text` is the color used for the WORD on a soft chip:
+ * amber text goes darker (#b45309) so it survives sunlight on a cheap screen.
+ */
+export const ComponentStatusMeta = {
+  ok: { label: 'Al día', color: Colors.statusOk, soft: Colors.statusOkSoft, text: '#15803d' },
+  pronto: { label: 'Pronto', color: Colors.statusWarn, soft: Colors.statusWarnSoft, text: '#b45309' },
+  toca: { label: 'Toca ahora', color: Colors.statusWarn, soft: Colors.statusWarnSoft, text: '#b45309' },
+  vencido: { label: 'Vencido', color: Colors.statusExpired, soft: Colors.statusExpiredSoft, text: '#b91c1c' },
+  sin_datos: { label: 'Sin datos', color: Colors.textTertiary, soft: Colors.surfaceAlt, text: Colors.textSecondary },
+} as const;
+
+export type ComponentStatusKey = keyof typeof ComponentStatusMeta;
+
+/**
  * System fonts, not custom-loaded ones: the reference UI reads as a native
  * platform font (SF Pro / Roboto), and skipping custom font loading entirely
  * is a real Android cold-start win — no useFonts hook, no splash-screen hold.
@@ -55,13 +70,16 @@ export const Type = {
   buttonLabel: { fontSize: 16, lineHeight: 20, fontWeight: '600' as const },
   body: { fontSize: 15, lineHeight: 21, fontWeight: '400' as const },
   bodyBold: { fontSize: 15, lineHeight: 21, fontWeight: '600' as const },
-  bodySmall: { fontSize: 13, lineHeight: 18, fontWeight: '400' as const },
+  bodySmall: { fontSize: 14, lineHeight: 19, fontWeight: '400' as const },
   label: { fontSize: 11, lineHeight: 14, fontWeight: '600' as const, letterSpacing: 0.4, textTransform: 'uppercase' as const },
   mono: { fontSize: 13, lineHeight: 18, fontWeight: '500' as const },
   monoSmall: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },
 } as const;
 
 export type TypeRole = keyof typeof Type;
+
+/** Roles that always show digits meant to line up (km, prices, dates, counters): tabular by default. */
+export const TABULAR_ROLES = new Set<TypeRole>(['bigNumber', 'mono', 'monoSmall']);
 
 export const Spacing = {
   xs: 4,
