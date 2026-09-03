@@ -20,8 +20,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="servicio/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="historial/[year]" options={{ presentation: 'card' }} />
-          <Stack.Screen name="mapa" options={{ presentation: 'card' }} />
-          <Stack.Screen name="sistema/[zone]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="mapa" options={{ presentation: 'card', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="registrar" options={{ presentation: 'card', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="vehiculo" options={{ presentation: 'card' }} />
           <Stack.Screen name="avisos" options={{ presentation: 'card' }} />
         </Stack>

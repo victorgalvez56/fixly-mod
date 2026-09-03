@@ -1,0 +1,541 @@
+{
+ "timeline": [
+  {
+   "tSeconds": 0,
+   "frame": "f_001",
+   "screen": "Hero composition (presentation) + Home",
+   "whatHappens": "Static two-phone Dribbble composition on a #e6e6e6 backdrop. Back-left: dark phone with an onboarding page: 3-segment pager at top (first segment white), thin large white headline 'Smart health', subtitle 'you catch issues early and drive with confidence', faint top-down car line drawing in dark gray below. Front-right: light Home screen: circular avatar photo (man sitting in front of a car), bell and gear circular white buttons top-right, Mercedes star icon + 'Mercedes AMG' (semibold ~20pt), 'EQE SUV 2025' (gray), green dot + 'Updated' chip at right, hero photograph of a white EQE SUV (front three-quarter), pagination pill with 2 dots (black active, gray), stat tiles: left tall tile 'Battery level' [battery icon] '83 %' (display numeral ~34pt, unit small gray) with '1h 23m' at right and a '0%' … '100%' segmented bar (15 bars, ~13 green, rest light gray); right column 'Est. range' [icon] '248 mi' and 'Temperature' [thermometer icon] '24.2 °C'; bottom: 'Recent alerts' label with 'View All' link. iOS status bar 9:41 on both phones."
+  },
+  {
+   "tSeconds": 0.4,
+   "frame": "dense sheet A tiles 1-4 (/private/tmp/claude-501/-Users-victorgalvez-Documents-me-fixly-mod--claude-worktrees-car-maintenance-details-ui-8f777d/644b70dc-4f3b-4985-890f-138bfa5ef113/scratchpad/dense/A_home_to_diag_0.4-1.6s_10fps.png)",
+   "screen": "Home (camera move)",
+   "whatHappens": "0.4-0.7 s: the virtual camera zooms into the light Home phone; the dark onboarding phone slides out of frame to the left ('Smart heal' -> 'Smart h' -> 'S' -> gone). No tap is visible on the Home screen; nothing in the Home UI changes."
+  },
+  {
+   "tSeconds": 0.5,
+   "frame": "f_002",
+   "screen": "Home (zoomed)",
+   "whatHappens": "Home phone fills the frame (avatar, Mercedes AMG / EQE SUV 2025, Updated chip, car photo, pagination dots, Battery level 83 % 1h 23m, Est. range 248 mi, Temperature 24.2 °C cut at bottom). A SECOND phone's top edge ('9:41' + Dynamic Island) is already peeking in at the bottom-center of the frame: the Diagnostic phone is rising from below while the Home phone is still fully visible."
+  },
+  {
+   "tSeconds": 0.8,
+   "frame": "dense sheet A tiles 5-12",
+   "screen": "Home -> Diagnostic (presentation transition)",
+   "whatHappens": "0.75-1.5 s: the Home phone disappears (cut/fade) and a smaller phone showing the Diagnostic screen rises from below the frame, decelerating (ease-out) and growing slightly, settling at center by ~1.5 s. Equivalent in-app reading: a bottom-sheet/modal presentation, ~700 ms; it is not a push. The cursor (white translucent circle) is already parked at the left of the car name when the phone arrives."
+  },
+  {
+   "tSeconds": 1,
+   "frame": "f_003",
+   "screen": "Diagnostic (still rising)",
+   "whatHappens": "Phone ~40 px lower than its final position (title 'Diagnostic' at y=152 vs 110 later). Screen content: back circle button (◂) top-left, 'Diagnostic' centered semibold, more circle button (•••) top-right; top-down technical line drawing of the car (front/hood at TOP), thin gray strokes on #f2f2f2, single 8 pt orange dot on the hood about one third down from the grille, centered; 'Mercedes AMG' semibold + 'EQE SUV 2025' gray under the car; white cursor circle at left of the name; four equal white square chips: [battery icon] 'Battery', [≋ waves icon] 'HVAC' with an orange dot at its top-right corner, [steering-wheel icon] 'Drive Unit', [lightning icon] 'Electronics'; home indicator bar."
+  },
+  {
+   "tSeconds": 1.5,
+   "frame": "f_004",
+   "screen": "Diagnostic (settled)",
+   "whatHappens": "Phone settled. Cursor at (352,433) over the left of 'Mercedes AMG'. No UI change. Car drawing spans ~47% of screen width (98 of 209 px in the 800-px frame), ~245 px tall, vertically centered between header and name."
+  },
+  {
+   "tSeconds": 2,
+   "frame": "f_005",
+   "screen": "Diagnostic",
+   "whatHappens": "Cursor has moved down-right and sits over the 'HVAC' chip (373,470). No pressed style visible on the chip beyond the cursor overlay."
+  },
+  {
+   "tSeconds": 2.5,
+   "frame": "f_006",
+   "screen": "Diagnostic",
+   "whatHappens": "Cursor still on the HVAC chip (373,473). Hold. (Dense sheet B tiles 1-6, 2.4-2.9 s: nothing changes; total hover on the chip before the tap ≈ 0.9 s.)"
+  },
+  {
+   "tSeconds": 2.9,
+   "frame": "dense sheet B tile 6-7 (/private/tmp/claude-501/-Users-victorgalvez-Documents-me-fixly-mod--claude-worktrees-car-maintenance-details-ui-8f777d/644b70dc-4f3b-4985-890f-138bfa5ef113/scratchpad/dense/B_tap_to_scan_2.4-3.8s_10fps.png)",
+   "screen": "Diagnostic -> Scan (tap registered)",
+   "whatHappens": "TAP on HVAC. First visible reaction at ~2.9-3.0 s: the four chips and the header (back, 'Diagnostic', more) begin to fade; the car name drifts down a few px; the car drawing has not yet scaled."
+  },
+  {
+   "tSeconds": 3,
+   "frame": "f_007",
+   "screen": "Diagnostic -> Scan (mid-transition)",
+   "whatHappens": "Header gone (only a faint ghost). Car drawing scaled up (spans y 165-455 vs 145-390) and fading/blurring as it grows; chips gone; a ghosted card 'Cabin HVAC unit / Airflow, temperature control, and filt…' fades in at the top with a faint '0%' at top-right; a faint tooltip shell appears at the right of the car; 'Mercedes AMG / EQE SUV 2025' at ~40% opacity, cursor now a small circle over the name. Dense sheet B tiles 8-10 (3.1-3.3 s): scale completes to ~1.9x with the hood region anchored ~30% from the top (rear of the car pushed off-screen under the bottom pill); card reaches full opacity; progress track + '0%' visible; bottom pill (replay ↻, dark pause ●, more •••) fades in; second card peeking under the first (stack)."
+  },
+  {
+   "tSeconds": 3.5,
+   "frame": "f_008",
+   "screen": "Scan (HVAC) 2%",
+   "whatHappens": "Progress bar at top: 4 pt light-gray track split into two segments (gap at ~82% of its length), green fill ≈2%, label '2%' right. Card stack: 'Cabin HVAC unit / Airflow, temperature control, and filt…' [fan icon tile] on top, a second card ghosted beneath. Car at 1.9x, hood top at y≈205, rear cut off. Schematic layer appears FAINT (~15% opacity) over the wireframe: radiator (wide finned rectangle under the hood), heat-pump block behind it on the centerline, small cylindrical reservoir lower-left, pipes: left loop light pink/red, right loop light blue-gray, both running down the center tunnel toward the rear with two small coupler blocks. Orange hood dot persists (now just under the radiator). Tooltip card at right: 'Heat pump' / 'COP:' (value empty) / '…'. Bottom pill: replay, dark pause circle, more."
+  },
+  {
+   "tSeconds": 4,
+   "frame": "f_009",
+   "screen": "Scan 15%",
+   "whatHappens": "Fill ≈15%. Same card. Schematic a little darker (~35%). Tooltip still 'COP:' empty. Nothing else."
+  },
+  {
+   "tSeconds": 4.5,
+   "frame": "f_010",
+   "screen": "Scan 38% (card 1 -> card 2)",
+   "whatHappens": "Card carousel mid-transition: 'Cabin HVAC unit' sliding up + fading out, 'Coolant reservoir / Coolant level and pressure are nomi…' [❄ icon] rising into place (both ~50%). Schematic now dark gray, fully legible (radiator fins, compressor block with bolts, reservoir, valves, couplers), pipes still NEUTRAL dark gray (no red/blue yet). White marker pins (white ~30 pt circle, soft shadow, small gray center dot) pop in on: radiator center, left T-valve, heat-pump center, reservoir, lower valve (stagger ~100 ms, dense sheet E). Tooltip fields fill: 'COP: 4.2' then 'CT: •71°C' (orange dot before 71°C) fading in; '…' row below."
+  },
+  {
+   "tSeconds": 5,
+   "frame": "f_011",
+   "screen": "Scan 55%",
+   "whatHappens": "Card 'Coolant reservoir' on top; next card ghosted ('Operating 8°C above the baseline fo…'). Fill ≈55%. Schematic full dark gray; 5 white markers; tooltip 'Heat pump / COP: 4.2 / CT: •71°C / …' with hairline separators between rows. Cursor not visible."
+  },
+  {
+   "tSeconds": 5.5,
+   "frame": "f_012",
+   "screen": "Scan 66%",
+   "whatHappens": "Hold. Fill ≈66%. No visual change other than the bar."
+  },
+  {
+   "tSeconds": 6,
+   "frame": "f_013",
+   "screen": "Scan 73% (card 2 -> card 3, status resolves)",
+   "whatHappens": "Card 3 'Heat pump running warm / Operating 8°C above the baseline fo…' [thermometer icon] arrives (card 2 ghost above it). Simultaneously (~300 ms): radiator gets a translucent GREEN fill and its marker turns green-centered; reservoir cylinder tints green, marker green; the small valve under the heat pump gets an ORANGE marker (larger, white ring); heat-pump and left-valve markers stay white; pipes take color: left loop RED (#a83c3c), right loop DARK BLUE-GRAY (#4b5b6f), including the two runs down the tunnel. Tooltip gains a third row 'RP: Optimal' (fades in), '…' below. Orange hood dot still there."
+  },
+  {
+   "tSeconds": 6.5,
+   "frame": "f_014",
+   "screen": "Scan 77%",
+   "whatHappens": "Fill ≈77%. Cursor reappears as a large soft white circle at the bottom-center of the car drawing (383,447), heading toward the pill."
+  },
+  {
+   "tSeconds": 7,
+   "frame": "f_015",
+   "screen": "Scan 79%",
+   "whatHappens": "Cursor over the dark pause button (398,490). Fill ≈79%."
+  },
+  {
+   "tSeconds": 7.5,
+   "frame": "f_016",
+   "screen": "Scan 80% (complete)",
+   "whatHappens": "Fill reaches the track split exactly at '80%' and stops. The center pill button now renders WHITE/light (either pressed state or the white cursor covering it); replay and more icons unchanged. Reading A: the cursor tapped the center button at ~7.3 s to finish/continue. Reading B: auto-advance ~0.7 s after completion, cursor merely parked. Both consistent with the frames."
+  },
+  {
+   "tSeconds": 8,
+   "frame": "f_017 (+ dense sheet C tiles 8-10, /private/tmp/claude-501/-Users-victorgalvez-Documents-me-fixly-mod--claude-worktrees-car-maintenance-details-ui-8f777d/644b70dc-4f3b-4985-890f-138bfa5ef113/scratchpad/dense/C_scan_to_detail_7.4-8.8s_10fps.png)",
+   "screen": "Scan -> Climate (EV) results (transition start)",
+   "whatHappens": "8.0-8.1 s: bottom pill fades out (~150 ms). 8.1-8.3 s: a header fades in at the top ('Climate (EV)' + 'Today, 08:14' + back/more circles) and everything below (progress bar, card) shifts DOWN ~10% of screen height to make room (~300 ms ease-out). Schematic still fully visible. A ghost of the black 'Get to fix' button appears at the bottom at low opacity."
+  },
+  {
+   "tSeconds": 8.3,
+   "frame": "dense sheet C tiles 10-14",
+   "screen": "Scan -> results (card expansion + list stagger)",
+   "whatHappens": "8.2-8.5 s: the compact card 'Heat pump running warm' GROWS in height into the verdict card; its icon/title/subtitle crossfade into the expanded layout (orange warning triangle top-left, title left-aligned below it, body text, recommendation line). 8.3-8.8 s: 'Components status' label, then rows 'Coolant reservoir', 'Heat pump running warm', 'Cabin HVAC unit' fade in top-to-bottom with ~100 ms stagger, each ~300 ms with a ~12 px rise; '↻ Rescan' and the black 'Get to fix' CTA fade to full by ~8.5 s. Underneath, the car + schematic fade out over ~500 ms (8.3-8.8 s), a faint ghost remains under the list until ~8.9 s."
+  },
+  {
+   "tSeconds": 8.5,
+   "frame": "f_018",
+   "screen": "Climate (EV) results (settling)",
+   "whatHappens": "Header: back, 'Climate (EV)', 'Today, 08:14', more. Progress bar 80% (same track, fill at the split). Verdict card: orange triangle icon; 'Heat pump running warm'; 'Operating 8°C above the baseline for this model. Performance is unaffected now, but monitoring is recommended.'; blank line; 'Consider a service check within 30 days.' Section 'Components status'. Rows: [❄] 'Coolant reservoir' / 'Optimal level, ELR 16'; [thermometer] 'Heat pump running warm' / 'Operating 8°C above the baseline fo…' with a 6 pt orange dot at the card's top-right; [fan] 'Cabin HVAC unit' / '28°C · Optimal' still at ~60% opacity. Ghost of the schematic visible behind the list. '↻ Rescan' text link. Black full-width 'Get to fix' pill with wrench icon."
+  },
+  {
+   "tSeconds": 9,
+   "frame": "f_019",
+   "screen": "Climate (EV) results (settled)",
+   "whatHappens": "All rows opaque; a 4th row's top edge peeks below 'Cabin HVAC unit' (clipped). Rescan + Get to fix. Hold begins."
+  },
+  {
+   "tSeconds": 9.5,
+   "frame": "f_020",
+   "screen": "Climate (EV) results",
+   "whatHappens": "Static hold. Identical to f_019."
+  },
+  {
+   "tSeconds": 10,
+   "frame": "f_021 (+ dense sheet D, /private/tmp/claude-501/-Users-victorgalvez-Documents-me-fixly-mod--claude-worktrees-car-maintenance-details-ui-8f777d/644b70dc-4f3b-4985-890f-138bfa5ef113/scratchpad/dense/D_detail_to_end_9.8-11.0s_10fps.png)",
+   "screen": "Results exit (presentation)",
+   "whatHappens": "Phone has shifted up ~45 px and begins sliding out of the top of the frame while fading (~10.0-10.4 s). During the exit the content shows a double exposure: the compact scan card layout ghosts over the top of the verdict card, and a 4th list row 'Front motor coolant loop / Normal' fades in below 'Cabin HVAC unit' (partly hidden behind 'Rescan'). Reads as the enter-transition played in reverse plus a list scroll, blended with the phone's exit. No 3D rotation is visible at 10 fps."
+  },
+  {
+   "tSeconds": 10.5,
+   "frame": "f_022",
+   "screen": "Home (zoomed, presentation loop)",
+   "whatHappens": "A Home-screen phone (identical to f_002, no peeking phone) has risen from the bottom and sits large in frame: avatar, Mercedes AMG / EQE SUV 2025, Updated, car photo, dots, Battery level 83 % 1h 23m + bar, Est. range 248 mi, Temperature 24.2 °C."
+  },
+  {
+   "tSeconds": 11,
+   "frame": "f_023",
+   "screen": "Hero composition",
+   "whatHappens": "Camera has pulled back: two-phone hero again (dark 'Smart hea…' onboarding phone at left still sliding into place, Home phone at right showing 'Recent alerts / View All' at the bottom)."
+  },
+  {
+   "tSeconds": 11.5,
+   "frame": "f_024",
+   "screen": "Hero composition",
+   "whatHappens": "Composition fully settled: identical to f_001 ('Smart health' complete)."
+  },
+  {
+   "tSeconds": 12,
+   "frame": "f_025",
+   "screen": "Hero composition",
+   "whatHappens": "Static hold, identical to f_001."
+  },
+  {
+   "tSeconds": 12.5,
+   "frame": "f_026",
+   "screen": "Hero composition",
+   "whatHappens": "Static hold, identical to f_001. Video ends at 13.0 s and loops seamlessly to f_001."
+  }
+ ],
+ "screens": [
+  {
+   "name": "Onboarding 'Smart health' (dark phone, presentation only)",
+   "purpose": "Marketing framing in the hero composition; never interacted with.",
+   "layoutTopToBottom": [
+    "iOS status bar 9:41",
+    "3-segment pager (first white, others gray)",
+    "Headline 'Smart health' (thin, ~34pt, white)",
+    "Subtitle 'you catch issues early and drive with confidence' (gray, 13pt)",
+    "Faint top-down car line drawing in dark gray, hood up, bleeding off the bottom"
+   ],
+   "visualTreatment": "Near-black background (#1c1c1c), white thin display type, the same car wireframe as Diagnostic rendered in ~#3a3a3a strokes."
+  },
+  {
+   "name": "Home",
+   "purpose": "Vehicle overview with live stats and alerts entry point.",
+   "layoutTopToBottom": [
+    "Status bar 9:41",
+    "Row: circular avatar photo (left) | bell circle button, gear circle button (right)",
+    "Mercedes star icon + 'Mercedes AMG' (semibold ~20pt) | right: green dot + 'Updated' chip",
+    "'EQE SUV 2025' (gray 13pt)",
+    "Hero photograph of the white EQE SUV (front three-quarter), no card, on the page background",
+    "Pagination pill: 2 dots (black active, gray inactive)",
+    "Stat tiles: left tall white tile 'Battery level' [battery icon]: '83 %' (34pt numeral, small gray unit) with '1h 23m' right; '0%' … '100%' labels; 15-segment bar, ~13 green segments",
+    "Right column: 'Est. range' [icon] '248 mi'; 'Temperature' [thermometer] '24.2 °C'",
+    "'Recent alerts' section label | 'View All' link"
+   ],
+   "visualTreatment": "#f2f2f2 page, white tiles radius ~20pt with no visible border/shadow, geometric rounded sans, numerals large and dark, units and labels gray, green only in the battery bar and the Updated dot."
+  },
+  {
+   "name": "Diagnostic (map)",
+   "purpose": "Choose a vehicle system; see where the alert is on a top-down drawing.",
+   "layoutTopToBottom": [
+    "Status bar",
+    "Header: back circle (◂) | 'Diagnostic' (semibold 17pt) | more circle (•••)",
+    "Top-down orthographic car line drawing, hood at top, ~47% screen width, ~60% screen height; one 8pt orange dot on the hood (centered, ~1/3 down)",
+    "'Mercedes AMG' (semibold 17pt) / 'EQE SUV 2025' (gray 13pt) centered",
+    "Row of 4 equal white square chips (~86pt): [battery] 'Battery' | [≋] 'HVAC' + orange dot top-right | [steering wheel] 'Drive Unit' | [lightning] 'Electronics'",
+    "Home indicator"
+   ],
+   "visualTreatment": "Very thin (~0.5-1pt) mid-gray (#9e9e9e) strokes on #f2f2f2; detailed tracing (grille slats, star, panoramic roof, mirrors, door seams, tire hatching, plate). Chips white, radius ~14pt, gray line icons, 12pt labels. Status shown only by the orange dots (map + chip)."
+  },
+  {
+   "name": "Scan (HVAC focus, transient animated state)",
+   "purpose": "Immersive progressive reveal of the chosen subsystem while checks 'run'; narrates each component and lands on a health index.",
+   "layoutTopToBottom": [
+    "Status bar",
+    "Progress bar: 4pt track split into two segments (split at ~82% of width), green fill, percentage label (11pt gray) right-aligned, 0% -> 80%",
+    "Stacked card carousel (one card + next card peeking ghosted beneath): [icon tile] title (15pt semibold) / one-line gray subtitle truncated with ellipsis. Sequence: 'Cabin HVAC unit / Airflow, temperature control, and filt…' -> 'Coolant reservoir / Coolant level and pressure are nomi…' -> 'Heat pump running warm / Operating 8°C above the baseline fo…'",
+    "Car drawing zoomed ~1.9x, hood region anchored ~30% from top, rear off-screen; orange hood dot persists",
+    "Schematic overlay on the wireframe: radiator (finned rectangle, end tanks, two ports), heat-pump/compressor block (bolts, pulley), cylindrical reservoir with cap, T-valve, small valve/sensor, expansion element, connector under windshield, two coupler blocks along the tunnel; pipes as rounded orthogonal polylines: left loop red, right loop dark blue-gray (neutral gray until status resolves)",
+    "5 marker pins (white 30pt circles, soft shadow, 10pt center dot: gray -> green/orange)",
+    "Floating tooltip card at right over the mirror/windshield: 'Heat pump' / 'COP: 4.2' / 'CT: •71°C' / 'RP: Optimal' / '…' (label gray left, value dark right, hairline separators)",
+    "Bottom media pill (white, ~64pt): replay ↻ | dark 48-56pt circle with pause ‖ | more •••",
+    "Home indicator"
+   ],
+   "visualTreatment": "Same light page; base wireframe stays light gray while the subsystem is ~2pt dark gray (#4a4a4a) then colored; passed components get a ~35% green tint over their silhouette; the warm component gets an orange marker; everything layered with translucency (cards ~95% white, ghosts 20-40%)."
+  },
+  {
+   "name": "Climate (EV) results (verdict + list)",
+   "purpose": "Static report after the reveal: what is wrong, why, what to do, when; per-component status; actions.",
+   "layoutTopToBottom": [
+    "Status bar",
+    "Header: back circle | 'Climate (EV)' (semibold 17pt) + 'Today, 08:14' (gray 12pt) | more circle",
+    "Progress bar frozen at 80% (now read as health index)",
+    "Verdict card (white, radius 20pt): orange warning-triangle icon; 'Heat pump running warm' (semibold 16pt); body gray 14pt 'Operating 8°C above the baseline for this model. Performance is unaffected now, but monitoring is recommended.'; blank line; 'Consider a service check within 30 days.'",
+    "Section label 'Components status' (15pt dark gray)",
+    "Rows (white cards ~75pt, radius 14pt, icon tile 44pt): [❄] 'Coolant reservoir' / 'Optimal level, ELR 16'; [thermometer] 'Heat pump running warm' / 'Operating 8°C above the baseline fo…' + 6pt orange dot top-right; [fan] 'Cabin HVAC unit' / '28°C · Optimal'; (4th, clipped/peeking) 'Front motor coolant loop' / 'Normal'",
+    "'↻ Rescan' centered text link (15pt)",
+    "Primary CTA: full-width black pill ~50-56pt, wrench icon + 'Get to fix' (white 15pt)",
+    "Home indicator"
+   ],
+   "visualTreatment": "Same tokens as Home; only accents are the green bar, the orange triangle/dot; the list scrolls under the fixed Rescan/CTA footer."
+  }
+ ],
+ "interactionPattern": "OVERVIEW (vehicle identity + a few headline numbers + freshness chip) -> MAP (one neutral technical top-down drawing of the vehicle with at most one attention dot placed on the affected region, plus a horizontal row of N system selectors, the affected one badged) -> FOCUS A SYSTEM (single tap on a selector; the map's chrome fades, the drawing zooms ~1.9x with the transform origin on that system's region so the rest of the car leaves the screen, and a HUD fades in: progress bar with % label, a narrating card stack, an empty key/value tooltip anchored to the region, and a control pill) -> PROGRESSIVE REVEAL in 3 synchronized beats of ~1.3 s (beat 1: the subsystem overlay ramps from ~15% to 100% opacity while card 1 names the subsystem; beat 2: marker pins pop on each component with ~100 ms stagger and the tooltip fills field by field while card 2 names the next component; beat 3: status resolves at once — passed silhouettes tint green with green markers, the problem component gets an orange marker, pipes take their semantic colors, the last tooltip field appears — while card 3 states the finding) with an eased progress bar that decelerates and lands on a health index at a notch in the track -> VERDICT + LIST (the reveal collapses in ~900 ms: header slides in from the top pushing content down, the narrating card grows into a verdict card [icon, title, explanation, recommendation with a time window], per-component rows stagger in beneath a section label, a secondary refresh link and one primary CTA appear, the drawing fades out under the list). Reversible: back returns to the map; refresh replays the reveal. The pattern is data-agnostic: any system -> any ordered list of components -> any per-component status + one finding + one action.",
+ "choreography": [
+  {
+   "step": "Home -> Diagnostic (presentation): second phone rises from below the frame and settles",
+   "approxDurationMs": 750,
+   "technique": "translateY from +100% to 0 with ease-out and a ~5% scale-up; Home phone cut away. In-app equivalent: bottom-sheet/modal present.",
+   "whatItCommunicates": "Diagnostic is a separate mode layered over the overview."
+  },
+  {
+   "step": "Hover/hold cursor on HVAC chip before tap",
+   "approxDurationMs": 900,
+   "technique": "none (Dribbble cursor only); no pressed style on the chip",
+   "whatItCommunicates": "Draws the viewer's eye to the badged chip."
+  },
+  {
+   "step": "Tap HVAC: header, car name and the 4 chips fade out",
+   "approxDurationMs": 300,
+   "technique": "opacity 1 -> 0 (chips also drop ~6 px); starts ~2.9 s",
+   "whatItCommunicates": "Leaving the overview; the car becomes the whole screen."
+  },
+  {
+   "step": "Car drawing zooms into the HVAC region",
+   "approxDurationMs": 400,
+   "technique": "scale 1 -> ~1.9 with transform origin at the hood region + translateY so the region sits ~30% from the top; ease-out; a slight blur/opacity dip during the move (3.0-3.35 s)",
+   "whatItCommunicates": "Focus: 'we are now inside this system'; the rest of the car is irrelevant."
+  },
+  {
+   "step": "Scan HUD fades in (progress track + 0%, card stack, tooltip shell, bottom control pill)",
+   "approxDurationMs": 300,
+   "technique": "opacity 0 -> 1 with ~12 px rise on the cards; pill fades from bottom (3.1-3.4 s)",
+   "whatItCommunicates": "A process is starting and will be narrated."
+  },
+  {
+   "step": "Subsystem schematic appears over the wireframe",
+   "approxDurationMs": 1300,
+   "technique": "layer opacity ramp ~0.15 -> 1.0 (3.4-4.7 s), possibly with a subtle progressive draw; NOT a visible tip-to-tail stroke-dashoffset sweep at 10 fps. Pipes are neutral dark gray during this phase.",
+   "whatItCommunicates": "'Scanning' — the components materialize as they are inspected."
+  },
+  {
+   "step": "Progress bar fill + counting label",
+   "approxDurationMs": 3900,
+   "technique": "width 0 -> 80% of a 2-segment track with strong ease-out (≈15% at +0.6 s, 38% at +1.1 s, 55% at +1.6 s, 66% at +2.1 s, 73% at +2.6 s, 77% at +3.1 s, 80% at +3.9 s); numeric label counts in sync; fill stops at the notch in the track",
+   "whatItCommunicates": "Scan progress that doubles as the resulting health index (80%)."
+  },
+  {
+   "step": "Card carousel beat 1 -> 2 ('Cabin HVAC unit' -> 'Coolant reservoir')",
+   "approxDurationMs": 400,
+   "technique": "stacked-card swap: outgoing card translateY -16 px + opacity -> 0; incoming card rises from the peeking slot (+12 px, opacity 0.3 -> 1); the next card's ghost appears beneath (4.4-4.8 s)",
+   "whatItCommunicates": "Narration moves to the next component."
+  },
+  {
+   "step": "Marker pins pop onto 5 components",
+   "approxDurationMs": 500,
+   "technique": "scale 0.6 -> 1 + opacity per pin, ~100 ms stagger (4.4-4.9 s), white circle with soft shadow and gray center dot",
+   "whatItCommunicates": "'These are the points being checked.'"
+  },
+  {
+   "step": "Tooltip fills field by field (COP 4.2 -> CT •71°C -> RP Optimal)",
+   "approxDurationMs": 2000,
+   "technique": "each value opacity 0 -> 1 (~200 ms) at ~4.5 s, ~4.9 s and ~6.1 s; row separators already present; '…' placeholder row at the bottom",
+   "whatItCommunicates": "Measurements arriving one at a time."
+  },
+  {
+   "step": "Card carousel beat 2 -> 3 ('Coolant reservoir' -> 'Heat pump running warm')",
+   "approxDurationMs": 400,
+   "technique": "same stacked swap (5.9-6.3 s)",
+   "whatItCommunicates": "The finding is announced."
+  },
+  {
+   "step": "Status resolution on the drawing",
+   "approxDurationMs": 300,
+   "technique": "simultaneous color changes at ~6.0 s: radiator and reservoir get a translucent green fill, their marker centers go green; the valve under the heat pump gets an enlarged orange marker; pipe strokes cross-fade from dark gray to red (left loop) and dark blue-gray (right loop)",
+   "whatItCommunicates": "Pass/warn verdict per component; hot vs cold sides of the circuit."
+  },
+  {
+   "step": "Cursor travels to the center pill button; button turns white",
+   "approxDurationMs": 800,
+   "technique": "cursor move 6.5-7.3 s; center button fill dark -> white at ~7.3 s (pressed state or cursor overlay)",
+   "whatItCommunicates": "Either 'tap to finish' or just a rest position while the scan completes (ambiguous)."
+  },
+  {
+   "step": "Bottom pill fades out",
+   "approxDurationMs": 150,
+   "technique": "opacity -> 0 at 8.0-8.1 s",
+   "whatItCommunicates": "The animated phase is over."
+  },
+  {
+   "step": "Results header slides/fades in from the top; content below shifts down",
+   "approxDurationMs": 300,
+   "technique": "header opacity 0 -> 1 with translateY -12 px -> 0; progress bar and card translateY +~40 pt (8.1-8.4 s), ease-out",
+   "whatItCommunicates": "Context switch from 'scanning' to 'report'."
+  },
+  {
+   "step": "Compact narrating card grows into the verdict card",
+   "approxDurationMs": 300,
+   "technique": "height animation (container grows from ~75 pt to ~190 pt) with crossfade: compact icon/title/subtitle -> warning triangle + title + body + recommendation (8.2-8.5 s)",
+   "whatItCommunicates": "The last narration IS the verdict; continuity between the animation and the report."
+  },
+  {
+   "step": "'Components status' label + rows stagger in",
+   "approxDurationMs": 600,
+   "technique": "each row opacity 0 -> 1 + translateY +12 px -> 0 over ~300 ms, ~100 ms stagger top to bottom (8.3-8.9 s)",
+   "whatItCommunicates": "The list is derived from the components just checked."
+  },
+  {
+   "step": "Rescan link + 'Get to fix' CTA fade in",
+   "approxDurationMs": 300,
+   "technique": "opacity, CTA from ~30% ghost to 100% (8.2-8.5 s)",
+   "whatItCommunicates": "Two exits: repeat or act."
+  },
+  {
+   "step": "Car + schematic fade out under the list",
+   "approxDurationMs": 500,
+   "technique": "layer opacity 1 -> 0 (8.3-8.8 s), a faint ghost visible under the rows until ~8.9 s",
+   "whatItCommunicates": "The illustration is a means, the list is the result."
+  },
+  {
+   "step": "Results hold",
+   "approxDurationMs": 1100,
+   "technique": "static (8.9-10.0 s)",
+   "whatItCommunicates": "Reading time."
+  },
+  {
+   "step": "Exit (presentation): phone slides up and out while fading; verdict card double-exposes with the compact card; 4th row 'Front motor coolant loop / Normal' fades in",
+   "approxDurationMs": 400,
+   "technique": "phone translateY -100% + opacity -> ~0.4 (10.0-10.4 s); content shows the enter transition partially reversed + a list scroll",
+   "whatItCommunicates": "Loop reset; nothing product-relevant."
+  },
+  {
+   "step": "Loop tail: Home phone rises from below, camera pulls back to the two-phone hero, hold",
+   "approxDurationMs": 2600,
+   "technique": "translateY rise 10.4-10.7 s; camera zoom-out 10.7-11.0 s; static hold 11.0-13.0 s",
+   "whatItCommunicates": "Seamless loop to frame 1."
+  }
+ ],
+ "visualGrammar": [
+  "Page background #f2f2f2-#f4f4f4 (near-white warm gray); cards pure white with radius ~20 pt (containers) / ~14 pt (rows, chips, tooltip); no visible borders; shadows absent or extremely soft — hierarchy comes from white-on-gray only.",
+  "Typeface: geometric rounded sans (Quicksand-like: single-story a and g, rounded terminals). Weights: semibold for titles (15-20 pt), regular for body/subtitles (12-14 pt), thin display for the onboarding headline; display numerals ~34 pt for stats with the unit in small regular gray after a space ('83 %', '248 mi', '24.2 °C').",
+  "Text colors: primary #1c1c1c; secondary/labels #8a8a8a-#9a9a9a (approx 3.2:1 on white — low); tooltip keys gray left-aligned, values dark right-aligned; body copy in gray even inside the verdict card.",
+  "Car base drawing: top-down orthographic, hood at top, traced with ~0.5-1 pt mid-gray strokes (#9e9e9e) on the gray page — grille slats, three-pointed star, panoramic roof, mirrors, door seams, wheel arches with tire hatching, plate. No fills. Same asset reused in dark mode on the onboarding phone (#3a3a3a strokes on #1c1c1c).",
+  "Focused subsystem overlay: ~2-2.5 pt strokes in dark gray (#4a4a4a) for components (radiator with ~14 fins and end tanks, compressor block with bolts and pulley, cylindrical reservoir with cap, T-valve, expansion element, connector, coupler blocks) and rounded-corner orthogonal polylines for pipes; after status resolution pipes are semantic: red #a83c3c (hot/left loop), dark blue-gray #4b5b6f (cold/right loop); before that they are neutral gray.",
+  "Status palette: green #6faa5c-#7bb662 (progress fill, ~35% alpha tint over a passed component's silhouette, green marker center, 'Updated' dot), amber/orange #e3a63b (attention dot on map and chips, warm marker, warning triangle, list-row dot, the dot before '71°C'). Red is never used for status; the worst state shown is amber. Black is reserved for the primary CTA.",
+  "Markers: two kinds — (1) plain 8 pt orange dot with no ring = 'alert location' on the map, persists through the whole flow; (2) 30 pt white circle with soft shadow and a 10 pt center dot (gray = being checked, green = passed, orange = attention; the attention one is drawn larger) = per-component check pin.",
+  "Progress bar: 4 pt track in light gray split into two segments (split at ~82% of length) with the green fill stopping at the split at 80%; 11 pt gray percentage label right-aligned; the same bar is reused unchanged on the results screen as the health index.",
+  "Cards: 44 pt light-gray icon tile (radius 12) with a gray line icon (fan, snowflake, thermometer, battery, waves, steering wheel, lightning, wrench) + 15 pt semibold title + 13 pt gray single-line subtitle truncated with '…'; attention rows get a 6 pt orange dot in the card's top-right corner; the narrating carousel is a stack with the next card peeking ~8 pt below at ~25% opacity.",
+  "System selector chips: 4 equal white squares (~86 pt), icon centered above a 12 pt label, orange 6 pt dot at top-right when the system has an alert.",
+  "Buttons: 42-44 pt white circles for back (◂) and more (•••); primary CTA full-width black pill 50-56 pt with a leading icon and white 15 pt label; secondary action as a centered 15 pt text link with a leading refresh icon ('↻ Rescan'); bottom control pill white ~64 pt containing replay ↻ | 48-56 pt dark-gray circle with pause ‖ | more •••.",
+  "Tooltip: ~117x113 pt white card, radius 14, soft shadow, title + up to 3 key/value rows separated by hairlines + a '…' placeholder row; anchored over the drawing at the right edge, not connected to the marker by a leader line.",
+  "Status encoding used in the reference: dot color (chips, rows), silhouette tint (drawing), marker color (drawing), pipe color (hot/cold, not status), warning-triangle icon (verdict card), and wording inside titles ('running warm', 'Optimal', 'Normal'). Several of these are color-only with no adjacent word.",
+  "Layering: page < light wireframe < dark schematic < markers < tooltip < card stack/progress < control pill; heavy use of translucency and ghosting (20-50% opacity) for stacked cards and fading layers; photos only on Home.",
+  "Motion vocabulary: opacity + small translateY (12-16 pt) for arrivals, scale for the map zoom, height animation for the card expansion; ease-out everywhere; UI steps 300-400 ms, reveal beats ~1.3 s, progress ~3.9 s with strong deceleration; no bounces, no pulsing, no continuous loops except the (implied) pause/replay."
+ ],
+ "telemetryOnlyElements": [
+  "Home: 'Battery level 83 %' numeral and the 15-segment battery bar",
+  "Home: '1h 23m' (time to full charge / remaining)",
+  "Home: 'Est. range 248 mi'",
+  "Home: 'Temperature 24.2 °C' (ambient/cabin sensor)",
+  "Home: green-dot 'Updated' chip meaning live sync with the car",
+  "Home: 'Recent alerts' feed populated by the vehicle",
+  "Diagnostic: the orange alert dot auto-placed on the hood (fault localized by the car)",
+  "Diagnostic: the orange badge on the 'HVAC' chip generated by a detected fault",
+  "Diagnostic: EV system taxonomy 'Battery', 'HVAC', 'Drive Unit', 'Electronics' (Fixly's fleet is 8-15-year-old ICE cars)",
+  "Scan: the concept of a 'scan' at all — progress 0-80% as live diagnostics running",
+  "Scan: narrating subtitle 'Airflow, temperature control, and filt…' as a checked capability",
+  "Scan: narrating subtitle 'Coolant level and pressure are nomi[nal]' (level/pressure sensors)",
+  "Scan: tooltip 'COP: 4.2' (heat-pump coefficient of performance)",
+  "Scan: tooltip 'CT: •71°C' (coolant/component temperature)",
+  "Scan: tooltip 'RP: Optimal' (refrigerant pressure)",
+  "Scan: white 'being checked' markers turning green/orange from measured results",
+  "Scan: pipes colored red/blue as live hot/cold circuit state",
+  "Scan: the pause/replay controls of a live diagnostic playback",
+  "Results: 'Heat pump running warm — Operating 8°C above the baseline for this model' (measured delta vs model baseline)",
+  "Results: 'Performance is unaffected now, but monitoring is recommended' (real-time judgement)",
+  "Results: 'Coolant reservoir — Optimal level, ELR 16' (level sensor + code)",
+  "Results: 'Cabin HVAC unit — 28°C · Optimal' (cabin temperature)",
+  "Results: 'Front motor coolant loop — Normal' (loop sensor)",
+  "Results: 'Today, 08:14' as a scan timestamp",
+  "Results: '80%' health index derived from a scan",
+  "Results: '↻ Rescan' (re-measure)",
+  "Results: 'Get to fix' routed from a detected fault (Fixly can only route from a schedule, not from a diagnosis)",
+  "Whole flow: any subsystem that is EV-specific (heat pump, drive unit, HV battery) and any silhouette tinted by a measured pass/fail"
+ ],
+ "transferableIdeas": [
+  {
+   "idea": "One neutral top-down technical drawing as the map, with an attention dot on the region that has the most urgent item and a badge on that zone's selector chip",
+   "howItMapsToManualOnlyData": "Dot/badge = computed: for each zone, any item where (odometer - lastDoneKm) >= intervalKm - warningWindowKm OR (today - lastDoneAt) >= intervalMonths. Fixly already has zones.ts getZoneStatus; extend to due-soon / due / overdue and show the count, not just a dot."
+  },
+  {
+   "idea": "Zone selector row (equal square chips with icon + label) under the drawing",
+   "howItMapsToManualOnlyData": "Zones from the manual's schedule grouped by location: Motor (aceite, filtro de aceite, filtro de aire, bujías, correa de distribución), Refrigeración (refrigerante, radiador), Transmisión (aceite de caja), Frenos (pastillas, líquido), Suspensión/Dirección, Eléctrico (batería 12V, escobillas). Each chip badge derives from the items' km/date math."
+  },
+  {
+   "idea": "Tap zone -> chrome fades, drawing zooms ~1.9x onto that zone, a zone-specific overlay appears over the wireframe",
+   "howItMapsToManualOnlyData": "The overlay is a static illustration per ZONE (not per model): e.g. engine bay with oil pan + filter, air box, spark plugs, timing belt cover, coolant reservoir + radiator, 12V battery. Each component is a path with an anchor point. Works for any model because it only needs to be schematic; no telemetry involved."
+  },
+  {
+   "idea": "Progressive reveal as a narrated walk-through of the zone's items, one beat per item, synchronized card carousel + marker on the drawing",
+   "howItMapsToManualOnlyData": "Replace 'scan' with 'revisión de tu plan': beat N shows card 'Aceite de motor — cada 5,000 km · último 82,000 km · te quedan 600 km' while the oil-pan marker turns green/amber/red by the computed status. Fully deterministic from manual intervals + user log; total ≤ 1.2 s or tap-to-skip, respecting the 240 ms ceiling per element with stagger as the one allowed choreography."
+  },
+  {
+   "idea": "Tooltip with 3 key/value rows filling in one by one",
+   "howItMapsToManualOnlyData": "Rows become 'Último cambio: 82,000 km (12 mar 2026)', 'Próximo: 87,000 km', 'Te quedan: 600 km / ~2 semanas' — all from the log + interval; the third row can be the derived estimate using the user's average km/day computed from their odometer history."
+  },
+  {
+   "idea": "Progress bar that lands on a score with a notch in the track",
+   "howItMapsToManualOnlyData": "Per item: fill = (odometer - lastDoneKm) / intervalKm, notch = the manual's interval (100%) with an amber window before it; this is exactly 'show graphically when I should change the oil'. Per zone/vehicle: 'Plan al día: 4 de 5 servicios' as a fraction, never a fake health %."
+  },
+  {
+   "idea": "Status resolution moment: passed silhouettes tint green, the problem one gets an orange marker",
+   "howItMapsToManualOnlyData": "Tint = status from km/date math, always paired with a word chip on the marker ('Al día', 'Pronto', 'Vencido') to satisfy Fixly's never-color-alone rule; use red for 'Vencido' since overdue is a real state for this persona."
+  },
+  {
+   "idea": "Verdict card structure: icon + title + explanation + consequence + recommendation with a time window",
+   "howItMapsToManualOnlyData": "'Te toca cambiar el aceite' / 'Según el manual del Changan CS35 es cada 5,000 km. Lo cambiaste hace 4,400 km.' / whatIfSkipped text already in data.ts / 'Hazlo en los próximos 600 km o 2 semanas'. Source is cited (the manual) instead of a baseline measurement; consistent with 'informar y explicar, nunca diagnosticar'."
+  },
+  {
+   "idea": "'Components status' rows with icon tile, title, one-line status subtitle and a corner dot",
+   "howItMapsToManualOnlyData": "Rows = the zone's maintenance items sorted by urgency; subtitle = 'Faltan 600 km · S/120–180' or 'Al día · próximo a 92,000 km'; corner dot only as a secondary cue with the status word in the subtitle; row tap -> existing /servicio/[id]."
+  },
+  {
+   "idea": "Header timestamp 'Today, 08:14' and the Home 'Updated' chip as freshness signals",
+   "howItMapsToManualOnlyData": "Show data freshness honestly: 'Km actualizado hace 3 días · 87,400 km' with a tap to update (vehiculo.tsx already edits mileage). Freshness of the user's odometer is the only 'live' signal Fixly has and it drives every estimate."
+  },
+  {
+   "idea": "'Rescan' secondary action",
+   "howItMapsToManualOnlyData": "Becomes 'Actualizar kilometraje' (re-runs all the math and can replay the reveal) — the honest equivalent of re-measuring."
+  },
+  {
+   "idea": "'Get to fix' single black primary CTA",
+   "howItMapsToManualOnlyData": "Becomes two clear actions: 'Agendar este servicio' (existing) and 'Ya lo hice — registrar' (writes lastDoneAt/lastDoneKm/cost to the log, which immediately re-colors the drawing — the most satisfying loop in the manual-data model)."
+  },
+  {
+   "idea": "Hot/cold pipe coloring as a semantic legend rather than status",
+   "howItMapsToManualOnlyData": "Use consistent per-fluid colors in the static overlay (aceite = amber, refrigerante = blue, líquido de frenos = purple) purely as identification, never as status, so the status colors stay unambiguous."
+  },
+  {
+   "idea": "Card stack carousel synchronized with markers (bidirectional)",
+   "howItMapsToManualOnlyData": "After the reveal, make the cards a horizontal swipeable row: swiping to an item highlights its marker; tapping a marker scrolls the row. All static data; cheap with Reanimated shared values."
+  },
+  {
+   "idea": "Scan progress that counts up and decelerates",
+   "howItMapsToManualOnlyData": "Reuse the eased count-up for the km bar ('0 -> 4,400 km de 5,000') on first render only; keep it under 600 ms and skip on reduced-motion/low-end devices."
+  },
+  {
+   "idea": "Zoomed drawing with the rest of the car off-screen as focus",
+   "howItMapsToManualOnlyData": "Pure transform on the existing SvgXml (scale + translate with origin at ZONE_META anchor). Do it with Reanimated on the UI thread; the overlay is a second SVG layer whose paths animate opacity/strokeDashoffset with animateProps."
+  }
+ ],
+ "weaknessesOfReference": [
+  "Line drawing uses ~0.5-1 pt #9e9e9e strokes on a #f2f2f2 page (contrast ≈1.7:1): invisible in sunlight on a dirty low-end Android screen; the map's only information (the dot) is 8 pt.",
+  "Type is small and low-contrast: tooltip keys/values ~12 pt gray, chip labels 12 pt, progress % 11 pt, body copy 13-14 pt #8a8a8a on white (≈3.2:1). The persona (45, sun, sometimes driving) needs ≥16 pt body and ≥4.5:1.",
+  "Status by color alone in several places: orange dot on the HVAC chip, orange corner dot on the list row, green tint on the radiator with no word, green vs orange marker centers with no label — violates Fixly's 'word + bar + explanation' rule.",
+  "Narrating cards truncate the key sentence with '…' ('…and filt…', '…are nomi…', '…the baseline fo…'); the user cannot read the finding during the animation.",
+  "~4.5 s of choreography (tap at 2.9 s, verdict readable at 8.9 s ≈ 6 s) before the answer; no visible skip; a driver checking at a red light needs the verdict in < 1 s with the animation optional. Fixly's 240 ms ceiling only allows the reveal stagger.",
+  "Jargon and codes: COP, CT, RP, ELR 16, HVAC, heat pump, coolant loop — meaningless to a non-mechanic; Fixly needs plain Spanish item names from the manual (aceite, bujías, correa).",
+  "English copy, EV-only systems (Battery, Drive Unit, heat pump) and a 2025 Mercedes: nothing maps to an 8-15-year-old ICE Changan/Chery/Toyota.",
+  "Touch targets below 56 pt: schematic markers ~30 pt, 'Rescan' text link, 42 pt back/more circles, 6 pt dots that look tappable but are not.",
+  "Fake or unearned precision: '80%' health, '8°C above baseline', 'COP 4.2', 'Optimal' — Fixly cannot measure anything and must not imply diagnosis ('informar y explicar, nunca diagnosticar ni autorizar').",
+  "The pause/replay/more media pill adds a second control vocabulary and suggests the animation is the product; for static data a replay is meaningless and a pause is confusing.",
+  "The unclear end of the scan: cursor parks on a 'pause' button that turns white and 0.7 s later the report appears — the affordance to proceed is ambiguous.",
+  "Heavy translucent layering (ghost cards at 25%, fading layers, soft shadows, blur during the zoom) is expensive on low-end GPUs and reads muddy on cheap LCDs; Fixly should keep opacity layers ≤ 2 and avoid blur.",
+  "The subsystem schematic is a bespoke, highly detailed per-model illustration (compressor bolts, pulley, fins); Fixly cannot author that per model and should use one generic per-zone schematic.",
+  "The map shows only one dot even though a real driver may have 3-4 items due across zones; no counts, no prioritization on the map itself.",
+  "None of the numbers the persona actually needs appear anywhere: kilometers, dates, price in soles, what happens if skipped.",
+  "The verdict says 'within 30 days' without a km equivalent; ride-hailing drivers think in km per day, so both units are required.",
+  "Gray-on-gray hierarchy (gray subtitles, gray labels, gray icons) collapses under glare; Fixly should keep the light theme but move secondary text to ≥ #555.",
+  "Photographic hero (Home) implies per-model photos Fixly does not have; the line drawing is the only asset that generalizes.",
+  "The narration order (unit -> reservoir -> finding) is not urgency-ordered; for Fixly the first beat must be the most urgent item."
+ ],
+ "presentationOnly": [
+  "Two-phone hero composition at 0.0-0.7 s and 10.7-13.0 s (dark 'Smart health' onboarding phone behind the light Home phone) and the seamless loop back to frame 1",
+  "Virtual camera zoom into the Home phone (0.4-0.7 s) and pull-back to the hero (10.7-11.0 s)",
+  "Home -> Diagnostic realized as a second physical phone mockup sliding up from below the frame (0.75-1.5 s) while the Home phone is cut away — not an in-app transition (nothing was tapped on Home)",
+  "Results exit: the phone sliding up and out of frame with a fade and a double-exposed card (10.0-10.4 s), then a Home phone rising from below (10.4-10.7 s); no 3D rotation is visible at 10 fps despite the context pack's note",
+  "The white translucent cursor circle with soft shadow that hovers, travels and 'taps' (1.0-3.0 s and 6.5-8.0 s)",
+  "iOS 9:41 status bar, Dynamic Island, home indicator, iPhone 15 Pro-style bezel — mockup chrome",
+  "The 'Updated' chip, avatar photo and the car photograph are stock demo content",
+  "Frame-blend/ghosting artifacts during fast moves (blur on the car during the 1.9x zoom, the compact-card ghost inside the verdict card at 10.0 s) come from the 60 fps video export, not from UI design",
+  "The scan's pause/replay pill is most plausibly a demo device to let the Dribbble viewer replay the choreography",
+  "Truncated one-line subtitles with '…' exist because the mockup never scrolls or expands them; a real app would need the full text somewhere",
+  "The 1600x1200 landscape canvas and #e6e6e6 backdrop are the Dribbble shot, not a screen"
+ ]
+}

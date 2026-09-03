@@ -2,27 +2,45 @@ import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { formatPEN } from '@/lib/format';
-import { history, historyTotals } from '@/mock/data';
+import { useVehicle } from '@/state/vehicle-context';
 import { Colors } from '@/theme/tokens';
 import { EmptyState } from '@/ui/EmptyState';
 import { FolderCard } from '@/ui/FolderCard';
 import { Screen } from '@/ui/Screen';
 import { Txt } from '@/ui/Txt';
 
+export function groupRecordsByYear(records: { date: string; costPen?: number }[]) {
+  const map = new Map<number, { count: number; total: number }>();
+  records.forEach((r) => {
+    const year = Number(r.date.slice(0, 4));
+    const g = map.get(year) ?? { count: 0, total: 0 };
+    g.count += 1;
+    g.total += r.costPen ?? 0;
+    map.set(year, g);
+  });
+  return [...map.entries()].sort((a, b) => b[0] - a[0]).map(([year, g]) => ({ year, ...g }));
+}
+
 export default function Historial() {
-  if (history.length === 0) {
+  const { records } = useVehicle();
+  const groups = groupRecordsByYear(records);
+
+  if (groups.length === 0) {
     return (
       <Screen edges={['top']}>
         <EmptyState
           icon="archive"
           title="Aún no hay historial"
           description="Cada servicio que registres aquí sube el valor de tu auto al venderlo."
+          actionLabel="Registrar un servicio"
+          onAction={() => router.push('/registrar')}
         />
       </Screen>
     );
   }
 
-  const [featured, ...rest] = history;
+  const totalSpent = records.reduce((sum, r) => sum + (r.costPen ?? 0), 0);
+  const [featured, ...rest] = groups;
 
   return (
     <Screen edges={['top']}>
@@ -31,16 +49,16 @@ export default function Historial() {
           Gasto acumulado
         </Txt>
         <Txt variant="bigNumber" tabularNums>
-          {formatPEN(historyTotals.totalSpent)}
+          {formatPEN(totalSpent)}
         </Txt>
         <Txt variant="bodySmall" color={Colors.textSecondary}>
-          En {historyTotals.serviceCount} servicios registrados
+          En {records.length} servicios registrados
         </Txt>
       </View>
 
       <FolderCard
         title={String(featured.year)}
-        subtitle={`${featured.entries.length} servicios registrados`}
+        subtitle={`${featured.count} servicios registrados`}
         featured
         onPress={() => router.push({ pathname: '/historial/[year]', params: { year: String(featured.year) } })}
       />
@@ -50,7 +68,7 @@ export default function Historial() {
           <View key={group.year} style={styles.gridItem}>
             <FolderCard
               title={String(group.year)}
-              subtitle={`${group.entries.length} servicios`}
+              subtitle={`${group.count} servicios`}
               onPress={() => router.push({ pathname: '/historial/[year]', params: { year: String(group.year) } })}
             />
           </View>

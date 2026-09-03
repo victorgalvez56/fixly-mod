@@ -1,0 +1,554 @@
+{
+ "verdict": "YES, feasible — as an ESTIMATE, not a measurement. A graphical \"when to change the oil (and every other scheduled component)\" can be computed from exactly two inputs: (1) the owner's-manual schedule (km interval + months interval per component, plus the manual's own severe-use schedule when it defines one) and (2) what the user records (odometer readings with dates, services done with km+date). The convention is confirmed: manuals state maintenance as \"every X km or Y months, whichever comes first\" — Toyota guides: 10,000 mi / 12 months normal, 5,000 mi / 6 months under special operating conditions (https://www.toyotaofbristol.com/blog/how-often-should-you-change-your-toyota-oil, https://www.autozone.com/diy/maintenance/toyota-maintenance-schedule-guide); Chinese brands sold in Peru use the identical Spanish wording \"lo que ocurra primero\": Chery Perú 5,000 km o 6 meses (https://www.chery.com.pe/promociones/chery-total-care), Geely 7,500 km o 12 meses (https://geely.pe/wp-content/uploads/2017/10/GX3-PRO-Libro-de-Garantia-2025-NX21.pdf), Changan 10,000 km o 6 meses (https://changanleon.com/precios-de-mantenimiento). Toyota's \"special operating conditions\" explicitly include \"heavy commercial use, such as delivery, taxi\" and \"unpaved or dusty roads\" (https://www.toyotanation.com/threads/definition-of-special-operating-conditions.1696092/, https://www.dttoyotachicago.com/blog/toyota-maintenance-required-light-chicago-guide) — so a ride-hailing driver in Lima legitimately falls under the manual's severe schedule when the manual has one. The time track is physically justified: oil oxidizes and its additives deplete with age even when parked (https://www.bumper.com/car-advice/ownership/oil-change-guide/).\n\nWhat the graphic can honestly show: a countdown ring/bar per component = max(km consumed / km interval, days consumed / days interval), the binding track, remaining km, remaining days, projected due date, a status word, and a confidence word. What it can NOT show: the physical condition of anything (oil quality, pad thickness, battery health). The engine (verified: compiles under tsc --strict, 14 scenarios run) is at /private/tmp/claude-501/-Users-victorgalvez-Documents-me-fixly-mod--claude-worktrees-car-maintenance-details-ui-8f777d/644b70dc-4f3b-4985-890f-138bfa5ef113/scratchpad/wear/wear-types.ts and .../wear/wear-engine.ts (test: .../wear/test.ts).\n\nHonest limits: (1) Accuracy is bounded by the user's odometer discipline; a reading older than 120 days caps confidence at \"baja\" and the UI must ask for an update. (2) A used car with no recorded last service is \"sin_datos\" for every component — the app must never assume it was done; it may offer the user the explicit choice \"asumir que se hizo al comprar\" (confidence capped \"baja\"). (3) Inspect-type items (brake pads, discs, tires, battery, timing chain) can only show \"next inspection due\", never \"remaining pad life\"; the replace decision comes from the workshop and is recorded as an inspection result. (4) The severe-use schedule is applied ONLY when the manual defines one; the engine never invents a multiplier (reason code severe_not_in_manual). (5) Placeholders from the component catalog must never render as a status — they exist for QA fixtures and a clearly labeled \"referencia general\" panel only. (6) A default km/day (150 ride-hailing / 25 private, both labeled ASSUMPTION; the ~200 km/day Lima-taxi figure is from a secondary source: https://www.udep.edu.pe/hoy/2016/02/y-quien-contamina-mas-nuestros-autos-o-los-taxis/) is used only to convert remaining km into days; it never projects the odometer forward, so an assumption alone cannot flip a status. (7) Everything shown is \"según el manual\" + \"estimado con tu kilometraje\" — Spanish copy rules below keep the app from sounding like it has telemetry.",
+ "dataSchemaTs": "// wear-types.ts — Fixly maintenance wear model. NO telemetry.\n// Every field is one of: (a) a fact taken from the owner's manual, (b) something the user typed,\n// or (c) a value derived from (a) and (b). Nothing here is measured from the car.\n\nexport type ISODate = string; // 'YYYY-MM-DD', calendar date, no time zone\n\nexport type Transmission = 'MT' | 'AT' | 'CVT' | 'DCT' | 'unknown';\nexport type Fuel = 'gasolina' | 'diesel' | 'glp' | 'gnv' | 'hibrido' | 'electrico' | 'unknown';\n\n/** Known component ids. The union is open so a manual can add model-specific lines. */\nexport type ComponentId =\n  | 'aceite_motor'\n  | 'filtro_aire_motor'\n  | 'filtro_cabina'\n  | 'filtro_combustible'\n  | 'bujias'\n  | 'refrigerante'\n  | 'aceite_caja_mt'\n  | 'aceite_caja_at'\n  | 'aceite_cvt'\n  | 'correa_distribucion'\n  | 'cadena_distribucion'\n  | 'correa_accesorios'\n  | 'pastillas_freno'\n  | 'discos_freno'\n  | 'liquido_frenos'\n  | 'rotacion_llantas'\n  | 'alineamiento_balanceo'\n  | 'llantas'\n  | 'bateria'\n  | 'plumillas'\n  | 'liquido_direccion'\n  | 'aceite_diferencial'\n  | 'amortiguadores'\n  | 'ajuste_valvulas'\n  | 'kit_gnv_glp'\n  | 'aire_acondicionado'\n  | (string & {});\n\nexport type Zone =\n  | 'motor'\n  | 'transmision'\n  | 'refrigeracion'\n  | 'frenos'\n  | 'llantas'\n  | 'electrico'\n  | 'cabina'\n  | 'suspension_direccion'\n  | 'combustible';\n\n/** What the user tells us about how the car is used. Maps onto the manual's \"severe conditions\". */\nexport type UsageProfile = {\n  rideHailing: boolean; // taxi / aplicativo: \"heavy commercial use\" in most manuals\n  mostlyCity: boolean; // stop-and-go, extended idling\n  dustyRoads: boolean; // unpaved or dusty roads\n  shortTrips: boolean; // habitual trips under ~8 km\n  highAltitude: boolean; // sierra; some manuals list mountain driving\n};\n\nexport type VehicleProfile = {\n  id: string;\n  brand: string;\n  model: string;\n  year: number;\n  engineCode?: string; // e.g. '1NZ-FE' — needed when the manual splits intervals by engine\n  transmission: Transmission;\n  fuel: Fuel;\n  usage: UsageProfile;\n  /** How the user got the car. Drives the \"unknown last service\" logic for used cars. */\n  acquisition?: { date?: ISODate; odometerKm?: number; wasUsed: boolean };\n  /** Answer to \"¿Cuántos km manejas por semana?\" — used only when readings are insufficient. */\n  declaredWeeklyKm?: number;\n};\n\nexport type SpecSourceKind =\n  | 'owner_manual'\n  | 'warranty_booklet'\n  | 'dealer_published'\n  | 'user_entered' // the driver typed it from his own booklet while the manual is not in the base\n  | 'placeholder'; // generic reference value, never shown as a status\n\n/** Bibliographic reference to where a fact came from. Never stores the manual's wording. */\nexport type SpecSource = {\n  kind: SpecSourceKind;\n  documentTitle?: string;\n  edition?: string; // publisher code / year, e.g. 'OM52G21S 2015'\n  market?: string; // 'PE', 'LATAM', 'US', 'global'\n  pageRefs?: string[]; // ['p. 412', 'p. 415']\n  extractedAt: ISODate;\n  extractedBy: 'llm' | 'human';\n  reviewedBy?: string; // human reviewer id; until set, the UI must show the \"sin revisar\" caveat\n};\n\nexport type ComponentAction =\n  | 'replace' // the manual schedules a replacement\n  | 'inspect' // the manual only schedules an inspection (pads, discs, battery, tires)\n  | 'inspect_then_replace' // inspect on schedule, replace by criterion or when the inspection says so\n  | 'rotate' // tires\n  | 'no_schedule'; // the manual schedules nothing (timing chain, \"lifetime\" fluids)\n\nexport type Interval = { km: number | null; months: number | null };\n\nexport type SevereCondition =\n  | 'dusty_roads'\n  | 'short_trips'\n  | 'taxi_or_commercial'\n  | 'towing'\n  | 'extended_idling'\n  | 'extreme_heat'\n  | 'extreme_cold'\n  | 'mountain'\n  | 'other';\n\nexport type ComponentSpec = {\n  componentId: ComponentId;\n  zone: Zone;\n  action: ComponentAction;\n  /** Normal-use interval. Both null only for 'no_schedule'. A null km with a months value = time-only item. */\n  normal: Interval;\n  /** Interval under the manual's severe/special operating conditions. null = the manual defines none. Never invented. */\n  severe: Interval | null;\n  /** Some manuals schedule the first service differently (e.g. first gearbox oil at 1,000 km). */\n  firstServiceKm?: number | null;\n  /** For inspect items: the manual's replacement criterion as data (e.g. pad thickness limit). */\n  replaceCriterion?: { measure: string; limit: number; unit: string } | null;\n  /** Consumable facts (grade, capacity). Facts, not text. */\n  consumable?: { grade?: string; capacityL?: number; partNote?: string };\n  /** When the manual splits the line by engine/transmission/fuel. Absent = applies to all variants. */\n  appliesTo?: { engines?: string[]; transmissions?: Transmission[]; fuels?: Fuel[] };\n  criticality: 'safety' | 'engine' | 'comfort';\n  source: SpecSource;\n};\n\n/** One manual = one MaintenanceSpec. Extracted once, reused for every car of that model/years. */\nexport type MaintenanceSpec = {\n  specId: string;\n  brand: string;\n  model: string;\n  yearFrom: number;\n  yearTo: number;\n  /** The manual's own list of severe conditions, as codes. The sentence itself is never stored. */\n  severeConditions: SevereCondition[];\n  components: ComponentSpec[];\n  source: SpecSource;\n};\n\nexport type ServiceKind =\n  | 'replaced'\n  | 'inspected_ok'\n  | 'inspected_needs_replace'\n  | 'unknown_before_purchase'; // user explicitly says \"no sé\" for a used car\n\n/** A service the user records. One workshop visit may cover several components. */\nexport type ServiceRecord = {\n  id: string;\n  componentIds: ComponentId[];\n  date: ISODate;\n  odometerKm: number | null; // null when the user does not remember\n  kind: ServiceKind;\n  costPen?: number;\n  workshop?: string;\n  note?: string;\n  source: 'user' | 'workshop_receipt' | 'assumed_at_purchase';\n};\n\nexport type OdometerReading = {\n  id: string;\n  date: ISODate;\n  km: number;\n  source: 'user' | 'service_record' | 'acquisition' | 'photo';\n};\n\nexport type WearStatus = 'ok' | 'pronto' | 'toca' | 'vencido' | 'sin_datos';\nexport type Confidence = 'alta' | 'media' | 'baja' | 'ninguna';\n\nexport type DailyKmSource = 'readings' | 'declared' | 'default_assumption';\n\nexport type DailyKmEstimate = {\n  kmPerDay: number;\n  source: DailyKmSource;\n  readingsUsed: number;\n  spanDays: number;\n  /** Set only when source === 'default_assumption'. Shown verbatim in the UI as an assumption. */\n  assumptionLabel?: string;\n};\n\nexport type TrackEstimate = {\n  interval: number; // applied interval, in km or days\n  used: number;\n  remaining: number; // negative when overdue\n  percent: number; // 0..∞, 1 = due\n};\n\nexport type AnchorKind = 'service_record' | 'inspection' | 'assumed_at_acquisition' | 'new_vehicle' | 'none';\n\nexport type Anchor = {\n  kind: AnchorKind;\n  date: ISODate | null;\n  km: number | null;\n  kmWasInterpolated: boolean;\n  recordId?: string;\n};\n\nexport type ReasonCode =\n  | 'reading_invalid_date'\n  | 'reading_invalid_km'\n  | 'reading_in_future'\n  | 'reading_non_monotonic'\n  | 'record_invalid_date'\n  | 'record_in_future'\n  | 'no_readings'\n  | 'single_reading'\n  | 'readings_span_too_short'\n  | 'daily_km_from_readings'\n  | 'daily_km_declared'\n  | 'daily_km_default_assumption'\n  | 'daily_km_implausible'\n  | 'daily_km_zero'\n  | 'odometer_projected'\n  | 'odometer_stale'\n  | 'odometer_very_stale'\n  | 'anchor_km_interpolated'\n  | 'anchor_km_extrapolated'\n  | 'anchor_assumed_at_acquisition'\n  | 'anchor_new_vehicle'\n  | 'anchor_after_last_reading'\n  | 'no_anchor'\n  | 'possibly_overdue_never_recorded'\n  | 'inspection_said_replace'\n  | 'severe_interval_applied'\n  | 'severe_not_in_manual'\n  | 'first_service_interval'\n  | 'km_track_unavailable'\n  | 'time_track_unavailable'\n  | 'no_interval_in_spec'\n  | 'no_schedule_in_manual'\n  | 'spec_is_placeholder'\n  | 'spec_unreviewed';\n\nexport type MissingInput =\n  | 'odometer_reading'\n  | 'second_odometer_reading'\n  | 'weekly_km'\n  | 'last_service_date'\n  | 'last_service_km'\n  | 'spec_from_manual'\n  | 'inspection_result';\n\n/** Derived. Recomputed on every render from spec + records + readings. Never persisted as truth. */\nexport type WearEstimate = {\n  componentId: ComponentId;\n  action: ComponentAction;\n  status: WearStatus;\n  confidence: Confidence;\n  /** Which track is binding under \"whichever comes first\". */\n  binding: 'km' | 'time' | 'none';\n  percentConsumed: number | null;\n  remainingKm: number | null;\n  remainingDays: number | null;\n  dueAtKm: number | null;\n  projectedDueDate: ISODate | null; // in the past when overdue: the date it became due\n  kmTrack: TrackEstimate | null;\n  timeTrack: TrackEstimate | null;\n  odometerNowKm: number | null;\n  odometerIsProjected: boolean;\n  lastReadingDate: ISODate | null;\n  lastReadingAgeDays: number | null;\n  dailyKm: DailyKmEstimate;\n  severeApplied: boolean;\n  anchor: Anchor;\n  reasons: ReasonCode[];\n  missingInputs: MissingInput[];\n  specSourceKind: SpecSourceKind;\n};",
+ "algorithmTs": "// wear-engine.ts — pure, dependency-free. Pairs with wear-types.ts.\n// estimateWear(spec, records, readings, today, ctx?) -> WearEstimate\n//\n// Model: two tracks per component — km and time — \"whichever comes first\"\n// (the convention owner's manuals use: \"every 10,000 km or 12 months, whichever comes first\").\n// Nothing is measured from the car. Everything is: manual facts + what the user typed + arithmetic.\n//\n// Verified: compiles with `tsc --strict --target es2020`; scenario test at ./test.ts.\n\nimport type {\n  Anchor,\n  ComponentSpec,\n  Confidence,\n  DailyKmEstimate,\n  ISODate,\n  Interval,\n  MaintenanceSpec,\n  MissingInput,\n  OdometerReading,\n  ReasonCode,\n  ServiceRecord,\n  TrackEstimate,\n  UsageProfile,\n  VehicleProfile,\n  WearEstimate,\n  WearStatus,\n} from './wear-types';\n\n// ----------------------------------------------------------------------------\n// Policy (thresholds + the ONLY assumptions in the engine). All overridable.\n// ----------------------------------------------------------------------------\n\nexport type Policy = {\n  /** ASSUMPTION, not a measurement. Secondary sources put a Lima taxi at ~200 km/day; 150 is a\n   *  deliberately lower working figure so a stale odometer does not flip items to \"vencido\" on\n   *  an assumption. The UI must label any number derived from it as \"supuesto\". */\n  defaultDailyKmRideHailing: number;\n  /** ASSUMPTION. Same sources put a private car in Lima at ~25 km/day. */\n  defaultDailyKmPrivate: number;\n  /** Minimum days between first and last reading before a km/day rate is trusted. */\n  minSpanDaysForRate: number;\n  /** Prefer readings inside this recent window when estimating km/day. */\n  recentWindowDays: number;\n  /** Rates above this are treated as data-entry errors. */\n  maxPlausibleDailyKm: number;\n  /** \"pronto\" window = clamp(fraction × interval, min, max). */\n  prontoFraction: number;\n  prontoMinKm: number;\n  prontoMaxKm: number;\n  prontoMinDays: number;\n  prontoMaxDays: number;\n  /** \"toca\" also triggers inside this absolute window before due. */\n  tocaKm: number;\n  tocaDays: number;\n  /** \"vencido\" once consumed ≥ 1 + grace. */\n  vencidoGracePct: number;\n  vencidoGracePctSafety: number;\n  /** Reading age (days) after which confidence drops / is capped. */\n  staleReadingDays: number;\n  veryStaleReadingDays: number;\n  daysPerMonth: number;\n};\n\nexport const DEFAULT_POLICY: Policy = {\n  defaultDailyKmRideHailing: 150,\n  defaultDailyKmPrivate: 25,\n  minSpanDaysForRate: 14,\n  recentWindowDays: 120,\n  maxPlausibleDailyKm: 600,\n  prontoFraction: 0.2,\n  prontoMinKm: 500,\n  prontoMaxKm: 5000,\n  prontoMinDays: 14,\n  prontoMaxDays: 60,\n  tocaKm: 300,\n  tocaDays: 7,\n  vencidoGracePct: 0.1,\n  vencidoGracePctSafety: 0.05,\n  staleReadingDays: 45,\n  veryStaleReadingDays: 120,\n  daysPerMonth: 30.4375,\n};\n\nexport type EstimateContext = {\n  usage?: Partial<UsageProfile>;\n  declaredWeeklyKm?: number | null;\n  acquisition?: VehicleProfile['acquisition'];\n  /** The user explicitly tapped \"asumir que se hizo al comprar\" for this component. Never default true. */\n  assumeDoneAtAcquisition?: boolean;\n  policy?: Partial<Policy>;\n};\n\n// ----------------------------------------------------------------------------\n// Dates: 'YYYY-MM-DD' <-> integer day number (UTC-based, so no DST/timezone drift).\n// ----------------------------------------------------------------------------\n\nconst ISO_RE = /^(\\d{4})-(\\d{2})-(\\d{2})$/;\nconst MS_PER_DAY = 86_400_000;\n\nexport function parseISODate(s: string | null | undefined): number | null {\n  if (!s) return null;\n  const m = ISO_RE.exec(s);\n  if (!m) return null;\n  const y = Number(m[1]);\n  const mo = Number(m[2]);\n  const d = Number(m[3]);\n  const ms = Date.UTC(y, mo - 1, d);\n  const dt = new Date(ms);\n  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;\n  return Math.round(ms / MS_PER_DAY);\n}\n\nexport function toISODate(day: number): ISODate {\n  const dt = new Date(Math.round(day) * MS_PER_DAY);\n  const p = (n: number) => String(n).padStart(2, '0');\n  return `${dt.getUTCFullYear()}-${p(dt.getUTCMonth() + 1)}-${p(dt.getUTCDate())}`;\n}\n\n// ----------------------------------------------------------------------------\n// Readings: merge, validate, drop future dates, resolve non-monotonic entries.\n// ----------------------------------------------------------------------------\n\nexport type CleanReading = { id: string; day: number; km: number; source: OdometerReading['source'] };\nexport type DroppedReading = { id: string; reason: ReasonCode };\n\n/** Longest non-decreasing subsequence by km over date-sorted readings. Readings outside it are\n *  the minority that contradicts the rest; they are dropped, not \"fixed\". Ties prefer keeping\n *  the most recent readings. O(n²) — n is tens, not thousands. */\nfunction longestNonDecreasing(items: CleanReading[]): Set<number> {\n  const n = items.length;\n  const keep = new Set<number>();\n  if (n === 0) return keep;\n  const len: number[] = new Array<number>(n).fill(1);\n  const prev: number[] = new Array<number>(n).fill(-1);\n  for (let i = 0; i < n; i++) {\n    for (let j = 0; j < i; j++) {\n      if (items[j].km <= items[i].km && len[j] + 1 >= len[i]) {\n        len[i] = len[j] + 1;\n        prev[i] = j;\n      }\n    }\n  }\n  let best = 0;\n  for (let i = 1; i < n; i++) if (len[i] >= len[best]) best = i;\n  for (let i = best; i !== -1; i = prev[i]) keep.add(i);\n  return keep;\n}\n\nexport function cleanReadings(\n  readings: OdometerReading[],\n  records: ServiceRecord[],\n  todayDay: number,\n): { clean: CleanReading[]; dropped: DroppedReading[] } {\n  const dropped: DroppedReading[] = [];\n  const raw: CleanReading[] = [];\n\n  for (const r of readings) {\n    const day = parseISODate(r.date);\n    if (day === null) {\n      dropped.push({ id: r.id, reason: 'reading_invalid_date' });\n      continue;\n    }\n    if (!Number.isFinite(r.km) || r.km < 0) {\n      dropped.push({ id: r.id, reason: 'reading_invalid_km' });\n      continue;\n    }\n    if (day > todayDay) {\n      dropped.push({ id: r.id, reason: 'reading_in_future' });\n      continue;\n    }\n    raw.push({ id: r.id, day, km: r.km, source: r.source });\n  }\n  // A service record with an odometer is also an odometer reading.\n  for (const s of records) {\n    if (s.odometerKm === null || !Number.isFinite(s.odometerKm) || s.odometerKm < 0) continue;\n    const day = parseISODate(s.date);\n    if (day === null || day > todayDay) continue; // reported separately by the record pass\n    raw.push({ id: `rec:${s.id}`, day, km: s.odometerKm, source: 'service_record' });\n  }\n\n  raw.sort((a, b) => a.day - b.day || a.km - b.km);\n  // Exact duplicates (same day, same km) are one observation.\n  const dedup: CleanReading[] = [];\n  for (const r of raw) {\n    const last = dedup[dedup.length - 1];\n    if (last && last.day === r.day && last.km === r.km) continue;\n    dedup.push(r);\n  }\n  const keep = longestNonDecreasing(dedup);\n  const clean: CleanReading[] = [];\n  dedup.forEach((r, i) => {\n    if (keep.has(i)) clean.push(r);\n    else dropped.push({ id: r.id, reason: 'reading_non_monotonic' });\n  });\n  return { clean, dropped };\n}\n\n// ----------------------------------------------------------------------------\n// km/day: readings → declared weekly km → labeled default assumption.\n// ----------------------------------------------------------------------------\n\nexport function estimateDailyKm(\n  clean: CleanReading[],\n  todayDay: number,\n  ctx: EstimateContext,\n  policy: Policy,\n  reasons: Set<ReasonCode>,\n): DailyKmEstimate {\n  const rateOver = (subset: CleanReading[]): DailyKmEstimate | null => {\n    if (subset.length < 2) return null;\n    const first = subset[0];\n    const last = subset[subset.length - 1];\n    const span = last.day - first.day;\n    if (span < policy.minSpanDaysForRate) return null;\n    const rate = (last.km - first.km) / span;\n    if (rate > policy.maxPlausibleDailyKm) {\n      reasons.add('daily_km_implausible');\n      return null;\n    }\n    return { kmPerDay: rate, source: 'readings', readingsUsed: subset.length, spanDays: span };\n  };\n\n  const recent = clean.filter((r) => r.day >= todayDay - policy.recentWindowDays);\n  const fromReadings = rateOver(recent) ?? rateOver(clean);\n  if (fromReadings) {\n    reasons.add('daily_km_from_readings');\n    if (fromReadings.kmPerDay === 0) reasons.add('daily_km_zero');\n    return fromReadings;\n  }\n  if (clean.length === 0) reasons.add('no_readings');\n  else if (clean.length === 1) reasons.add('single_reading');\n  else reasons.add('readings_span_too_short');\n\n  const weekly = ctx.declaredWeeklyKm;\n  if (typeof weekly === 'number' && Number.isFinite(weekly) && weekly > 0) {\n    reasons.add('daily_km_declared');\n    return { kmPerDay: weekly / 7, source: 'declared', readingsUsed: 0, spanDays: 0 };\n  }\n\n  reasons.add('daily_km_default_assumption');\n  const ride = ctx.usage?.rideHailing === true;\n  return {\n    kmPerDay: ride ? policy.defaultDailyKmRideHailing : policy.defaultDailyKmPrivate,\n    source: 'default_assumption',\n    readingsUsed: 0,\n    spanDays: 0,\n    assumptionLabel: ride\n      ? `Supuesto: ${policy.defaultDailyKmRideHailing} km por día (conductor de aplicativo). Cámbialo en tu perfil.`\n      : `Supuesto: ${policy.defaultDailyKmPrivate} km por día (uso particular). Cámbialo en tu perfil.`,\n  };\n}\n\n// ----------------------------------------------------------------------------\n// Odometer at an arbitrary date, from the cleaned readings.\n// ----------------------------------------------------------------------------\n\nfunction kmAtDay(\n  clean: CleanReading[],\n  day: number,\n  kmPerDay: number,\n  reasons: Set<ReasonCode>,\n): number | null {\n  if (clean.length === 0) return null;\n  const first = clean[0];\n  const last = clean[clean.length - 1];\n  if (day <= first.day) {\n    if (day === first.day) return first.km;\n    reasons.add('anchor_km_extrapolated');\n    return Math.max(0, first.km - (first.day - day) * kmPerDay);\n  }\n  if (day >= last.day) {\n    if (day === last.day) return last.km;\n    reasons.add('anchor_after_last_reading');\n    return last.km + (day - last.day) * kmPerDay;\n  }\n  for (let i = 1; i < clean.length; i++) {\n    const a = clean[i - 1];\n    const b = clean[i];\n    if (day >= a.day && day <= b.day) {\n      if (b.day === a.day) return b.km;\n      reasons.add('anchor_km_interpolated');\n      return a.km + ((b.km - a.km) * (day - a.day)) / (b.day - a.day);\n    }\n  }\n  return last.km;\n}\n\n// ----------------------------------------------------------------------------\n// Anchor: the last event that reset the component's clock.\n// ----------------------------------------------------------------------------\n\nfunction findAnchor(\n  spec: ComponentSpec,\n  records: ServiceRecord[],\n  clean: CleanReading[],\n  todayDay: number,\n  ctx: EstimateContext,\n  kmPerDay: number,\n  reasons: Set<ReasonCode>,\n): { anchor: Anchor; inspectionSaidReplace: boolean } {\n  type Ev = { rec: ServiceRecord; day: number };\n  const events: Ev[] = [];\n  for (const rec of records) {\n    if (!rec.componentIds.includes(spec.componentId)) continue;\n    const day = parseISODate(rec.date);\n    if (day === null) {\n      reasons.add('record_invalid_date');\n      continue;\n    }\n    if (day > todayDay) {\n      reasons.add('record_in_future');\n      continue;\n    }\n    events.push({ rec, day });\n  }\n  events.sort((a, b) => b.day - a.day); // newest first\n\n  const resets: ServiceRecord['kind'][] =\n    spec.action === 'replace' || spec.action === 'rotate'\n      ? ['replaced']\n      : ['replaced', 'inspected_ok'];\n\n  const latestReplace = events.find((e) => e.rec.kind === 'replaced');\n  const latestNeedsReplace = events.find((e) => e.rec.kind === 'inspected_needs_replace');\n  const inspectionSaidReplace =\n    latestNeedsReplace !== undefined && (latestReplace === undefined || latestNeedsReplace.day > latestReplace.day);\n\n  const hit = events.find((e) => resets.includes(e.rec.kind));\n  if (hit) {\n    const interp = hit.rec.odometerKm === null;\n    const km = interp ? kmAtDay(clean, hit.day, kmPerDay, reasons) : hit.rec.odometerKm;\n    return {\n      anchor: {\n        kind: hit.rec.kind === 'replaced' ? 'service_record' : 'inspection',\n        date: toISODate(hit.day),\n        km,\n        kmWasInterpolated: interp,\n        recordId: hit.rec.id,\n      },\n      inspectionSaidReplace,\n    };\n  }\n\n  const acq = ctx.acquisition;\n  const acqDay = parseISODate(acq?.date);\n  if (acq && acqDay !== null && acqDay <= todayDay) {\n    if (!acq.wasUsed) {\n      reasons.add('anchor_new_vehicle');\n      return {\n        anchor: { kind: 'new_vehicle', date: toISODate(acqDay), km: acq.odometerKm ?? 0, kmWasInterpolated: false },\n        inspectionSaidReplace,\n      };\n    }\n    if (ctx.assumeDoneAtAcquisition === true) {\n      reasons.add('anchor_assumed_at_acquisition');\n      const interp = acq.odometerKm === undefined;\n      const km = interp ? kmAtDay(clean, acqDay, kmPerDay, reasons) : (acq.odometerKm as number);\n      return {\n        anchor: { kind: 'assumed_at_acquisition', date: toISODate(acqDay), km, kmWasInterpolated: interp },\n        inspectionSaidReplace,\n      };\n    }\n  }\n  reasons.add('no_anchor');\n  return { anchor: { kind: 'none', date: null, km: null, kmWasInterpolated: false }, inspectionSaidReplace };\n}\n\n// ----------------------------------------------------------------------------\n// Severe usage → the manual's own severe interval, if it defines one. Never a made-up multiplier.\n// ----------------------------------------------------------------------------\n\nexport function isSevereUsage(u: Partial<UsageProfile> | undefined): boolean {\n  if (!u) return false;\n  return u.rideHailing === true || u.dustyRoads === true || u.shortTrips === true || u.mostlyCity === true;\n}\n\nfunction applicableInterval(\n  spec: ComponentSpec,\n  ctx: EstimateContext,\n  anchorKind: Anchor['kind'],\n  reasons: Set<ReasonCode>,\n): { interval: Interval; severeApplied: boolean } {\n  let interval: Interval = { km: spec.normal.km, months: spec.normal.months };\n  let severeApplied = false;\n  if (isSevereUsage(ctx.usage)) {\n    if (spec.severe) {\n      interval = { km: spec.severe.km ?? spec.normal.km, months: spec.severe.months ?? spec.normal.months };\n      severeApplied = true;\n      reasons.add('severe_interval_applied');\n    } else {\n      reasons.add('severe_not_in_manual');\n    }\n  }\n  if (anchorKind === 'new_vehicle' && typeof spec.firstServiceKm === 'number') {\n    interval = { km: spec.firstServiceKm, months: interval.months };\n    reasons.add('first_service_interval');\n  }\n  return { interval, severeApplied };\n}\n\n// ----------------------------------------------------------------------------\n// Status and confidence.\n// ----------------------------------------------------------------------------\n\nfunction clamp(v: number, lo: number, hi: number): number {\n  return Math.min(hi, Math.max(lo, v));\n}\n\nfunction statusFrom(\n  percent: number,\n  remainingKm: number | null,\n  remainingDays: number | null,\n  kmInterval: number | null,\n  dayInterval: number | null,\n  criticality: ComponentSpec['criticality'],\n  policy: Policy,\n): WearStatus {\n  const grace = criticality === 'safety' ? policy.vencidoGracePctSafety : policy.vencidoGracePct;\n  if (percent >= 1 + grace) return 'vencido';\n  if (percent >= 1) return 'toca';\n  if (remainingKm !== null && remainingKm <= policy.tocaKm) return 'toca';\n  if (remainingDays !== null && remainingDays <= policy.tocaDays) return 'toca';\n  const prontoKm = kmInterval === null ? null : clamp(kmInterval * policy.prontoFraction, policy.prontoMinKm, policy.prontoMaxKm);\n  const prontoDays =\n    dayInterval === null ? null : clamp(dayInterval * policy.prontoFraction, policy.prontoMinDays, policy.prontoMaxDays);\n  if (remainingKm !== null && prontoKm !== null && remainingKm <= prontoKm) return 'pronto';\n  if (remainingDays !== null && prontoDays !== null && remainingDays <= prontoDays) return 'pronto';\n  return 'ok';\n}\n\nfunction confidenceFrom(args: {\n  anchor: Anchor;\n  readingsCount: number;\n  lastReadingAgeDays: number | null;\n  daily: DailyKmEstimate;\n  spec: ComponentSpec;\n  needsKm: boolean;\n  policy: Policy;\n}): Confidence {\n  const { anchor, readingsCount, lastReadingAgeDays, daily, spec, needsKm, policy } = args;\n  if (anchor.kind === 'none') return 'ninguna';\n  let score = 0;\n  const caps: Confidence[] = [];\n\n  // Anchor quality\n  if (anchor.kind === 'service_record' || anchor.kind === 'new_vehicle') score += anchor.kmWasInterpolated ? 2 : 3;\n  else if (anchor.kind === 'inspection') score += 2;\n  else if (anchor.kind === 'assumed_at_acquisition') caps.push('baja');\n\n  if (needsKm) {\n    // Reading count\n    if (readingsCount >= 4) score += 2;\n    else if (readingsCount >= 2) score += 1;\n    // Freshness\n    if (lastReadingAgeDays === null) caps.push('baja');\n    else if (lastReadingAgeDays <= 14) score += 2;\n    else if (lastReadingAgeDays <= policy.staleReadingDays) score += 1;\n    else if (lastReadingAgeDays > policy.veryStaleReadingDays) caps.push('baja');\n    // Rate source\n    if (daily.source === 'readings') score += daily.spanDays >= 30 ? 2 : 1;\n    else if (daily.source === 'declared') score += 1;\n    else caps.push('media');\n  } else {\n    score += 3; // time-only items do not depend on the odometer at all\n  }\n\n  // Spec provenance\n  if (spec.source.kind === 'placeholder') caps.push('baja');\n  else if (spec.source.kind === 'user_entered') caps.push('media');\n  else if (!spec.source.reviewedBy) caps.push('media');\n\n  let level: Confidence = score >= 7 ? 'alta' : score >= 4 ? 'media' : 'baja';\n  const order: Confidence[] = ['ninguna', 'baja', 'media', 'alta'];\n  for (const cap of caps) if (order.indexOf(cap) < order.indexOf(level)) level = cap;\n  return level;\n}\n\n// ----------------------------------------------------------------------------\n// The estimator.\n// ----------------------------------------------------------------------------\n\nexport function estimateWear(\n  spec: ComponentSpec,\n  records: ServiceRecord[],\n  readings: OdometerReading[],\n  today: ISODate,\n  ctx: EstimateContext = {},\n): WearEstimate {\n  const policy: Policy = { ...DEFAULT_POLICY, ...(ctx.policy ?? {}) };\n  const todayDay = parseISODate(today);\n  if (todayDay === null) throw new TypeError(`estimateWear: invalid today \"${today}\" (expected YYYY-MM-DD)`);\n\n  const reasons = new Set<ReasonCode>();\n  const missing = new Set<MissingInput>();\n  if (spec.source.kind === 'placeholder') {\n    reasons.add('spec_is_placeholder');\n    missing.add('spec_from_manual');\n  } else if (!spec.source.reviewedBy) {\n    reasons.add('spec_unreviewed');\n  }\n\n  // 1. Readings\n  const { clean, dropped } = cleanReadings(readings, records, todayDay);\n  for (const d of dropped) reasons.add(d.reason);\n\n  // 2. km/day\n  const daily = estimateDailyKm(clean, todayDay, ctx, policy, reasons);\n  if (daily.source !== 'readings') {\n    if (clean.length < 2) missing.add('second_odometer_reading');\n    if (daily.source === 'default_assumption') missing.add('weekly_km');\n  }\n\n  // 3. Odometer today. Projected forward only from real information (readings or declared km),\n  //    never from the default assumption — an assumption must not move a status on its own.\n  const last = clean.length ? clean[clean.length - 1] : null;\n  const lastAge = last ? todayDay - last.day : null;\n  let odometerNowKm: number | null = last ? last.km : null;\n  let odometerIsProjected = false;\n  if (last && lastAge !== null && lastAge > 0) {\n    if (daily.source !== 'default_assumption') {\n      odometerNowKm = last.km + daily.kmPerDay * lastAge;\n      odometerIsProjected = true;\n      reasons.add('odometer_projected');\n    }\n    if (lastAge > policy.veryStaleReadingDays) reasons.add('odometer_very_stale');\n    else if (lastAge > policy.staleReadingDays) reasons.add('odometer_stale');\n  }\n  if (!last) missing.add('odometer_reading');\n\n  // 4. Anchor\n  const { anchor, inspectionSaidReplace } = findAnchor(spec, records, clean, todayDay, ctx, daily.kmPerDay, reasons);\n\n  // 5. Interval\n  const { interval, severeApplied } = applicableInterval(spec, ctx, anchor.kind, reasons);\n\n  const base: Omit<\n    WearEstimate,\n    'status' | 'confidence' | 'binding' | 'percentConsumed' | 'remainingKm' | 'remainingDays' | 'dueAtKm' | 'projectedDueDate' | 'kmTrack' | 'timeTrack'\n  > = {\n    componentId: spec.componentId,\n    action: spec.action,\n    odometerNowKm,\n    odometerIsProjected,\n    lastReadingDate: last ? toISODate(last.day) : null,\n    lastReadingAgeDays: lastAge,\n    dailyKm: daily,\n    severeApplied,\n    anchor,\n    reasons: [],\n    missingInputs: [],\n    specSourceKind: spec.source.kind,\n  };\n  const finish = (partial: Pick<\n    WearEstimate,\n    'status' | 'confidence' | 'binding' | 'percentConsumed' | 'remainingKm' | 'remainingDays' | 'dueAtKm' | 'projectedDueDate' | 'kmTrack' | 'timeTrack'\n  >): WearEstimate => ({ ...base, ...partial, reasons: Array.from(reasons), missingInputs: Array.from(missing) });\n\n  const empty = (status: WearStatus, confidence: Confidence): WearEstimate =>\n    finish({\n      status,\n      confidence,\n      binding: 'none',\n      percentConsumed: null,\n      remainingKm: null,\n      remainingDays: null,\n      dueAtKm: null,\n      projectedDueDate: null,\n      kmTrack: null,\n      timeTrack: null,\n    });\n\n  // 6. Items the manual does not schedule, or specs with no interval at all.\n  if (spec.action === 'no_schedule') {\n    reasons.add('no_schedule_in_manual');\n    if (inspectionSaidReplace) reasons.add('inspection_said_replace');\n    return empty(inspectionSaidReplace ? 'toca' : 'sin_datos', inspectionSaidReplace ? 'alta' : 'ninguna');\n  }\n  if (interval.km === null && interval.months === null) {\n    reasons.add('no_interval_in_spec');\n    missing.add('spec_from_manual');\n    return empty('sin_datos', 'ninguna');\n  }\n\n  // 7. A recorded inspection that said \"replace\" overrides arithmetic until a 'replaced' record lands.\n  if (inspectionSaidReplace) {\n    reasons.add('inspection_said_replace');\n    return empty('toca', 'alta');\n  }\n\n  // 8. No anchor: honest \"sin datos\", plus a hint when the car has plainly driven past one interval.\n  if (anchor.kind === 'none') {\n    missing.add('last_service_date');\n    if (\n      odometerNowKm !== null &&\n      interval.km !== null &&\n      odometerNowKm >= interval.km &&\n      spec.criticality !== 'comfort'\n    ) {\n      reasons.add('possibly_overdue_never_recorded');\n    }\n    return empty('sin_datos', 'ninguna');\n  }\n\n  // 9. Tracks\n  let kmTrack: TrackEstimate | null = null;\n  if (interval.km !== null) {\n    if (anchor.km !== null && odometerNowKm !== null) {\n      const used = Math.max(0, odometerNowKm - anchor.km);\n      kmTrack = { interval: interval.km, used, remaining: interval.km - used, percent: used / interval.km };\n    } else {\n      reasons.add('km_track_unavailable');\n      if (odometerNowKm === null) missing.add('odometer_reading');\n      if (anchor.km === null) missing.add('last_service_km');\n    }\n  }\n  let timeTrack: TrackEstimate | null = null;\n  if (interval.months !== null) {\n    const anchorDay = parseISODate(anchor.date);\n    if (anchorDay !== null) {\n      const intervalDays = Math.round(interval.months * policy.daysPerMonth);\n      const used = Math.max(0, todayDay - anchorDay);\n      timeTrack = { interval: intervalDays, used, remaining: intervalDays - used, percent: used / intervalDays };\n    } else {\n      reasons.add('time_track_unavailable');\n      missing.add('last_service_date');\n    }\n  }\n  if (!kmTrack && !timeTrack) return empty('sin_datos', 'ninguna');\n\n  // 10. Whichever comes first.\n  const kmDays =\n    kmTrack === null ? null : daily.kmPerDay > 0 ? kmTrack.remaining / daily.kmPerDay : kmTrack.remaining <= 0 ? kmTrack.remaining : Number.POSITIVE_INFINITY;\n  const timeDays = timeTrack === null ? null : timeTrack.remaining;\n  let binding: WearEstimate['binding'] = 'none';\n  let remainingDays: number | null = null;\n  if (kmDays !== null && timeDays !== null) {\n    binding = kmDays <= timeDays ? 'km' : 'time';\n    remainingDays = Math.min(kmDays, timeDays);\n  } else if (kmDays !== null) {\n    binding = 'km';\n    remainingDays = kmDays;\n  } else if (timeDays !== null) {\n    binding = 'time';\n    remainingDays = timeDays;\n  }\n  if (remainingDays !== null && !Number.isFinite(remainingDays)) remainingDays = null; // parked car, km-only item\n\n  const kmFromTime = timeTrack === null ? null : timeTrack.remaining * daily.kmPerDay;\n  let remainingKm: number | null = null;\n  if (kmTrack && kmFromTime !== null) remainingKm = Math.min(kmTrack.remaining, kmFromTime);\n  else if (kmTrack) remainingKm = kmTrack.remaining;\n  else if (kmFromTime !== null) remainingKm = kmFromTime;\n\n  const percentConsumed = Math.max(kmTrack?.percent ?? 0, timeTrack?.percent ?? 0);\n  const dueAtKm = kmTrack && anchor.km !== null ? anchor.km + kmTrack.interval : null;\n  const projectedDueDate = remainingDays === null ? null : toISODate(todayDay + remainingDays);\n\n  const status = statusFrom(\n    percentConsumed,\n    remainingKm === null ? null : Math.round(remainingKm),\n    remainingDays === null ? null : Math.round(remainingDays),\n    kmTrack ? kmTrack.interval : null,\n    timeTrack ? timeTrack.interval : null,\n    spec.criticality,\n    policy,\n  );\n  const confidence = confidenceFrom({\n    anchor,\n    readingsCount: clean.length,\n    lastReadingAgeDays: lastAge,\n    daily,\n    spec,\n    needsKm: kmTrack !== null,\n    policy,\n  });\n\n  return finish({\n    status,\n    confidence,\n    binding,\n    percentConsumed: round3(percentConsumed),\n    remainingKm: remainingKm === null ? null : Math.round(remainingKm),\n    remainingDays: remainingDays === null ? null : Math.round(remainingDays),\n    dueAtKm: dueAtKm === null ? null : Math.round(dueAtKm),\n    projectedDueDate,\n    kmTrack: kmTrack && roundTrack(kmTrack),\n    timeTrack: timeTrack && roundTrack(timeTrack),\n  });\n}\n\nfunction round3(n: number): number {\n  return Math.round(n * 1000) / 1000;\n}\nfunction roundTrack(t: TrackEstimate): TrackEstimate {\n  return { interval: Math.round(t.interval), used: Math.round(t.used), remaining: Math.round(t.remaining), percent: round3(t.percent) };\n}\n\n// ----------------------------------------------------------------------------\n// Whole-car helper: filter the manual's lines by variant, build the context from the profile.\n// ----------------------------------------------------------------------------\n\nexport function estimateAll(\n  spec: MaintenanceSpec,\n  vehicle: VehicleProfile,\n  records: ServiceRecord[],\n  readings: OdometerReading[],\n  today: ISODate,\n  assumeDoneAtAcquisitionFor: ReadonlySet<string> = new Set(),\n  policy?: Partial<Policy>,\n): WearEstimate[] {\n  const applies = (c: ComponentSpec): boolean => {\n    const a = c.appliesTo;\n    if (!a) return true;\n    if (a.engines && vehicle.engineCode && !a.engines.includes(vehicle.engineCode)) return false;\n    if (a.transmissions && vehicle.transmission !== 'unknown' && !a.transmissions.includes(vehicle.transmission)) return false;\n    if (a.fuels && vehicle.fuel !== 'unknown' && !a.fuels.includes(vehicle.fuel)) return false;\n    return true;\n  };\n  return spec.components.filter(applies).map((c) =>\n    estimateWear(c, records, readings, today, {\n      usage: vehicle.usage,\n      declaredWeeklyKm: vehicle.declaredWeeklyKm ?? null,\n      acquisition: vehicle.acquisition,\n      assumeDoneAtAcquisition: assumeDoneAtAcquisitionFor.has(c.componentId),\n      policy,\n    }),\n  );\n}\n\n/** Sort helper for the UI: worst first, then soonest (unknowns last). */\nexport function sortByUrgency(list: WearEstimate[]): WearEstimate[] {\n  const rank: Record<WearStatus, number> = { vencido: 0, toca: 1, pronto: 2, ok: 3, sin_datos: 4 };\n  return [...list].sort((a, b) => {\n    const r = rank[a.status] - rank[b.status];\n    if (r !== 0) return r;\n    const da = a.remainingDays ?? Number.POSITIVE_INFINITY;\n    const db = b.remainingDays ?? Number.POSITIVE_INFINITY;\n    return da - db;\n  });\n}",
+ "statusRules": [
+  {
+   "status": "vencido",
+   "rule": "percentConsumed >= 1 + grace, where grace = 0.10 (0.05 for criticality 'safety'). percentConsumed = max(kmUsed/kmInterval, daysUsed/daysInterval) — whichever track is further along. Interval = manual normal, or manual severe when the usage profile is severe AND the manual defines a severe line.",
+   "spanishLabel": "Vencido (inspect items: Revisión vencida)",
+   "spanishExplanationTemplate": "Según el manual, {componente} va cada {intervaloKm} km o {intervaloMeses} meses, lo que ocurra primero. Desde el último {cambio|revisión} que registraste ({fechaAnchor}, {kmAnchor} km) llevas {usadoKm} km y {usadoDias} días. Se pasó hace {excesoKm} km / {excesoDias} días (estimado con tu kilometraje). Si no lo haces: {whatIfSkipped}."
+  },
+  {
+   "status": "toca",
+   "rule": "percentConsumed >= 1.0 (inside the grace band) OR remainingKm <= 300 OR remainingDays <= 7. remainingDays = min(remainingKm / kmPerDay, remainingDaysByTime).",
+   "spanishLabel": "Toca ahora (inspect items: Toca revisar)",
+   "spanishExplanationTemplate": "Según el manual, toca {cambiar|revisar} {componente} cada {intervaloKm} km o {intervaloMeses} meses. Estimado con tu kilometraje ({kmPorDia} km por día), le quedan ~{restanteKm} km, aprox. {restanteDias} días."
+  },
+  {
+   "status": "pronto",
+   "rule": "remainingKm <= clamp(0.20 × kmInterval, 500, 5000) OR remainingDays <= clamp(0.20 × daysInterval, 14, 60). The window scales with the interval so a 100,000 km timing belt warns ~5,000 km ahead (time to save up) while a 5,000 km oil change warns 1,000 km ahead.",
+   "spanishLabel": "Pronto (inspect items: Revisar pronto)",
+   "spanishExplanationTemplate": "Según el manual, {componente} va cada {intervaloKm} km o {intervaloMeses} meses. Llevas {usadoKm} de {intervaloKm} km ({porcentaje} % del intervalo). Al ritmo que registraste, tocaría aprox. el {fechaProyectada} o a los {dueAtKm} km."
+  },
+  {
+   "status": "ok",
+   "rule": "None of the above triggered, and an anchor (last service / inspection / new-vehicle / user-assumed) exists with at least one track computable.",
+   "spanishLabel": "Al día (inspect items: Revisión al día)",
+   "spanishExplanationTemplate": "Según el manual, {componente} va cada {intervaloKm} km o {intervaloMeses} meses. Llevas {usadoKm} km y {usadoDias} días desde el último {cambio|revisión} que registraste. Próximo aprox. el {fechaProyectada} ({dueAtKm} km)."
+  },
+  {
+   "status": "sin_datos",
+   "rule": "No anchor (no service/inspection record for the component, not a new vehicle, and the user did not assert 'asumir que se hizo al comprar'); OR the spec has no interval; OR action is 'no_schedule'; OR neither track is computable (km-only item with no odometer reading). Confidence is 'ninguna'. When the odometer is already past one full interval and the item is not 'comfort', reason 'possibly_overdue_never_recorded' is added so the UI can suggest asking the workshop.",
+   "spanishLabel": "Sin datos",
+   "spanishExplanationTemplate": "No registraste cuándo fue el último {cambio|revisión} de {componente}. Según el manual va cada {intervaloKm} km o {intervaloMeses} meses. {si possibly_overdue: Tu auto ya pasó los {intervaloKm} km; si no sabes cuándo se hizo, pídele al taller que lo revise.} Regístralo o marca 'no sé' para asumir que se hizo cuando compraste el auto."
+  }
+ ],
+ "confidenceModel": "Confidence is a label on the ESTIMATE, not on the car. Four levels: alta / media / baja / ninguna. Computed per component by confidenceFrom():\n\n1. Hard exit: anchor.kind === 'none' → 'ninguna' (nothing to count from).\n2. Score (0–9):\n   - Anchor quality: service record or new-vehicle with recorded km +3; record whose km had to be interpolated from readings +2; inspection record +2; 'assumed_at_acquisition' +0 and CAP at 'baja'.\n   - Only if the component has a km track (needsKm): readings count ≥4 → +2, 2–3 → +1; freshness of last reading ≤14 days +2, ≤45 days +1, 46–120 days +0, >120 days CAP 'baja' (no reading at all → CAP 'baja'); km/day source: from readings spanning ≥30 days +2, from readings with a shorter span +1, declared weekly km +1, default assumption CAP 'media'.\n   - Time-only components (wipers, brake fluid by years, battery age) get +3 in place of the odometer block: they do not depend on the odometer at all.\n   - Spec provenance: 'placeholder' CAP 'baja'; 'user_entered' CAP 'media'; owner_manual/warranty_booklet/dealer_published without reviewedBy CAP 'media'; reviewed → no cap.\n3. Map: score ≥7 alta, ≥4 media, else baja; then apply the lowest cap.\n4. Spanish rendering (never a number): alta → \"Estimación confiable\"; media → \"Estimación aproximada\"; baja → \"Estimación poco confiable — actualiza tu kilometraje\" (or \"— confirma el último cambio\" when the anchor is assumed); ninguna → no confidence chip; the card shows the sin_datos CTA instead.\n5. Freshness drives the nudge loop: reasons 'odometer_stale' (>45 d) and 'odometer_very_stale' (>120 d) are what the estado tab uses to ask \"¿Cuántos km marca hoy?\". missingInputs tells the UI exactly which question would raise the confidence ('second_odometer_reading', 'weekly_km', 'last_service_date', 'last_service_km', 'spec_from_manual', 'inspection_result').\n6. The default km/day assumption never projects the odometer forward (only converts remaining km → days), so an assumption can lower confidence but cannot by itself move a status to vencido.",
+ "inputsFromManual": [
+  "Per component: the ACTION verb the manual uses — replace (R) / inspect (I) / inspect-and-replace-if-needed / rotate / adjust / no schedule ('lifetime'). Table codes I/R must be mapped, not guessed.",
+  "Per component: normal-use km interval (null if the manual gives none).",
+  "Per component: normal-use months interval (null if none). Both together imply 'whichever comes first' — the manual's own convention; store it as the default binding rule.",
+  "Per component: severe/special-operating-conditions km and months interval, ONLY when the manual prints one (Toyota: 5,000 mi / 6 months oil under special conditions). Null means 'not in manual' and the engine applies no multiplier.",
+  "The manual's list of severe conditions as codes: dusty_roads, short_trips, taxi_or_commercial, towing, extended_idling, extreme_heat, extreme_cold, mountain. Needed to map the user's usage profile (ride-hailing in Lima → taxi_or_commercial) to the severe schedule.",
+  "Per component: first-service exception (e.g. first gearbox oil at 1,000 km, then every N).",
+  "Per component: replacement CRITERION for inspect items as data — brake pad minimum thickness (mm), disc minimum thickness, belt condition, tire tread — so the UI can say what the workshop must measure.",
+  "Per component: variant split — which engine codes / transmissions (MT, AT, CVT, DCT) / fuels the line applies to; timing belt vs chain per engine.",
+  "Consumable facts: oil grade/viscosity (e.g. 5W-30, API SN), coolant type, ATF/CVT fluid spec, brake fluid DOT grade, capacities in liters, spark plug type (copper/iridium). Facts only.",
+  "Units used by the manual (km vs miles; months vs years) — for normalization.",
+  "Explicit 'not scheduled' statements (timing chain, sealed transmission) so the app can say 'el manual no programa un cambio' instead of showing nothing.",
+  "Bibliographic reference for the audit trail: document title, publisher code/edition, market (PE/LATAM/US), model years covered, page numbers of the schedule table, severe-conditions page, specifications page. Never the text itself.",
+  "Items the manual lists that are outside the catalog (e.g. 'engine valve clearance', 'fuel lines', 'exhaust') — keep them with manual-specific ids; the ComponentId union is open."
+ ],
+ "inputsFromUser": [
+  {
+   "input": "Brand, model, year (plus engine code and transmission when the manual splits lines)",
+   "whenAsked": "Onboarding, step 1. Engine/transmission asked only if the selected spec has appliesTo splits; hint: 'está en tu tarjeta de propiedad'.",
+   "whyNeeded": "Selects the MaintenanceSpec and filters variant lines (MT vs CVT oil, belt vs chain).",
+   "ifMissing": "No spec → the car diagram renders with zones but no status; show the cold-start flow. Unknown transmission → estimateAll includes every transmission line and the UI asks which one applies before showing a status for those lines."
+  },
+  {
+   "input": "Fuel type and GNV/GLP conversion",
+   "whenAsked": "Onboarding, step 1 (one tap: gasolina / diésel / GNV / GLP).",
+   "whyNeeded": "Filters fuel-specific lines; enables the 'kit GNV/GLP' item, which is NOT in the OEM manual.",
+   "ifMissing": "Assume the manual's default fuel; hide the GNV/GLP item; reason logged."
+  },
+  {
+   "input": "Usage profile: ¿Manejas para aplicativo o taxi? ¿Calles de tierra o polvo? ¿Viajes cortos? ¿Mayormente ciudad?",
+   "whenAsked": "Onboarding, step 2 (four toggles). Editable in the vehicle sheet.",
+   "whyNeeded": "Maps to the manual's severe/special operating conditions; when the manual defines a severe schedule it is applied (severeApplied = true).",
+   "ifMissing": "Normal schedule; reason 'severe_not_in_manual' is NOT set (no severe usage declared); the UI keeps a one-line prompt 'Si manejas para aplicativo, dilo aquí'."
+  },
+  {
+   "input": "Current odometer reading (km) with date — optionally by photo of the dash",
+   "whenAsked": "Onboarding step 3, then a nudge every 14 days and after every service. This is the single most valuable datum.",
+   "whyNeeded": "Km track needs the odometer today; two or more readings ≥14 days apart give the km/day rate; freshness drives confidence.",
+   "ifMissing": "No km track (reason 'km_track_unavailable'); only time tracks render; missingInputs includes 'odometer_reading'."
+  },
+  {
+   "input": "A second odometer reading at least 14 days later",
+   "whenAsked": "Automatic nudge 14 days after the first reading ('¿Cuántos km marca hoy?').",
+   "whyNeeded": "Turns km/day from an assumption into a measurement (source 'readings').",
+   "ifMissing": "Ask weekly km; else default assumption labeled 'Supuesto'."
+  },
+  {
+   "input": "¿Cuántos km manejas por semana? (declaredWeeklyKm)",
+   "whenAsked": "Only when readings are insufficient (single reading or span <14 days) — asked once, editable in the profile.",
+   "whyNeeded": "Converts remaining km into remaining days and a projected date without waiting two weeks.",
+   "ifMissing": "Default assumption: 150 km/day ride-hailing, 25 km/day private — both labeled ASSUMPTION in the UI (dailyKm.assumptionLabel). It never projects the odometer forward."
+  },
+  {
+   "input": "Last service per component: date + odometer km (with a 'No sé' option)",
+   "whenAsked": "Onboarding step 4 for the 4–6 most important items (aceite, filtro de aire, pastillas, líquido de frenos, correa/cadena, refrigerante); the rest from the component sheet ('¿Cuándo fue la última vez?').",
+   "whyNeeded": "The anchor. Without it there is nothing to count from.",
+   "ifMissing": "Status 'sin_datos', confidence 'ninguna', missingInputs 'last_service_date'. If the odometer is already past one interval and the item is not comfort → reason 'possibly_overdue_never_recorded' (copy: pídele al taller que lo revise)."
+  },
+  {
+   "input": "Acquisition: date, odometer at purchase, new or used",
+   "whenAsked": "Onboarding step 1b ('¿Lo compraste nuevo o usado? ¿Cuándo? ¿Con cuántos km?').",
+   "whyNeeded": "New car → anchor 'new_vehicle' (first-service exceptions apply). Used car → enables the explicit per-component option 'asumir que se hizo al comprar'.",
+   "ifMissing": "No assumption possible; used-car items stay 'sin_datos' until a record exists."
+  },
+  {
+   "input": "Per-component confirmation 'asumir que se hizo cuando compré el auto'",
+   "whenAsked": "On a sin_datos card of a used car, as a secondary action — never pre-checked.",
+   "whyNeeded": "Gives an anchor for used cars whose seller said 'recién le hice todo'.",
+   "ifMissing": "Stays 'sin_datos'. When used, anchor kind 'assumed_at_acquisition' caps confidence at 'baja' and the card says 'asumido, no registrado'."
+  },
+  {
+   "input": "Service record after each workshop visit: components (multi-select), date, km, cost (S/), workshop, kind (cambiado / revisado ok / revisado: hay que cambiar)",
+   "whenAsked": "Post-service prompt ('¿Qué te hicieron?') from the plan or the component sheet; also from the 'Agendar este servicio' completion.",
+   "whyNeeded": "Resets the component clock (anchor). Cost feeds history totals. Km doubles as an odometer reading.",
+   "ifMissing": "The clock keeps counting: the item goes pronto → toca → vencido. That is correct behavior: the app only knows what was recorded."
+  },
+  {
+   "input": "Inspection result for inspect items ('¿Qué dijeron de las pastillas?': bien / hay que cambiar / no revisaron)",
+   "whenAsked": "After a service that included an inspection interval item.",
+   "whyNeeded": "inspected_ok resets the inspection interval; inspected_needs_replace forces status 'toca' until a 'replaced' record lands.",
+   "ifMissing": "Only the inspection interval counts; the card says 'el cambio depende de lo que mida el taller'."
+  }
+ ],
+ "manualExtractionPipeline": {
+  "steps": [
+   "1. Acquire the manual legally: OEM public download, the user's own booklet (photos of the maintenance pages), or a purchased copy. Store the file privately with metadata (brand, model, years, market, edition code, page count, SHA-256). Never redistribute it; never show its pages in the app.",
+   "2. Locate the schedule: pages titled 'Mantenimiento programado' / 'Cuadro de mantenimiento' / 'Scheduled maintenance' / 'Maintenance schedule', tables with a km (or miles) header row and a months row, the 'condiciones severas / special operating conditions' page, and the 'Especificaciones' page (oil grade, capacities). Record page numbers.",
+   "3. Convert to text with page markers: PDF text layer when present; OCR (or a vision-capable model on page images) for scans and phone photos. Keep tables row-major; if the table is an image, pass the image to a vision model together with the row/column headers you can read.",
+   "4. Run the extraction prompt (below) at temperature 0, JSON-only output, one manual per run, feeding the schedule pages + severe-conditions page + specifications page. Output = draft MaintenanceSpec JSON with per-line confidence and pageRefs.",
+   "5. Run a second independent pass (different model, or same model with the pages shuffled). Diff line by line (componentId, action, normal, severe, firstServiceKm). Agreeing lines go to validation; disagreeing lines go to human review with both candidates shown.",
+   "6. Automated validation (rules below). Failures block publishing.",
+   "7. Human review: the reviewer opens each cited page next to the JSON line, confirms numbers and action verbs, fixes ids, sets source.reviewedBy. Until then the spec is served with reason 'spec_unreviewed' and confidence capped at 'media', and the card shows 'según el manual (sin revisar aún)'.",
+   "8. Normalize into catalog ids (aceite_motor, bujias, ...). Lines the catalog does not have keep a manual-specific id (the ComponentId union is open) and a Spanish name.",
+   "9. Version and publish: specId = brand-model-yearFrom-yearTo-market, semantic version; keep history so an estimate can cite the version it used. The app caches specs offline (low-end Android, no signal).",
+   "10. Feedback loop: in-app 'Esto no coincide con mi manual' on any card creates a ticket with the user's photo of the page; re-review; bump version.",
+   "11. Demand queue: every vehicle registered without a spec increments a counter per brand/model/year; extraction is prioritized by that count (Changan, Jetour, Chery, Geely, JAC first per NEGOCIO.md)."
+  ],
+  "jsonSchema": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"$id\": \"https://fixly.pe/schemas/maintenance-spec.v1.json\",\n  \"title\": \"MaintenanceSpec\",\n  \"type\": \"object\",\n  \"additionalProperties\": false,\n  \"required\": [\"specId\", \"brand\", \"model\", \"yearFrom\", \"yearTo\", \"severeConditions\", \"components\", \"source\", \"extractionNotes\"],\n  \"properties\": {\n    \"specId\": { \"type\": \"string\", \"pattern\": \"^[a-z0-9]+(-[a-z0-9]+)*$\" },\n    \"brand\": { \"type\": \"string\", \"minLength\": 1 },\n    \"model\": { \"type\": \"string\", \"minLength\": 1 },\n    \"yearFrom\": { \"type\": \"integer\", \"minimum\": 1990, \"maximum\": 2035 },\n    \"yearTo\": { \"type\": \"integer\", \"minimum\": 1990, \"maximum\": 2035 },\n    \"severeConditions\": {\n      \"type\": \"array\", \"uniqueItems\": true,\n      \"items\": { \"enum\": [\"dusty_roads\", \"short_trips\", \"taxi_or_commercial\", \"towing\", \"extended_idling\", \"extreme_heat\", \"extreme_cold\", \"mountain\", \"other\"] }\n    },\n    \"components\": { \"type\": \"array\", \"minItems\": 1, \"items\": { \"$ref\": \"#/$defs/component\" } },\n    \"source\": { \"$ref\": \"#/$defs/source\" },\n    \"extractionNotes\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"object\", \"additionalProperties\": false, \"required\": [\"kind\", \"detail\"],\n        \"properties\": { \"kind\": { \"enum\": [\"ambiguity\", \"unit_conversion\", \"missing_item\", \"variant_split\", \"table_unreadable\"] }, \"detail\": { \"type\": \"string\", \"maxLength\": 200 }, \"pageRef\": { \"type\": \"string\" } } }\n    }\n  },\n  \"$defs\": {\n    \"interval\": {\n      \"type\": \"object\", \"additionalProperties\": false, \"required\": [\"km\", \"months\"],\n      \"properties\": {\n        \"km\": { \"type\": [\"integer\", \"null\"], \"minimum\": 500, \"maximum\": 300000 },\n        \"months\": { \"type\": [\"integer\", \"null\"], \"minimum\": 1, \"maximum\": 120 }\n      }\n    },\n    \"source\": {\n      \"type\": \"object\", \"additionalProperties\": false, \"required\": [\"kind\", \"extractedAt\", \"extractedBy\"],\n      \"properties\": {\n        \"kind\": { \"enum\": [\"owner_manual\", \"warranty_booklet\", \"dealer_published\", \"user_entered\", \"placeholder\"] },\n        \"documentTitle\": { \"type\": \"string\", \"maxLength\": 120 },\n        \"edition\": { \"type\": \"string\", \"maxLength\": 60 },\n        \"market\": { \"type\": \"string\", \"maxLength\": 10 },\n        \"pageRefs\": { \"type\": \"array\", \"items\": { \"type\": \"string\", \"maxLength\": 20 } },\n        \"extractedAt\": { \"type\": \"string\", \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}$\" },\n        \"extractedBy\": { \"enum\": [\"llm\", \"human\"] },\n        \"reviewedBy\": { \"type\": \"string\" }\n      }\n    },\n    \"component\": {\n      \"type\": \"object\", \"additionalProperties\": false,\n      \"required\": [\"componentId\", \"spanishName\", \"zone\", \"action\", \"normal\", \"severe\", \"criticality\", \"source\", \"lineConfidence\"],\n      \"properties\": {\n        \"componentId\": { \"type\": \"string\", \"pattern\": \"^[a-z0-9_]+$\" },\n        \"spanishName\": { \"type\": \"string\", \"maxLength\": 60 },\n        \"zone\": { \"enum\": [\"motor\", \"transmision\", \"refrigeracion\", \"frenos\", \"llantas\", \"electrico\", \"cabina\", \"suspension_direccion\", \"combustible\"] },\n        \"action\": { \"enum\": [\"replace\", \"inspect\", \"inspect_then_replace\", \"rotate\", \"no_schedule\"] },\n        \"normal\": { \"$ref\": \"#/$defs/interval\" },\n        \"severe\": { \"oneOf\": [{ \"$ref\": \"#/$defs/interval\" }, { \"type\": \"null\" }] },\n        \"firstServiceKm\": { \"type\": [\"integer\", \"null\"], \"minimum\": 500, \"maximum\": 20000 },\n        \"replaceCriterion\": {\n          \"oneOf\": [{ \"type\": \"null\" }, { \"type\": \"object\", \"additionalProperties\": false, \"required\": [\"measure\", \"limit\", \"unit\"],\n            \"properties\": { \"measure\": { \"type\": \"string\", \"maxLength\": 40 }, \"limit\": { \"type\": \"number\" }, \"unit\": { \"type\": \"string\", \"maxLength\": 10 } } }]\n        },\n        \"consumable\": {\n          \"type\": \"object\", \"additionalProperties\": false,\n          \"properties\": { \"grade\": { \"type\": \"string\", \"maxLength\": 40 }, \"capacityL\": { \"type\": \"number\", \"minimum\": 0, \"maximum\": 30 }, \"partNote\": { \"type\": \"string\", \"maxLength\": 80 } }\n        },\n        \"appliesTo\": {\n          \"type\": \"object\", \"additionalProperties\": false,\n          \"properties\": {\n            \"engines\": { \"type\": \"array\", \"items\": { \"type\": \"string\", \"maxLength\": 20 } },\n            \"transmissions\": { \"type\": \"array\", \"items\": { \"enum\": [\"MT\", \"AT\", \"CVT\", \"DCT\"] } },\n            \"fuels\": { \"type\": \"array\", \"items\": { \"enum\": [\"gasolina\", \"diesel\", \"glp\", \"gnv\", \"hibrido\", \"electrico\"] } }\n          }\n        },\n        \"criticality\": { \"enum\": [\"safety\", \"engine\", \"comfort\"] },\n        \"source\": { \"$ref\": \"#/$defs/source\" },\n        \"lineConfidence\": { \"enum\": [\"high\", \"medium\", \"low\"] },\n        \"notInManual\": { \"type\": \"boolean\", \"description\": \"true when the catalog expects this item but the manual has no line for it; then normal.km and normal.months are null and action is no_schedule\" }\n      }\n    }\n  }\n}",
+  "extractionPromptEn": "You are extracting the scheduled-maintenance FACTS from a vehicle owner's manual (or warranty/maintenance booklet) into a strict JSON document. You will receive page text and/or page images, each preceded by a marker like [PAGE 412]. Output ONLY a JSON object that validates against the MaintenanceSpec schema provided to you; no prose before or after.\n\nWHAT TO EXTRACT (facts only):\n- For every maintenance line in the schedule table(s) and in any accompanying notes: the component, the ACTION the manual prescribes, the normal-use interval in km AND in months, the severe/special-conditions interval when the manual prints a separate one, any first-service exception, the replacement criterion for inspection items, the consumable specification (fluid grade, capacity, part type), and which variants the line applies to.\n- The manual's list of severe / special / heavy-duty operating conditions, mapped to these codes: dusty_roads, short_trips, taxi_or_commercial, towing, extended_idling, extreme_heat, extreme_cold, mountain, other.\n- The page reference(s) for every line (e.g. \"p. 412\").\n\nHOW TO INTERPRET THE MANUAL:\n1. Action verbs. Map the manual's wording to exactly one action: \"replace\", \"change\", \"R\" → replace; \"inspect\", \"check\", \"I\" → inspect; \"inspect, replace if necessary\", \"inspect and replace as needed\", \"I/R\" → inspect_then_replace; \"rotate\" → rotate; explicit \"no replacement required\", \"lifetime\", \"maintenance-free\", or a component the manual names but never schedules → no_schedule. Do not upgrade inspect to replace, ever.\n2. Two tracks. If a line gives a distance AND a time (e.g. \"every 10,000 km or 12 months\"), fill both. If it gives only one, set the other to null. Do not infer a time from a distance or vice versa. Note whether the manual states \"whichever comes first\" / \"lo que ocurra primero\" in extractionNotes only if it states the opposite (e.g. \"whichever comes later\") — that is rare and important.\n3. Tables. Schedule tables usually have a header row of distances (x1,000 km or x1,000 miles) and a row of months; each cell has I / R / a dot. The interval of a line is the smallest recurring spacing of its R (or I) marks, e.g. R at 10, 20, 30, 40 → 10,000 km. If a line has R only at 100 → 100,000 km with months from the same column. If marks are irregular (I at 20, R at 40, I at 60, R at 80) report action inspect_then_replace with the R spacing as the interval and describe the pattern in extractionNotes.\n4. Units. Convert miles to km (× 1.609) and round to the nearest 500 km; convert years to months (× 12). Record every conversion in extractionNotes with kind unit_conversion. If the manual gives km, keep km exactly as printed.\n5. Severe conditions. Only fill \"severe\" when the manual prints a different interval for that component under severe/special/heavy-duty conditions (a separate table, a footnote, or an asterisk). If the manual lists severe conditions but gives no different interval for a component, set that component's severe to null. Never invent a factor.\n6. Variants. If the manual splits a line by engine code, transmission (manual / automatic / CVT / DCT), fuel (gasoline / diesel / LPG / CNG) or drive type, emit one component object per variant with appliesTo filled. Timing belt vs chain: if the manual says the engine has a chain or never schedules a belt, emit cadena_distribucion with action no_schedule.\n7. First service. If the manual schedules a first service at a different point (e.g. \"first at 1,000 km, then every 10,000 km\"), put the first point in firstServiceKm and the recurring spacing in normal.\n8. Inspection items. For brake pads/linings, discs, tires, battery, drive belts and similar, record the inspection interval in normal, and the replacement criterion (minimum thickness, tread depth, etc.) in replaceCriterion when the manual states a number. If it does not, replaceCriterion is null.\n9. Missing items. The catalog expects: aceite_motor, filtro_aire_motor, filtro_cabina, filtro_combustible, bujias, refrigerante, aceite_caja_mt, aceite_caja_at, aceite_cvt, correa_distribucion, cadena_distribucion, correa_accesorios, pastillas_freno, discos_freno, liquido_frenos, rotacion_llantas, llantas, bateria, liquido_direccion, aceite_diferencial, ajuste_valvulas. For each one the manual does not mention at all, emit the object with notInManual: true, action no_schedule, normal {km: null, months: null}, severe null, lineConfidence high. Do NOT fill in a typical value from general knowledge.\n10. Extra items. Lines the manual has that are not in the catalog (fuel lines, exhaust, ball joints, drive shaft boots, PCV valve, EGR, DPF...) get a snake_case componentId, a short Spanish name, and the closest zone.\n11. Confidence. lineConfidence high = read directly from a clear table cell or sentence; medium = required interpreting an irregular pattern or a footnote; low = OCR uncertain or the table was partly unreadable (also add an extractionNotes entry with kind table_unreadable and the page).\n12. Spanish names. spanishName is a short Peruvian-Spanish noun phrase (\"Aceite de motor y filtro\", \"Pastillas de freno\", \"Llantas\", \"Bujías\", \"Plumillas\") — never a sentence.\n\nSTRICT PROHIBITIONS:\n- Do not copy sentences, headings, footnotes, warnings or table captions from the manual anywhere in the output. Every string field is a name, a code, a page reference, or a note in your own words of at most 200 characters. Facts (numbers, units, verbs) are what we keep; the manual's expression is not.\n- Do not use knowledge about this brand or model from outside the provided pages. If a value is not in the pages, it is null.\n- Do not output ranges (\"5,000–10,000\"). If the manual gives a range, use the shorter value for normal, and explain in extractionNotes.\n- Do not merge oil and oil filter unless the manual schedules them together (most do; then one line aceite_motor with partNote \"incluye filtro\").\n\nOUTPUT: exactly one JSON object with fields specId (brand-model-yearFrom-yearTo-market, lowercase, hyphens), brand, model, yearFrom, yearTo, severeConditions, components[], source (kind, documentTitle, edition, market, pageRefs, extractedAt = today's date, extractedBy = \"llm\"), extractionNotes[]. Before finishing, self-check: (a) every component has pageRefs; (b) no severe km is greater than the normal km of the same line; (c) every catalog id above appears exactly once (or once per variant); (d) no string field contains more than 200 characters; (e) months values are integers.",
+  "validationRules": [
+   "Schema: must validate against the JSON schema (additionalProperties false; enums; integer months).",
+   "Range sanity: normal.km ∈ [500, 300000] or null; normal.months ∈ [1, 120] or null; firstServiceKm ∈ [500, 20000] or null; km rounded to a multiple of 500 (else flag for review — a value like 7,812 is usually a bad miles conversion).",
+   "Severe ≤ normal: for every line with severe ≠ null, severe.km ≤ normal.km and severe.months ≤ normal.months (when both non-null). A severe interval longer than normal is an extraction error.",
+   "Action consistency: action 'replace' or 'rotate' requires at least one non-null interval; 'no_schedule' requires both null; 'inspect' / 'inspect_then_replace' requires an interval and should have replaceCriterion (warn if null, do not block).",
+   "Catalog coverage: every catalog id appears exactly once, or once per variant with disjoint appliesTo, or once with notInManual true. Missing ids block publishing (the prompt must emit notInManual, never silently omit).",
+   "Variant disjointness: lines sharing a componentId must have non-overlapping appliesTo (transmissions/engines/fuels); overlapping → review.",
+   "Provenance: every component.source.pageRefs is non-empty and every page number exists in the document (≤ page count). A line without a page reference cannot be published.",
+   "No copied text: run an n-gram overlap check (8-gram shingles) between every string field and the source text; any match → block. String fields ≤ 200 chars; spanishName ≤ 60 chars, no terminal period, no verbs.",
+   "Unit audit: if the source text contains 'miles' or 'mi' headers, every km value must be flagged as converted in extractionNotes; converted values must be within ±3 % of value_miles × 1.609.",
+   "Two-pass agreement: lines where the two extraction passes differ in action, normal, severe or firstServiceKm go to human review; ≥ 90 % agreement required before the spec enters review at all (else re-run with better page images).",
+   "Cross-model plausibility (warn only, never auto-fix): aceite_motor normal.km ∈ [3000, 20000]; bujias ∈ [15000, 160000]; correa_distribucion ∈ [60000, 160000]; liquido_frenos months ∈ [12, 60]; refrigerante km ∈ [30000, 200000]. Out-of-range → reviewer must confirm against the page.",
+   "Market check: the market of the manual (PE/LATAM/US/EU) is recorded; a US-market manual applied to a Peru car is served with reason 'spec_unreviewed' until a reviewer confirms the schedule matches the local booklet (schedules differ by market).",
+   "Human sign-off: reviewedBy set only after the reviewer spot-checks 100 % of replace lines and ≥ 3 random inspect lines against the cited pages. Until then the app caps confidence at 'media' and shows 'sin revisar aún'.",
+   "Versioning: any change after publication increments the spec version; estimates cite the version; a changed interval triggers a re-estimate notification only when a status changes."
+  ],
+  "coldStartStrategy": "When the user's brand/model/year has no MaintenanceSpec, the app must not promise data it does not have (DESIGN.md §7). Behavior: (1) The car diagram still renders with its zones, but with NO status chips, rings or percentages; the header says 'Todavía no tenemos el manual de tu {marca} {modelo} {año}'. (2) Primary CTA: 'Fotografía las páginas de mantenimiento de tu manual' — photos go to the extraction queue (steps 3–7); the user is told the honest timeline ('lo revisamos a mano; te avisamos cuando esté') and gets a push when published. (3) Secondary path: 'Escribe los intervalos de tu libreta' — a per-component form (km, meses, cada cuánto revisar) that creates a spec with source.kind 'user_entered'; it renders statuses immediately but confidence is capped at 'media' and every card carries 'según lo que escribiste'. (4) Generic catalog placeholders are NEVER rendered as a status, ring or date. They may appear only in a separate, collapsed 'Referencia general (no es de tu manual)' panel in plain text with no color, no percent, and a note that intervals vary by model — and only if product decides to keep that panel at all. (5) Adjacent-year specs of the same brand+model+engine may be offered as 'Manual de {modelo} {años}: ¿es el mismo que el tuyo?' — the user confirms explicitly; until confirmed nothing is shown, and once confirmed the source keeps reviewedBy but the vehicle record stores 'confirmedByUser' so it can be audited. (6) Meanwhile the app still delivers value from user data alone: odometer history, service log with costs, document expirations (SOAT, revisión técnica), and per-service reminders the user sets manually ('recuérdame cada 5,000 km') — these are user-defined, not manual-derived, and are labeled as such. (7) Every cold-start vehicle increments the demand counter that orders the extraction backlog."
+ },
+ "componentCatalog": [
+  {
+   "id": "aceite_motor",
+   "spanishName": "Aceite de motor y filtro",
+   "zone": "motor",
+   "typicalIntervalKm": 5000,
+   "typicalIntervalMonths": 6,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER — replace with the manual. Manuals range 5,000–10,000 km / 6–12 months; severe schedules (taxi, dust, short trips) typically halve it (Toyota: 10,000 mi/12 mo normal → 5,000 mi/6 mo special conditions). Oil degrades with time even when parked, so the months track is real. criticality: engine."
+  },
+  {
+   "id": "filtro_aire_motor",
+   "spanishName": "Filtro de aire del motor",
+   "zone": "motor",
+   "typicalIntervalKm": 20000,
+   "typicalIntervalMonths": 24,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER. Most manuals: inspect at every service, replace at 20,000–40,000 km; dusty roads shorten it (severe line). Lima's coastal desert dust makes the severe line relevant. criticality: engine."
+  },
+  {
+   "id": "filtro_cabina",
+   "spanishName": "Filtro de cabina (aire acondicionado)",
+   "zone": "cabina",
+   "typicalIntervalKm": 15000,
+   "typicalIntervalMonths": 12,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER. Some older/cheaper models have none — the manual must say. criticality: comfort."
+  },
+  {
+   "id": "filtro_combustible",
+   "spanishName": "Filtro de combustible",
+   "zone": "combustible",
+   "typicalIntervalKm": 40000,
+   "typicalIntervalMonths": 24,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER. Gasoline in-tank filters are often unscheduled ('lifetime'); diesel 20,000–30,000 km. Take only from the manual; expect no_schedule for many gasoline cars. criticality: engine."
+  },
+  {
+   "id": "bujias",
+   "spanishName": "Bujías",
+   "zone": "motor",
+   "typicalIntervalKm": 40000,
+   "typicalIntervalMonths": 48,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER. Copper ~20,000–40,000 km; platinum/iridium 80,000–160,000 km — the manual specifies the type. GNV/GLP conversions wear plugs faster and the OEM manual does not cover that; flag when fuel is gnv/glp. criticality: engine."
+  },
+  {
+   "id": "refrigerante",
+   "spanishName": "Refrigerante del motor",
+   "zone": "refrigeracion",
+   "typicalIntervalKm": 40000,
+   "typicalIntervalMonths": 24,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER. Varies enormously: long-life coolants first at ~160,000 km/10 years then 80,000/5; conventional 40,000 km/2 years. Level is 'inspect' at every service; the replacement line is what we track. criticality: engine."
+  },
+  {
+   "id": "aceite_caja_mt",
+   "spanishName": "Aceite de caja manual",
+   "zone": "transmision",
+   "typicalIntervalKm": 40000,
+   "typicalIntervalMonths": 24,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER. Many manuals only 'inspect' (level/leaks); some replace at 40,000–80,000 km. appliesTo transmissions: MT. criticality: engine."
+  },
+  {
+   "id": "aceite_caja_at",
+   "spanishName": "Aceite de caja automática (ATF)",
+   "zone": "transmision",
+   "typicalIntervalKm": 60000,
+   "typicalIntervalMonths": 48,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER. Many manuals: 'no replacement under normal conditions' but a severe/taxi line at ~60,000 km — exactly the ride-hailing case. appliesTo: AT. criticality: engine."
+  },
+  {
+   "id": "aceite_cvt",
+   "spanishName": "Aceite de CVT",
+   "zone": "transmision",
+   "typicalIntervalKm": 60000,
+   "typicalIntervalMonths": 48,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER. Fluid spec is brand-specific (wrong fluid destroys a CVT); severe use often 40,000–60,000 km. appliesTo: CVT. criticality: engine."
+  },
+  {
+   "id": "correa_distribucion",
+   "spanishName": "Correa de distribución",
+   "zone": "motor",
+   "typicalIntervalKm": 100000,
+   "typicalIntervalMonths": 72,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER. Typical 90,000–105,000 km or 6–7 years (Honda: 105,000 mi / 84 months, whichever comes first; https://www.hondaoflincoln.com/understanding-honda-timing-belts-maintenance-replacement-and-expert-advice-from-honda-of-lincoln/). Only engines with a belt; tensioner and often water pump are replaced together (the existing mock already lists them). Some markets' manuals say 'inspect' at 90k — keep the manual's verb. criticality: engine (catastrophic if it snaps)."
+  },
+  {
+   "id": "cadena_distribucion",
+   "spanishName": "Cadena de distribución",
+   "zone": "motor",
+   "typicalIntervalKm": 0,
+   "typicalIntervalMonths": 0,
+   "hasInspectVsReplace": true,
+   "note": "No schedule in most manuals ('lifetime'); noise-driven inspection only. action: no_schedule; 0 means no track. The app must say 'el manual no programa un cambio', not 'al día'. criticality: engine."
+  },
+  {
+   "id": "correa_accesorios",
+   "spanishName": "Correa de accesorios (alternador, A/C)",
+   "zone": "motor",
+   "typicalIntervalKm": 20000,
+   "typicalIntervalMonths": 12,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER inspection interval; replacement on cracks/glazing, often ~80,000–100,000 km. action: inspect_then_replace. criticality: engine."
+  },
+  {
+   "id": "pastillas_freno",
+   "spanishName": "Pastillas de freno",
+   "zone": "frenos",
+   "typicalIntervalKm": 10000,
+   "typicalIntervalMonths": 6,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER inspection interval. Replacement is by measured thickness (manual limit, commonly ~1.0 mm), NOT by km — city/ride-hailing pads may last 20,000–40,000 km but this cannot be estimated without inspection. The existing mock's 'intervalKm: 30000' for pads should become an inspection interval plus an inspection result. criticality: safety."
+  },
+  {
+   "id": "discos_freno",
+   "spanishName": "Discos de freno",
+   "zone": "frenos",
+   "typicalIntervalKm": 10000,
+   "typicalIntervalMonths": 6,
+   "hasInspectVsReplace": true,
+   "note": "Inspect with the pads; replace at the minimum thickness stamped on the disc. action: inspect_then_replace. criticality: safety."
+  },
+  {
+   "id": "liquido_frenos",
+   "spanishName": "Líquido de frenos",
+   "zone": "frenos",
+   "typicalIntervalKm": 40000,
+   "typicalIntervalMonths": 24,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER. Hygroscopic: the months track dominates (Honda: every 3 years regardless of mileage; many: 2 years). criticality: safety."
+  },
+  {
+   "id": "rotacion_llantas",
+   "spanishName": "Rotación de llantas",
+   "zone": "llantas",
+   "typicalIntervalKm": 10000,
+   "typicalIntervalMonths": 6,
+   "hasInspectVsReplace": false,
+   "note": "PLACEHOLDER. action: rotate. Some manuals give 5,000–10,000 km. criticality: comfort (safety-adjacent)."
+  },
+  {
+   "id": "alineamiento_balanceo",
+   "spanishName": "Alineamiento y balanceo",
+   "zone": "llantas",
+   "typicalIntervalKm": 10000,
+   "typicalIntervalMonths": 12,
+   "hasInspectVsReplace": true,
+   "note": "Rarely a fixed interval in manuals (done on uneven wear / after tire change / potholes). Expect notInManual true; Peru workshops suggest ~10,000 km — that would be a user-defined reminder, not a manual fact. criticality: comfort."
+  },
+  {
+   "id": "llantas",
+   "spanishName": "Llantas (reemplazo)",
+   "zone": "llantas",
+   "typicalIntervalKm": 0,
+   "typicalIntervalMonths": 72,
+   "hasInspectVsReplace": true,
+   "note": "Inspect only: tread depth (legal minimum 1.6 mm) and age. Cannot be predicted by km without measuring; 0 km = no km track; age placeholder 6 years is a PLACEHOLDER. criticality: safety."
+  },
+  {
+   "id": "bateria",
+   "spanishName": "Batería",
+   "zone": "electrico",
+   "typicalIntervalKm": 0,
+   "typicalIntervalMonths": 36,
+   "hasInspectVsReplace": true,
+   "note": "No replacement interval in manuals ('inspect' at each service). Typical life 2–4 years, shorter with heat and heavy use; the history mock already shows a 2025 replacement. Time-only PLACEHOLDER capped at confidence 'baja'; no km track. criticality: comfort (strands the driver, not unsafe)."
+  },
+  {
+   "id": "plumillas",
+   "spanishName": "Plumillas (limpiaparabrisas)",
+   "zone": "cabina",
+   "typicalIntervalKm": 0,
+   "typicalIntervalMonths": 12,
+   "hasInspectVsReplace": true,
+   "note": "Time-only PLACEHOLDER; usually not in the manual; replace on streaking. Lima garúa + sun. criticality: comfort."
+  },
+  {
+   "id": "liquido_direccion",
+   "spanishName": "Aceite de dirección hidráulica",
+   "zone": "suspension_direccion",
+   "typicalIntervalKm": 80000,
+   "typicalIntervalMonths": 48,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER. Only hydraulic power steering (older cars — the persona's 8–15-year-old car often has it); electric steering has none. Most manuals: inspect level only. criticality: comfort."
+  },
+  {
+   "id": "aceite_diferencial",
+   "spanishName": "Aceite de diferencial / caja de transferencia",
+   "zone": "transmision",
+   "typicalIntervalKm": 40000,
+   "typicalIntervalMonths": 24,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER. Only RWD/4x4; FWD cars share gearbox oil. Expect notInManual for most city cars. criticality: engine."
+  },
+  {
+   "id": "amortiguadores",
+   "spanishName": "Amortiguadores",
+   "zone": "suspension_direccion",
+   "typicalIntervalKm": 20000,
+   "typicalIntervalMonths": 12,
+   "hasInspectVsReplace": true,
+   "note": "Inspect for leaks/bounce; replacement is condition-based (~80,000 km is folklore, not a manual fact). action: inspect. criticality: safety."
+  },
+  {
+   "id": "ajuste_valvulas",
+   "spanishName": "Ajuste de válvulas",
+   "zone": "motor",
+   "typicalIntervalKm": 40000,
+   "typicalIntervalMonths": 48,
+   "hasInspectVsReplace": true,
+   "note": "PLACEHOLDER. Only engines with mechanical lifters (many small Japanese and Chinese engines); manual says 'inspect/adjust'. criticality: engine."
+  },
+  {
+   "id": "kit_gnv_glp",
+   "spanishName": "Kit GNV/GLP (revisión y filtros)",
+   "zone": "combustible",
+   "typicalIntervalKm": 20000,
+   "typicalIntervalMonths": 12,
+   "hasInspectVsReplace": true,
+   "note": "NOT in the OEM manual. Source must be the conversion kit installer's schedule and Peru's periodic certification rules (verify current MTC/INACAL requirements before writing copy). Show only when fuel is gnv/glp; source kind 'user_entered' or a separate kit spec. PLACEHOLDER values. criticality: safety."
+  },
+  {
+   "id": "aire_acondicionado",
+   "spanishName": "Aire acondicionado (revisión)",
+   "zone": "cabina",
+   "typicalIntervalKm": 0,
+   "typicalIntervalMonths": 12,
+   "hasInspectVsReplace": true,
+   "note": "Rarely in manuals; inspect/recharge on performance loss. Time-only PLACEHOLDER. criticality: comfort."
+  }
+ ],
+ "edgeCases": [
+  {
+   "case": "Used car, unknown last service (the persona's default: 8–15-year-old car bought used)",
+   "handling": "No anchor → status 'sin_datos', confidence 'ninguna', missingInputs ['last_service_date']. If the odometer is already ≥ one interval and the item is not 'comfort' → reason 'possibly_overdue_never_recorded' (copy: pídele al taller que lo revise). The card offers two actions: 'Registrar último cambio' (date + km, 'no sé el km' allowed) and 'Asumir que se hizo cuando compré' — the latter sets ctx.assumeDoneAtAcquisition for that component only, anchors at the acquisition date/km, caps confidence at 'baja', and the card says 'asumido, no registrado'. Never pre-checked."
+  },
+  {
+   "case": "Single odometer reading",
+   "handling": "km/day cannot be measured → reasons 'single_reading' + 'daily_km_declared' (if weekly km known) or 'daily_km_default_assumption'. The km track still works from the one reading (odometer today = that reading, NOT projected when the source is the default assumption). remainingDays uses the declared/default rate and the UI shows dailyKm.assumptionLabel. missingInputs ['second_odometer_reading', 'weekly_km'] drive the nudge. Verified in test: single reading + default → km track 0 % used, time track binding."
+  },
+  {
+   "case": "Non-monotonic readings (typo 70,000 between 84,300 and 91,500)",
+   "handling": "cleanReadings keeps the longest non-decreasing subsequence by km over date-sorted readings (ties keep the most recent); the minority is dropped with reason 'reading_non_monotonic' and its id is returned so the UI can show 'ignoramos 70,000 km del 15 de julio: no cuadra con tus otros registros — ¿corregirlo?'. Verified in test."
+  },
+  {
+   "case": "Reading or service record dated in the future",
+   "handling": "Dropped/ignored with reason 'reading_in_future' / 'record_in_future'; the record is not an anchor. The UI should reject future dates at input time; the engine still guards. Verified in test (future record → no anchor → sin_datos)."
+  },
+  {
+   "case": "Invalid date strings (2026-02-30, 'hoy')",
+   "handling": "Readings/records with unparseable dates are dropped with 'reading_invalid_date' / 'record_invalid_date'. An invalid `today` throws TypeError — that is a programmer error, not user data."
+  },
+  {
+   "case": "Service record with a date but no odometer ('no me acuerdo del km')",
+   "handling": "Anchor km is interpolated linearly between the two surrounding readings ('anchor_km_interpolated'), extrapolated backwards from the first reading with the km/day rate ('anchor_km_extrapolated', clamped ≥ 0), or forward from the last reading ('anchor_after_last_reading'). kmWasInterpolated = true lowers the anchor score (2 instead of 3)."
+  },
+  {
+   "case": "Two readings fewer than 14 days apart",
+   "handling": "Span too short for a rate ('readings_span_too_short') → falls back to declared weekly km, then to the default assumption. Prevents a 40 km weekend from becoming 6 km/day."
+  },
+  {
+   "case": "Implausible rate (>600 km/day, e.g. a reading typed with an extra zero)",
+   "handling": "'daily_km_implausible' → the readings-based rate is discarded and the fallback chain runs; the UI should ask the user to check the last reading."
+  },
+  {
+   "case": "Car parked (rate = 0)",
+   "handling": "'daily_km_zero'; remaining days by km is +∞ → the time track binds; if the component is km-only, remainingDays = null and projectedDueDate = null (copy: 'mientras no manejes, no avanza')."
+  },
+  {
+   "case": "Stale odometer (last reading 46–120 days) / very stale (>120 days)",
+   "handling": "'odometer_stale' → confidence loses the freshness points; 'odometer_very_stale' → confidence capped at 'baja'. The odometer is projected forward only when the rate came from readings or declared km. Both reasons feed the 'Actualiza tu kilometraje' banner on the estado tab."
+  },
+  {
+   "case": "Severe usage (ride-hailing) but the manual has no severe schedule for that component",
+   "handling": "No multiplier is invented; reason 'severe_not_in_manual'. Copy: 'Tu manual no indica un intervalo distinto para uso intensivo'. Product may later add a user-defined margin, but it must be the user's choice, labeled as such."
+  },
+  {
+   "case": "Inspection said 'hay que cambiar' (inspected_needs_replace) with no later 'replaced' record",
+   "handling": "Status forced to 'toca', confidence 'alta', reason 'inspection_said_replace', tracks null. Copy: 'El taller indicó cambio el {fecha}'. Cleared by the next 'replaced' record."
+  },
+  {
+   "case": "Inspect-only items (pads, discs, tires, battery, belts)",
+   "handling": "The interval tracked is the INSPECTION interval; anchors accept 'inspected_ok' or 'replaced'. Labels switch to 'Toca revisar / Revisión vencida'. Replacement is never predicted; replaceCriterion is shown as what the workshop must measure."
+  },
+  {
+   "case": "Component with no schedule in the manual (timing chain, sealed transmission)",
+   "handling": "action 'no_schedule' → 'sin_datos' + reason 'no_schedule_in_manual'; the UI renders 'El manual no programa un cambio; se revisa si hay ruido/fuga' — never 'Al día'."
+  },
+  {
+   "case": "Time-only components (wipers, brake fluid by years, battery age)",
+   "handling": "kmTrack null, binding 'time'; confidence does not depend on the odometer (+3 in place of the odometer block). Verified: wipers placeholder → 'pronto' at 60 days remaining, confidence 'baja' because of the placeholder cap."
+  },
+  {
+   "case": "km-only component with no odometer reading at all",
+   "handling": "'km_track_unavailable' + missing 'odometer_reading'; if the component also has months, the time track alone renders; else 'sin_datos'."
+  },
+  {
+   "case": "New vehicle with a first-service exception (e.g. first oil at 1,000 km)",
+   "handling": "acquisition.wasUsed === false → anchor 'new_vehicle' at the acquisition date/km; if spec.firstServiceKm is set and no service has been recorded, the km interval becomes firstServiceKm ('first_service_interval'). Verified: 40 km at purchase, 700 km now → due at 1,040 km, status 'toca' via remainingDays ≤ 7."
+  },
+  {
+   "case": "Manual splits lines by transmission/engine/fuel and the user's transmission is 'unknown'",
+   "handling": "estimateAll includes every variant line (does not filter on 'unknown'); the UI must ask 'Tu caja es manual, automática o CVT?' before showing a status for those lines. Engine-split lines are filtered only when engineCode is known."
+  },
+  {
+   "case": "Spec is a placeholder or user-entered or not yet human-reviewed",
+   "handling": "placeholder → reason 'spec_is_placeholder', missing 'spec_from_manual', confidence cap 'baja', and per the cold-start rule it must NOT render as a status at all; user_entered → cap 'media', copy 'según lo que escribiste'; unreviewed manual → 'spec_unreviewed', cap 'media', copy 'según el manual (sin revisar aún)'."
+  },
+  {
+   "case": "Overdue items",
+   "handling": "projectedDueDate is in the past = the date it became due (copy: 'venció aprox. el {fecha}'); remainingKm/remainingDays are negative; percentConsumed > 1 (the ring renders full and the label carries the excess: 'se pasó 3,400 km'). 'vencido' needs percent ≥ 1.10 (1.05 for safety items); between 1.0 and the grace it is 'toca' so a driver who is 200 km late is not shamed."
+  },
+  {
+   "case": "One workshop visit covering several components",
+   "handling": "ServiceRecord.componentIds is an array; each component finds its own anchor from the same record; the record's km is one odometer reading (deduplicated if the user also logged it)."
+  },
+  {
+   "case": "Duplicate readings (same day, same km) or same-day different km",
+   "handling": "Exact duplicates collapse to one observation; same-day different km are sorted by km and the non-decreasing filter keeps the consistent one."
+  },
+  {
+   "case": "km track and time track due on the same day",
+   "handling": "binding = 'km' (kmDays <= timeDays). Cosmetic; both are shown."
+  },
+  {
+   "case": "Months → days conversion",
+   "handling": "months × 30.4375 (mean Gregorian month), rounded. A 6-month interval = 183 days."
+  },
+  {
+   "case": "Record of kind 'unknown_before_purchase' ('no sé')",
+   "handling": "Not a reset event; treated as no anchor. It exists so the UI can stop asking and show the 'asumir' option instead."
+  },
+  {
+   "case": "User edits mileage in vehiculo.tsx (today's only datum)",
+   "handling": "Every edit becomes an OdometerReading {date: today, km, source: 'user'}; never overwrite — the history IS the km/day estimator. Migration: the existing vehicle.mileage + mileageUpdatedAt become the first reading; maintenancePlan[].lastDoneAt + km become ServiceRecords."
+  }
+ ],
+ "copyRules": [
+  "Todo intervalo se atribuye al manual, siempre con la misma fórmula: 'Según el manual, cada 5,000 km o 6 meses, lo que ocurra primero'. Si el spec no está revisado: 'según el manual (sin revisar aún)'. Si lo escribió el usuario: 'según lo que escribiste'.",
+  "Todo número restante o proyectado se atribuye al kilometraje del usuario: 'estimado con tu kilometraje', 'calculado con los km que registraste', 'al ritmo que registraste (~145 km por día)'. Nunca un número sin su origen.",
+  "Prohibido el vocabulario de telemetría: 'detectamos', 'el auto reporta', 'sensor', 'lectura', 'diagnóstico', 'salud del motor', 'estado del aceite', 'temperatura', 'nivel', 'en tiempo real', 'monitoreo', 'escaneo', 'alerta del vehículo'. La app no sabe nada del auto; sabe lo que hay en el manual y lo que el usuario registró.",
+  "Nunca 'vida útil restante' ni '% de vida' del componente. Lo que se muestra es el intervalo consumido: 'Llevas 4,200 de 5,000 km del intervalo (84 %)'. El anillo gráfico se titula 'Intervalo' o 'Cuánto llevas', no 'Desgaste real'.",
+  "El estado siempre va con palabra + explicación de una línea, nunca solo color (DESIGN.md): 'Toca ahora — según el manual cada 5,000 km; llevas 5,100 km desde el cambio del 2 de junio que registraste'.",
+  "Los supuestos se declaran en la misma tarjeta y se pueden corregir: 'Supuesto: 150 km por día (conductor de aplicativo). Cámbialo.' Nunca un supuesto escondido detrás de una fecha.",
+  "Las fechas proyectadas siempre llevan 'aprox.' y su condición: 'aprox. el 12 de setiembre si sigues manejando ~145 km por día'. En Perú se escribe 'setiembre'.",
+  "El odómetro proyectado se marca como tal: 'Odómetro estimado hoy: ~93,400 km (último registro: 91,500 km el 20 de agosto)'. Nunca presentarlo como lectura actual.",
+  "Ítems de revisión usan 'revisar', no 'cambiar': 'Toca revisar las pastillas — el manual pide revisarlas cada 10,000 km; el cambio depende del grosor que mida el taller'. Nunca 'te quedan X km de pastillas'.",
+  "Sin datos se dice sin datos, nunca 'al día' por defecto: 'Sin datos — no registraste el último cambio de aceite. Según el manual va cada 5,000 km o 6 meses.' Con CTA 'Registrar último cambio' y, en autos usados, 'Asumir que se hizo cuando compré' (marcado después como 'asumido, no registrado').",
+  "La confianza se dice en palabras, nunca en porcentaje: 'Estimación confiable' / 'Estimación aproximada' / 'Estimación poco confiable — actualiza tu kilometraje'. Nunca 'confianza 73 %'.",
+  "Informar y explicar, nunca diagnosticar ni autorizar (NEGOCIO.md): prohibido 'puedes seguir manejando', 'está bien', 'no hay riesgo', 'es urgente', 'peligro'. Se usa 'según el manual', 'pídele al taller que lo revise', y la consecuencia del manual en 'Si no lo haces: …'.",
+  "Cuando el manual no programa nada: 'El manual no programa un cambio de cadena; se revisa si hay ruido'. Nunca dejar la fila vacía ni marcarla 'al día'.",
+  "Cuando el usuario declara uso intensivo y el manual no tiene tabla severa: 'Tu manual no indica un intervalo distinto para uso intensivo; mostramos el normal'. Nunca inventar un factor.",
+  "Vencido se explica con el exceso, no con alarma: 'Vencido — se pasó 3,400 km del intervalo del manual (estimado con tu kilometraje)'. Sin signos de exclamación, sin mayúsculas, sin emojis.",
+  "Formato peruano siempre: 87,400 km; S/130.00; '5,000 km o 6 meses'; fechas '8 de setiembre'. Oración con mayúscula inicial solamente; botones en oración ('Registrar último cambio', no 'Registrar Último Cambio').",
+  "Vocabulario peruano: 'llantas' (no neumáticos), 'plumillas', 'bujías', 'taller', 'cambio de aceite', 'revisión técnica', 'aplicativo'. 'Cambio', no 'reemplazo'.",
+  "La app habla de lo que se registró, no de lo que pasó: 'desde el último cambio que registraste', 'según tus registros'. Si el usuario no lo registró, para la app no ocurrió — y se dice así.",
+  "Los datos que faltan se piden como una sola pregunta concreta por tarjeta, en el orden de missingInputs: '¿Cuántos km marca hoy?', '¿Cuántos km manejas por semana?', '¿Cuándo fue el último cambio de aceite?', '¿Qué dijeron de las pastillas?'.",
+  "Nunca prometer datos que no existen para ese modelo (DESIGN.md §7): en arranque en frío el titular es 'Todavía no tenemos el manual de tu Changan CS35 2019', no 'Cargando…' ni valores genéricos con color."
+ ],
+ "legalNotes": [
+  "NEGOCIO.md (pendiente legal, no resuelto): los intervalos son hechos y los hechos no se protegen por derecho de autor; el texto y la maquetación del manual sí. Extraer 'aceite cada 10,000 km' y redistribuir el PDF son cosas distintas. Consultar con abogado en Perú ANTES de construir la base, no después. Este diseño lo asume: el modelo de datos almacena solo números, códigos, verbos de acción normalizados y referencias de página — nunca frases, tablas maquetadas ni imágenes del manual.",
+  "Perú, Decreto Legislativo 822 (Ley sobre el Derecho de Autor): art. 8 protege exclusivamente la forma de expresión mediante la cual las ideas del autor son descritas, explicadas, ilustradas o incorporadas; art. 9 excluye de protección las ideas, procedimientos, métodos de operación, conceptos matemáticos y el contenido técnico de las obras científicas. Fuente: https://wipolex-res.wipo.int/edocs/lexdocs/laws/es/pe/pe077es.html y https://lpderecho.pe/ley-sobre-derecho-autor-decreto-legislativo-822-actualizada/. Esto respalda guardar el dato (10,000 km / 12 meses / 'reemplazar') y no la expresión. No es dictamen legal.",
+  "Referencia comparada (EE. UU.): Feist Publications v. Rural Telephone (499 U.S. 340, 1991): los hechos no son protegibles; una compilación solo lo es por su selección/coordinación/arreglo original, y aun así la protección no alcanza a los hechos. https://tile.loc.gov/storage-services/service/ll/usrep/usrep499/usrep499340/usrep499340.pdf. Implicación doble: (a) los intervalos del fabricante se pueden extraer; (b) la base de Fixly, por su selección y arreglo, puede ser a su vez un activo protegible.",
+  "El pipeline de extracción impone el límite técnicamente: prompt con prohibición explícita de copiar frases, campos de texto ≤ 200 caracteres, validación por n-gramas contra el texto fuente, y nombres en español propios de Fixly. El PDF fuente se guarda como evidencia privada y nunca se muestra ni se redistribuye.",
+  "Marcas: usar nombres de marca/modelo solo de forma nominativa ('para tu Toyota Yaris 2015'); sin logotipos, sin insinuar afiliación o respaldo del fabricante. Copy: 'según el manual del propietario', no 'según Toyota'.",
+  "Responsabilidad por consejo errado (NEGOCIO.md, riesgo medio): la app informa y explica, nunca diagnostica ni autoriza. Ningún estado dice que el auto está bien para circular; 'vencido' describe el intervalo del manual, no la condición de la pieza. Términos y condiciones deben decirlo, y cada estimación lleva su origen ('según el manual', 'estimado con tu kilometraje') y su confianza.",
+  "Auditoría: cada línea de spec guarda edición, mercado, páginas, quién extrajo y quién revisó; cada estimación cita la versión del spec. Si un usuario alega daño por un intervalo mal extraído, se puede reconstruir exactamente qué se mostró y de dónde salió.",
+  "Ediciones por mercado: el manual de EE. UU. y el de Perú del mismo modelo pueden traer cuadros distintos; un spec extraído de otro mercado se sirve como 'sin revisar' hasta confirmarlo con la libreta local. No prometer que el intervalo mostrado es el de la unidad peruana si no se verificó.",
+  "Datos del usuario: lecturas de odómetro, servicios, costos y fotos del tablero/manual son datos personales del conductor (Ley 29733); fotos del manual subidas por el usuario se usan solo para extracción y se conservan como evidencia privada.",
+  "Kit GNV/GLP: no está en el manual OEM; las reglas de certificación periódica en Perú deben verificarse (MTC/INACAL) antes de escribir copy que suene a obligación legal."
+ ],
+ "whatCannotBeKnown": [
+  "The actual condition of the engine oil (viscosity loss, soot, fuel dilution, additive depletion) — only the elapsed interval.",
+  "Coolant concentration, pH, or level.",
+  "Brake pad and disc thickness (only the inspection interval; the number comes from the workshop).",
+  "Battery state of health / cold-cranking amps / whether it will start tomorrow.",
+  "Tire tread depth, pressure, uneven wear, age cracks.",
+  "Timing belt cracks or tension; timing chain stretch.",
+  "Spark plug gap, fouling, or misfire.",
+  "Engine temperature, overheating events, fault codes (DTC), check-engine state.",
+  "The true kilometres driven — only what the user records; anything between readings is interpolation.",
+  "Engine hours vs km: a ride-hailing car idling in Lima traffic degrades oil per hour, not per km; manuals cover this only through the 'severe' schedule, not a measurement.",
+  "Driving style (harsh braking, high revs), load, or trip length distribution — beyond the user's self-declared usage profile.",
+  "Fuel quality and its effect on injectors, filters and plugs.",
+  "Whether the workshop actually replaced the part, used the specified grade/part, or reset anything — the app knows only what the user recorded.",
+  "Fluid leaks or low levels between services.",
+  "Whether the manual edition in the base matches this exact unit (market variant, mid-year engine change, GNV conversion) — mitigated by variant filtering and user confirmation, never certain.",
+  "Odometer tampering or a replaced instrument cluster on a used car.",
+  "Any failure that happens before its scheduled interval — the schedule prevents, it does not detect.",
+  "Automatic/CVT fluid condition; sealed 'lifetime' transmissions have no schedule to count.",
+  "GNV/GLP kit condition, cylinder integrity, leaks.",
+  "Effects of Lima-specific environment (coastal humidity, dust, sun on wipers/rubber) beyond what the manual's severe list encodes.",
+  "Whether the user is telling the truth about dates and km — confidence measures internal consistency and freshness, not veracity."
+ ]
+}
