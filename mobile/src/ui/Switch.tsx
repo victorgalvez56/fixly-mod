@@ -7,6 +7,7 @@ import { Colors, Motion } from '@/theme/tokens';
 type Props = {
   value: boolean;
   onValueChange: (value: boolean) => void;
+  accessibilityLabel?: string;
 };
 
 const TRACK_WIDTH = 50;
@@ -15,7 +16,7 @@ const THUMB_SIZE = 24;
 const PADDING = 3;
 
 /** Hand-rolled so the "on" state matches the exact brand green, not a system default. */
-export function Switch({ value, onValueChange }: Props) {
+export function Switch({ value, onValueChange, accessibilityLabel }: Props) {
   const progress = useSharedValue(value ? 1 : 0);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export function Switch({ value, onValueChange }: Props) {
     <Pressable
       onPress={() => onValueChange(!value)}
       accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel ?? (value ? 'Activado' : 'Desactivado')}
       accessibilityState={{ checked: value }}
       hitSlop={8}>
       <Animated.View style={[styles.track, trackStyle]}>

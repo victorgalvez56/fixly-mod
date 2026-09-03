@@ -9,7 +9,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
       <VehicleProvider>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -24,6 +24,12 @@ export default function RootLayout() {
           <Stack.Screen name="registrar" options={{ presentation: 'card', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="vehiculo" options={{ presentation: 'card' }} />
           <Stack.Screen name="avisos" options={{ presentation: 'card' }} />
+          <Stack.Screen name="onboarding" options={{ presentation: 'card' }} />
+          <Stack.Screen name="documentos" options={{ presentation: 'card' }} />
+          <Stack.Screen name="proforma" options={{ presentation: 'card' }} />
+          <Stack.Screen name="manual" options={{ presentation: 'card' }} />
+          <Stack.Screen name="chatbot" options={{ presentation: 'card' }} />
+          <Stack.Screen name="reportes" options={{ presentation: 'card' }} />
         </Stack>
       </VehicleProvider>
     </GestureHandlerRootView>

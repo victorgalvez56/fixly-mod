@@ -14,7 +14,7 @@ type Props = {
 /** Vault-style folder card — used for the year-grouped history, one row per year. */
 export function FolderCard({ title, subtitle, onPress, featured }: Props) {
   return (
-    <Pressable onPress={onPress} style={[styles.card, featured && styles.featured]}>
+    <Pressable onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${title}. ${subtitle}`} style={[styles.card, featured && styles.featured]}>
       <View style={[styles.iconBox, featured && styles.iconBoxFeatured]}>
         <Feather name="folder" size={20} color={featured ? Colors.accent : Colors.textPrimary} />
       </View>
@@ -37,7 +37,10 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
-    padding: Spacing.md,
+    padding: Spacing.lg,
+    minHeight: 72,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   featured: { backgroundColor: Colors.accentSoft },
   iconBox: {

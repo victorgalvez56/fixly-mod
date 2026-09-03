@@ -23,7 +23,11 @@ export function StatusRow({ title, status, detail, fineAmount, onPress }: Props)
   const Wrapper = onPress ? Pressable : View;
 
   return (
-    <Wrapper onPress={onPress} style={styles.row}>
+    <Wrapper
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={`${title}. ${meta.label}. ${detail}`}
+      style={styles.row}>
       <View style={[styles.bar, { backgroundColor: meta.color }]} />
       <View style={styles.body}>
         <View style={styles.headerLine}>
