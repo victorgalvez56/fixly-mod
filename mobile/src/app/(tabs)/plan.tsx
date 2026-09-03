@@ -82,7 +82,7 @@ function Row({ item, last, muted, index }: { item: WearEstimate; last: boolean; 
   const def = componentDef(item.componentId);
   const meta = ComponentStatusMeta[item.status];
   return (
-    <Pressable onPress={() => router.push({ pathname: '/servicio/[id]', params: { id: item.componentId } })}>
+    <Pressable onPress={() => router.push({ pathname: '/servicio/[id]', params: { id: item.componentId } })} accessibilityRole="button" accessibilityLabel={`${def.label}: ${statusWord(item)}, ${remainingLine(item)}`}>
       <HairlineRow last={last}>
         <View style={styles.row}>
           <View style={[styles.bar, { backgroundColor: muted ? Colors.borderSoft : meta.color }]} />

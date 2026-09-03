@@ -82,6 +82,8 @@ export default function Vehiculo() {
             onBlur={commitMileage}
             onSubmitEditing={commitMileage}
             keyboardType="number-pad"
+            accessibilityLabel="Kilometraje actual"
+            accessibilityHint="Escribe el kilometraje y guarda al terminar"
             style={styles.mileageInput}
           />
         ) : (
@@ -89,7 +91,9 @@ export default function Vehiculo() {
             onPress={() => {
               setDraft(String(vehicle.mileage));
               setEditing(true);
-            }}>
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Editar kilometraje actual: ${formatKm(vehicle.mileage)}`}>
             <Txt variant="bigNumber" tabularNums color={Colors.accent}>
               {formatKm(vehicle.mileage)}
             </Txt>
@@ -117,7 +121,7 @@ export default function Vehiculo() {
                     {row.hint}
                   </Txt>
                 </View>
-                <Switch value={profile.usage[row.key]} onValueChange={(v) => setUsage({ ...profile.usage, [row.key]: v })} />
+                <Switch value={profile.usage[row.key]} onValueChange={(v) => setUsage({ ...profile.usage, [row.key]: v })} accessibilityLabel={row.label} />
               </View>
             </HairlineRow>
           ))}

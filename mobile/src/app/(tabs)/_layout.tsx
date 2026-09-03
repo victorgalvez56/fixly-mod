@@ -13,13 +13,13 @@ export default function TabsLayout() {
       <TabSlot />
       <TabList style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <TabTrigger name="estado" href="/estado" asChild>
-          <TabButton icon="file-text" label="Estado" />
+          <TabButton icon="activity" label="Estado" />
         </TabTrigger>
         <TabTrigger name="plan" href="/plan" asChild>
-          <TabButton icon="list" label="Plan" />
+          <TabButton icon="calendar" label="Plan" />
         </TabTrigger>
         <TabTrigger name="historial" href="/historial" asChild>
-          <TabButton icon="clock" label="Historial" />
+          <TabButton icon="archive" label="Historial" />
         </TabTrigger>
         <TabTrigger name="ajustes" href="/ajustes" asChild>
           <TabButton icon="settings" label="Ajustes" />

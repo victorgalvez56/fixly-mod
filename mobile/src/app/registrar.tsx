@@ -112,7 +112,7 @@ export default function Registrar() {
       <Field label="Taller" value={workshop} onChangeText={setWorkshop} />
 
       {error ? (
-        <Txt variant="bodySmall" color={Colors.statusExpired}>
+        <Txt variant="bodySmall" color={Colors.statusExpired} accessibilityLiveRegion="polite">
           {error}
         </Txt>
       ) : null}
@@ -126,7 +126,14 @@ function Field({ label, value, onChangeText, keyboardType }: { label: string; va
       <Txt variant="label" color={Colors.textTertiary}>
         {label}
       </Txt>
-      <TextInput value={value} onChangeText={onChangeText} keyboardType={keyboardType} style={styles.input} placeholderTextColor={Colors.textTertiary} />
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        accessibilityLabel={label}
+        style={styles.input}
+        placeholderTextColor={Colors.textTertiary}
+      />
     </View>
   );
 }

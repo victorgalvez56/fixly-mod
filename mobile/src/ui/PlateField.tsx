@@ -17,7 +17,7 @@ function formatPlate(raw: string): string {
 
 /**
  * The product's entry gesture. Styled to read as a real plate: pale face,
- * green stripe fixed to the left edge, heavy uppercase text. The placeholder
+ * gold stripe fixed to the left edge, heavy uppercase text. The placeholder
  * shows the pattern (ABC-123), not an instruction.
  */
 export function PlateField({ value, onChangeText, onSubmit }: Props) {
@@ -34,6 +34,8 @@ export function PlateField({ value, onChangeText, onSubmit }: Props) {
         autoCorrect={false}
         maxLength={7}
         returnKeyType="go"
+        accessibilityLabel="Placa del vehículo"
+        accessibilityHint="Escribe seis caracteres, por ejemplo ABC-123"
         style={styles.input}
       />
     </View>
@@ -44,7 +46,7 @@ const styles = StyleSheet.create({
   wrap: {
     height: 76,
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.paper,
     overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -56,7 +58,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     letterSpacing: 3.6,
-    color: Colors.textPrimary,
+    color: Colors.dark,
     textAlign: 'center',
   },
 });

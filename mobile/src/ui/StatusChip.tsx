@@ -7,7 +7,7 @@ import { Txt } from '@/ui/Txt';
 export function StatusChip({ status }: { status: StatusKey }) {
   const meta = StatusMeta[status];
   return (
-    <View style={[styles.chip, { backgroundColor: meta.soft }]}>
+    <View accessible accessibilityLabel={meta.label} style={[styles.chip, { backgroundColor: meta.soft }]}>
       <Txt variant="label" color={meta.color}>
         {meta.label}
       </Txt>

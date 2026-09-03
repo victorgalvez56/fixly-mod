@@ -20,7 +20,7 @@ export function IconRow({ icon, title, subtitle, trailing, onPress, chevron = tr
   const Wrapper = onPress ? Pressable : View;
 
   return (
-    <Wrapper onPress={onPress} style={[styles.row, !last && styles.divider]}>
+    <Wrapper onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title} style={[styles.row, !last && styles.divider]}>
       <View style={styles.iconCircle}>
         <Feather name={icon} size={16} color={Colors.textPrimary} />
       </View>
@@ -39,7 +39,7 @@ export function IconRow({ icon, title, subtitle, trailing, onPress, chevron = tr
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.md, minHeight: 56 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.md, minHeight: 72 },
   divider: { borderBottomWidth: 1, borderBottomColor: Colors.borderSoft },
   iconCircle: {
     width: 36,
