@@ -17,18 +17,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ZONE_ANCHORS, ZONE_FOCUS, type CarZone } from '@/data/car-drawing';
+import { componentAnchor, drawingFor, drawingHeight, unitScale, zoneAnchor, zoneFocus } from '@/data/drawing';
 import { componentDef } from '@/data/catalog';
-import { ZONE_META, isZoneId, type ZoneId } from '@/data/zones';
+import { isZoneId, zoneMeta, type ZoneId } from '@/data/zones';
 import { formatKm } from '@/lib/format';
+import { vehicleCopy } from '@/lib/vehicle';
 import { COPY } from '@/lib/wear/copy';
 import { daysLabel, explanation, formatDateEs, intervalSentence, isInspect, remainingLine, statusWord } from '@/lib/wear/selectors';
-import type { WearEstimate } from '@/lib/wear/types';
+import type { VehicleType, WearEstimate } from '@/lib/wear/types';
 import { useMaintenance } from '@/state/use-maintenance';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors, ComponentStatusMeta, Motion, Radius, Spacing } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
-import { CarMap, anchorFor, carMapHeight, unitScale, type RevealPlan, type ZoneVisual } from '@/ui/CarMap';
+import { VehicleMap, type RevealPlan, type ZoneVisual } from '@/ui/VehicleMap';
 import { ComponentRow } from '@/ui/ComponentRow';
 import { IntervalBar } from '@/ui/IntervalBar';
 import { KmPrompt } from '@/ui/KmPrompt';
@@ -65,13 +66,19 @@ const ms = (n: number) => n * SPEED;
 
 type Phase = 'map' | 'reveal' | 'results';
 
+/** Width of the box a marker's status pill is centred in. */
+const MARKER_LABEL_W = 116;
+
 export default function Mapa() {
   const params = useLocalSearchParams<{ zone?: string }>();
   const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const { vehicle, addReading, lastReading } = useVehicle();
-  const { zones, spec, specFor, coldStart } = useMaintenance();
+  const { zones, activeZones, spec, specFor, coldStart, vehicleType, worst: overallWorst } = useMaintenance();
+  const drawing = drawingFor(vehicleType);
+  const copy = vehicleCopy(vehicleType);
+  const meta = (zone: ZoneId) => zoneMeta(vehicleType, zone);
 
   const [phase, setPhase] = useState<Phase>('map');
   const [zone, setZone] = useState<ZoneId | null>(null);
@@ -89,17 +96,21 @@ export default function Mapa() {
   const hud = useSharedValue(0);
   const reveal = useSharedValue(0);
   const pins = useSharedValue(0);
-  const drawing = useSharedValue(1);
+  const mapFade = useSharedValue(1); // opacity of the whole drawing during the reveal
 
-  const mapW = Math.min(240, Math.round(screenW * 0.62));
-  const mapH = carMapHeight(mapW);
-  const k = unitScale(mapW);
+  // A car is drawn from above and stands tall; a bike is drawn from the side and
+  // runs wide. Give each the width that fills the stage without cropping, capped
+  // so a tablet does not scale the drawing past the viewport.
+  const portrait = drawing.viewBox.h > drawing.viewBox.w;
+  const mapW = Math.min(portrait ? 240 : 380, Math.round(screenW * (portrait ? 0.62 : 0.92)));
+  const mapH = drawingHeight(drawing, mapW);
+  const k = unitScale(drawing, mapW);
   const ox = (stage.w - mapW) / 2;
   const C = { x: ox + mapW / 2, y: mapH / 2 };
 
   const zoneList: WearEstimate[] = zone ? zones[zone].estimates : [];
   const worst = zone ? zones[zone].worst : null;
-  const worstDef = worst ? componentDef(worst.componentId) : null;
+  const worstDef = worst ? componentDef(worst.componentId, vehicleType) : null;
   const worstSpec = worst ? specFor(worst.componentId) : null;
 
   // Reveal windows: worst component first, 60 ms stagger, each stroke gets most of the timeline.
@@ -109,18 +120,22 @@ export default function Mapa() {
     plan.windows[e.componentId] = [start, Math.min(1, start + 0.55)];
   });
 
-  const zoneVisuals: Partial<Record<CarZone, ZoneVisual>> = {};
-  (Object.keys(zones) as ZoneId[]).forEach((z) => {
+  // The single zone whose worst item is the vehicle's worst overall.
+  const worstZone = activeZones.find((z) => zones[z].worst?.componentId === overallWorst?.componentId) ?? null;
+
+  const zoneVisuals: Partial<Record<ZoneId, ZoneVisual>> = {};
+  activeZones.forEach((z) => {
     zoneVisuals[z] = { color: ComponentStatusMeta[zones[z].status].color, pending: zones[z].pending > 0 };
   });
 
   const resolvedColors: Record<string, string> = {};
   if (resolved) zoneList.forEach((e) => (resolvedColors[e.componentId] = ComponentStatusMeta[e.status].color));
 
-  const focus = zone ? ZONE_FOCUS[zone] : { cx: 120, cy: 200, scale: 1 };
+  const focus = zoneFocus(drawing, zone);
   const S = focus.scale;
   const F = { x: ox + focus.cx * k, y: focus.cy * k };
-  const Tgt = { x: stage.w / 2, y: Math.max(mapH * 0.46, 190) };
+  // Just below the middle of the stage, but never so low that a short (wide-vehicle) stage pushes it off.
+  const Tgt = { x: stage.w / 2, y: Math.max(mapH * 0.46, Math.min(190, mapH * 0.75)) };
   const tx = Tgt.x - C.x - (F.x - C.x) * S;
   const ty = Tgt.y - C.y - (F.y - C.y) * S;
 
@@ -133,7 +148,7 @@ export default function Mapa() {
   }
 
   function resetValues(instant: boolean) {
-    [chrome, zoom, detail, hud, reveal, pins, drawing].forEach(cancelAnimation);
+    [chrome, zoom, detail, hud, reveal, pins, mapFade].forEach(cancelAnimation);
     const t = { duration: instant ? 0 : Motion.duration.disappear, easing: Motion.easing.change };
     chrome.value = withTiming(1, t);
     zoom.value = withTiming(0, t);
@@ -141,7 +156,7 @@ export default function Mapa() {
     hud.value = withTiming(0, t);
     reveal.value = 0;
     pins.value = 0;
-    drawing.value = withTiming(1, t);
+    mapFade.value = withTiming(1, t);
   }
 
   function finishToResults() {
@@ -157,18 +172,21 @@ export default function Mapa() {
     hud.value = withTiming(0, { duration: Motion.duration.disappear, easing: Motion.easing.change });
     reveal.value = withTiming(1, quick);
     pins.value = withTiming(1, quick);
-    drawing.value = withTiming(0.14, { duration: 500, easing: Motion.easing.change });
+    mapFade.value = withTiming(0.14, { duration: 500, easing: Motion.easing.change });
     setPhase('results');
   }
 
   function startReveal(z: ZoneId) {
+    // Tapping the drawing can hit a zone this manual covers with nothing
+    // (an air-cooled bike's radiator). Leave the map where it is.
+    if (zones[z].estimates.length === 0) return;
     clearTimers();
     setZone(z);
     setBeat(0);
     setRows(0);
     setResolved(false);
     const list = zones[z].estimates;
-    if (reduceMotion || list.length === 0) {
+    if (reduceMotion) {
       setPhase('results');
       chrome.value = 0;
       zoom.value = 1;
@@ -176,7 +194,7 @@ export default function Mapa() {
       hud.value = 0;
       reveal.value = 1;
       pins.value = 1;
-      drawing.value = 0.14;
+      mapFade.value = 0.14;
       setBeat(Math.max(0, list.length - 1));
       setRows(3);
       setResolved(true);
@@ -191,7 +209,7 @@ export default function Mapa() {
     hud.value = withDelay(ms(T.hudDelay), withTiming(1, { duration: ms(T.hud), easing: arrive }));
     reveal.value = withDelay(ms(T.drawDelay), withTiming(1, { duration: ms(T.draw), easing: Easing.bezier(0.2, 0.8, 0.2, 1) }));
     pins.value = withDelay(ms(T.pinsDelay), withTiming(1, { duration: ms(T.pins), easing: arrive }));
-    drawing.value = 1;
+    mapFade.value = 1;
     for (let i = 1; i < list.length; i++) later(() => setBeat(i), T.hudDelay + i * T.cardEvery);
     T.rows.forEach((at, i) => later(() => setRows(i + 1), at));
     later(() => setResolved(true), T.resolveAt);
@@ -222,7 +240,7 @@ export default function Mapa() {
   const chromeStyle = useAnimatedStyle(() => ({ opacity: chrome.value, transform: [{ translateY: (1 - chrome.value) * 6 }] }));
   const hudStyle = useAnimatedStyle(() => ({ opacity: hud.value, transform: [{ translateY: (1 - hud.value) * 12 }] }));
   const zoomStyle = useAnimatedStyle(() => ({
-    opacity: drawing.value,
+    opacity: mapFade.value,
     transform: [{ translateX: zoom.value * tx }, { translateY: zoom.value * ty }, { scale: 1 + zoom.value * (S - 1) }],
   }));
 
@@ -230,7 +248,7 @@ export default function Mapa() {
     setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
   }
 
-  const title = phase === 'results' && zone ? ZONE_META[zone].label : 'Tu auto';
+  const title = phase === 'results' && zone ? meta(zone).label : `Tu ${copy.noun}`;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -246,7 +264,8 @@ export default function Mapa() {
       {/* ---- the drawing stage ---- */}
       <View style={[styles.stage, { height: mapH }]} onLayout={onStageLayout}>
         <Animated.View style={[styles.mapWrap, { width: mapW, height: mapH, left: ox }, zoomStyle]}>
-          <CarMap
+          <VehicleMap
+            drawing={drawing}
             width={mapW}
             zones={zoneVisuals}
             selectedZone={zone}
@@ -260,27 +279,30 @@ export default function Mapa() {
 
         {/* zone dots (map) and component pins (reveal) share the zoom math so they ride the drawing */}
         {stage.h > 0
-          ? (Object.keys(zones) as ZoneId[])
+          ? activeZones
               .filter((z) => zones[z].pending > 0 && (phase === 'map' || z !== zone))
               .map((z) => (
                 <Marker
                   key={`zone-${z}`}
-                  base={{ x: ox + ZONE_ANCHORS[z].x * k, y: ZONE_ANCHORS[z].y * k }}
+                  base={{ x: ox + zoneAnchor(drawing, z).x * k, y: zoneAnchor(drawing, z).y * k }}
                   center={C}
                   scale={S}
                   translate={{ x: tx, y: ty }}
                   zoom={zoom}
                   appear={chrome}
-                  drawing={drawing}
+                  fade={mapFade}
                   color={ComponentStatusMeta[zones[z].status].color}
-                  word={zones[z].worst ? statusWord(zones[z].worst) : ''}
+                  // Only the worst zone is labelled on the drawing: with several
+                  // pending at once the pills collide, and the chip row below
+                  // already spells out every zone's status word.
+                  word={z === worstZone && zones[z].worst ? statusWord(zones[z].worst) : ''}
                   kind="dot"
                 />
               ))
           : null}
         {stage.h > 0 && zone
           ? zoneList.map((e, i) => {
-              const a = anchorFor(e.componentId) ?? ZONE_ANCHORS[zone];
+              const a = componentAnchor(drawing, e.componentId) ?? zoneAnchor(drawing, zone);
               return (
                 <Marker
                   key={`pin-${e.componentId}`}
@@ -290,11 +312,12 @@ export default function Mapa() {
                   translate={{ x: tx, y: ty }}
                   zoom={zoom}
                   appear={pins}
-                  drawing={drawing}
+                  fade={mapFade}
                   delay={i / Math.max(1, zoneList.length)}
                   color={resolved ? ComponentStatusMeta[e.status].color : Colors.textTertiary}
                   word={resolved ? statusWord(e) : ''}
                   kind="pin"
+                  labelRow={i}
                   emphasized={resolved && e.status !== 'ok'}
                 />
               );
@@ -312,10 +335,10 @@ export default function Mapa() {
         </View>
         {coldStart ? (
           <Txt variant="body" color={Colors.textSecondary} style={styles.cold}>
-            Todavía no tenemos el manual de tu {vehicle?.brand} {vehicle?.model} {vehicle?.year}.
+            Todavía no tenemos el manual de {copy.yours} {vehicle?.brand} {vehicle?.model} {vehicle?.year}.
           </Txt>
         ) : (
-          <ZoneChips zones={zones} onPress={startReveal} />
+          <ZoneChips zones={zones} order={activeZones} vehicleType={vehicleType} onPress={startReveal} />
         )}
       </Animated.View>
 
@@ -326,7 +349,7 @@ export default function Mapa() {
           <View style={styles.cardStack}>
             {beat + 1 < zoneList.length ? <View style={styles.ghostCard} /> : null}
             <Animated.View key={beat} entering={FadeInDown.duration(ms(260)).easing(Easing.out(Easing.cubic))} exiting={FadeOutUp.duration(ms(180))} style={styles.card}>
-              <NarrationCard estimate={zoneList[beat]} resolved={resolved} spec={spec ? specFor(zoneList[beat].componentId) : null} />
+              <NarrationCard estimate={zoneList[beat]} resolved={resolved} spec={spec ? specFor(zoneList[beat].componentId) : null} vehicleType={vehicleType} />
             </Animated.View>
           </View>
           <View style={[styles.tooltip, { top: mapH * 0.36 }]}>
@@ -364,7 +387,7 @@ export default function Mapa() {
             <Animated.View entering={FadeInDown.duration(ms(300)).easing(Easing.out(Easing.cubic))} style={styles.header}>
               <CircleButton icon="chevron-left" label="Volver al mapa" onPress={backToMap} />
               <View style={styles.headerCenter}>
-                <Txt variant="cardTitle">{ZONE_META[zone].label}</Txt>
+                <Txt variant="cardTitle">{meta(zone).label}</Txt>
                 <Txt variant="monoSmall" color={Colors.textTertiary}>
                   Según tu manual · hoy
                 </Txt>
@@ -380,7 +403,7 @@ export default function Mapa() {
               <View style={[styles.verdictIcon, { backgroundColor: ComponentStatusMeta[worst.status].soft }]}>
                 <Feather name={worst.status === 'ok' ? 'check' : worst.status === 'sin_datos' ? 'help-circle' : 'alert-triangle'} size={18} color={ComponentStatusMeta[worst.status].text} />
               </View>
-              <Txt variant="cardTitle">{verdictTitle(worst, worstDef.shortLabel, ZONE_META[zone].label)}</Txt>
+              <Txt variant="cardTitle">{verdictTitle(worst, worstDef.shortLabel, meta(zone).label)}</Txt>
               {worstSpec ? (
                 <Txt variant="body" color={Colors.textSecondary}>
                   {explanation(worst, worstSpec, worstDef.label)}
@@ -500,8 +523,18 @@ function ProgressRow({ estimate, durationMs, delayMs }: { estimate: WearEstimate
   );
 }
 
-function NarrationCard({ estimate, resolved, spec }: { estimate: WearEstimate; resolved: boolean; spec: ReturnType<ReturnType<typeof useMaintenance>['specFor']> }) {
-  const def = componentDef(estimate.componentId);
+function NarrationCard({
+  estimate,
+  resolved,
+  spec,
+  vehicleType,
+}: {
+  estimate: WearEstimate;
+  resolved: boolean;
+  spec: ReturnType<ReturnType<typeof useMaintenance>['specFor']>;
+  vehicleType: VehicleType;
+}) {
+  const def = componentDef(estimate.componentId, vehicleType);
   const meta = ComponentStatusMeta[estimate.status];
   const subtitle = resolved ? `${statusWord(estimate)} · ${remainingLine(estimate)}` : spec ? intervalSentence(spec, estimate) : def.description;
   return (
@@ -551,11 +584,12 @@ function Marker({
   translate,
   zoom,
   appear,
-  drawing,
+  fade,
   delay = 0,
   color,
   word,
   kind,
+  labelRow = 0,
   emphasized,
 }: {
   base: { x: number; y: number };
@@ -564,11 +598,13 @@ function Marker({
   translate: { x: number; y: number };
   zoom: SharedValue<number>;
   appear: SharedValue<number>;
-  drawing: SharedValue<number>;
+  fade: SharedValue<number>;
   delay?: number;
   color: string;
   word: string;
   kind: 'dot' | 'pin';
+  /** Pins of one zone are nearly coincident: each label steps down a row so they stay readable. */
+  labelRow?: number;
   emphasized?: boolean;
 }) {
   const style = useAnimatedStyle(() => {
@@ -577,7 +613,7 @@ function Marker({
     const y = center.y + (base.y - center.y) * s + zoom.value * translate.y;
     const local = Math.min(1, Math.max(0, (appear.value - delay) / Math.max(0.001, 1 - delay)));
     return {
-      opacity: local * drawing.value,
+      opacity: local * fade.value,
       transform: [{ translateX: x }, { translateY: y }, { scale: 0.7 + 0.3 * local }],
     };
   });
@@ -587,10 +623,12 @@ function Marker({
         <View style={styles.dotWrap}>
           <View style={[styles.dot, { backgroundColor: color }]} />
           {word ? (
-            <View style={styles.dotLabel}>
-              <Txt variant="label" color={Colors.textPrimary} style={styles.dotLabelText}>
-                {word}
-              </Txt>
+            <View style={styles.labelSlot} pointerEvents="none">
+              <View style={styles.labelPill}>
+                <Txt variant="label" color={Colors.textPrimary} numberOfLines={1} style={styles.dotLabelText}>
+                  {word}
+                </Txt>
+              </View>
             </View>
           ) : null}
         </View>
@@ -600,10 +638,12 @@ function Marker({
             <View style={[styles.pinDot, { backgroundColor: color }, emphasized && styles.pinDotBig]} />
           </View>
           {word ? (
-            <View style={styles.pinLabel}>
-              <Txt variant="label" color={Colors.textPrimary} style={styles.dotLabelText}>
-                {word}
-              </Txt>
+            <View style={[styles.labelSlot, styles.pinLabelSlot, { top: 31 + labelRow * 15 }]} pointerEvents="none">
+              <View style={styles.labelPill}>
+                <Txt variant="label" color={Colors.textPrimary} numberOfLines={1} style={styles.dotLabelText}>
+                  {word}
+                </Txt>
+              </View>
             </View>
           ) : null}
         </View>
@@ -676,7 +716,10 @@ const styles = StyleSheet.create({
   marker: { position: 'absolute', left: 0, top: 0 },
   dotWrap: { alignItems: 'center', marginLeft: -5, marginTop: -5 },
   dot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.background },
-  dotLabel: { marginTop: 3, backgroundColor: Colors.background, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 },
+  /** Fixed-width slot centred on the marker, so the pill never runs off the screen edge. */
+  labelSlot: { position: 'absolute', top: 13, left: -MARKER_LABEL_W / 2 + 5, width: MARKER_LABEL_W, alignItems: 'center' },
+  pinLabelSlot: { top: 31, left: -MARKER_LABEL_W / 2 + 14 },
+  labelPill: { backgroundColor: Colors.background, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, maxWidth: MARKER_LABEL_W },
   dotLabelText: { fontSize: 9, lineHeight: 11 },
   pinWrap: { alignItems: 'center', marginLeft: -14, marginTop: -14 },
   pin: {
@@ -695,5 +738,4 @@ const styles = StyleSheet.create({
   pinBig: { width: 34, height: 34, borderRadius: 17, marginTop: -3 },
   pinDot: { width: 10, height: 10, borderRadius: 5 },
   pinDotBig: { width: 14, height: 14, borderRadius: 7 },
-  pinLabel: { marginTop: 3, backgroundColor: Colors.background, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 },
 });

@@ -1,15 +1,19 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { ZONE_META, ZONE_ORDER, type ZoneId } from '@/data/zones';
+import { zoneMeta, type ZoneId } from '@/data/zones';
 import { COPY } from '@/lib/wear/copy';
 import { statusWord } from '@/lib/wear/selectors';
+import type { VehicleType } from '@/lib/wear/types';
 import type { ZoneState } from '@/state/use-maintenance';
 import { CardShadow, Colors, ComponentStatusMeta, Radius } from '@/theme/tokens';
 import { Txt } from '@/ui/Txt';
 
 type Props = {
   zones: Record<ZoneId, ZoneState>;
+  /** Which zones to show and in what order — a bike's list is not a car's. */
+  order: ZoneId[];
+  vehicleType: VehicleType;
   onPress: (zone: ZoneId) => void;
   limit?: number;
 };
@@ -18,12 +22,13 @@ type Props = {
  * The reference's row of square system chips (icon + label + attention dot),
  * with the status WORD added under the label so the dot is never the only cue.
  */
-export function ZoneChips({ zones, onPress, limit }: Props) {
-  const list = limit ? ZONE_ORDER.slice(0, limit) : ZONE_ORDER;
+export function ZoneChips({ zones, order, vehicleType, onPress, limit }: Props) {
+  const list = limit ? order.slice(0, limit) : order;
   return (
     <View style={styles.grid}>
       {list.map((zone) => {
         const z = zones[zone];
+        const info = zoneMeta(vehicleType, zone);
         const meta = ComponentStatusMeta[z.status];
         const pending = z.pending > 0;
         const word = z.worst ? COPY.statusWord[z.worst.status] : 'Sin datos';
@@ -33,12 +38,12 @@ export function ZoneChips({ zones, onPress, limit }: Props) {
             key={zone}
             onPress={() => onPress(zone)}
             accessibilityRole="button"
-            accessibilityLabel={`${ZONE_META[zone].label}: ${longWord}${pending ? `, ${z.pending} pendientes` : ''}`}
+            accessibilityLabel={`${info.label}: ${longWord}${pending ? `, ${z.pending} pendientes` : ''}`}
             style={({ pressed }) => [styles.chip, pressed && styles.pressed]}>
             {pending ? <View style={[styles.dot, { backgroundColor: meta.color }]} /> : null}
-            <Feather name={ZONE_META[zone].icon} size={22} color={Colors.textPrimary} />
+            <Feather name={info.icon} size={22} color={Colors.textPrimary} />
             <Txt color={Colors.textPrimary} numberOfLines={1} style={styles.label}>
-              {ZONE_META[zone].shortLabel}
+              {info.shortLabel}
             </Txt>
             <Txt variant="label" color={pending ? meta.text : Colors.textTertiary} numberOfLines={1} style={styles.word}>
               {word}

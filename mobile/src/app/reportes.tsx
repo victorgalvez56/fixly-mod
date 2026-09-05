@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { componentDef } from '@/data/catalog';
 import { formatKm, formatPEN } from '@/lib/format';
+import { vehicleCopy } from '@/lib/vehicle';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors, Spacing } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
@@ -13,7 +14,8 @@ import { Surface } from '@/ui/Surface';
 import { Txt } from '@/ui/Txt';
 
 export default function Reportes() {
-  const { records, vehicle } = useVehicle();
+  const { records, vehicle, vehicleType } = useVehicle();
+  const copy = vehicleCopy(vehicleType);
   const total = records.reduce((sum, record) => sum + (record.costPen ?? 0), 0);
   const highest = records.reduce((highestRecord, record) => (record.costPen ?? 0) > (highestRecord?.costPen ?? 0) ? record : highestRecord, records[0]);
   const average = records.length ? total / records.length : 0;
@@ -22,7 +24,7 @@ export default function Reportes() {
   return (
     <Screen>
       <DetailHeader title="Reportes" />
-      <View style={styles.intro}><Txt variant="label" color={Colors.accentLight}>LECTURA DE TU AUTO</Txt><Txt variant="screenTitle">Lo que cuesta mantenerlo.</Txt><Txt variant="body" color={Colors.textSecondary}>{vehicle ? vehicle.brand + ' ' + vehicle.model + ' · ' + formatKm(vehicle.mileage) : 'Tu historial se convierte en una vista simple.'}</Txt></View>
+      <View style={styles.intro}><Txt variant="label" color={Colors.accentLight}>LECTURA DE {copy.yours.toUpperCase()}</Txt><Txt variant="screenTitle">Lo que cuesta {vehicleType === 'moto' ? 'mantenerla' : 'mantenerlo'}.</Txt><Txt variant="body" color={Colors.textSecondary}>{vehicle ? vehicle.brand + ' ' + vehicle.model + ' · ' + formatKm(vehicle.mileage) : 'Tu historial se convierte en una vista simple.'}</Txt></View>
 
       <Surface size="lg" style={styles.totalCard}>
         <Txt variant="label" color={Colors.textMuted}>GASTO ACUMULADO</Txt>
@@ -42,7 +44,7 @@ export default function Reportes() {
 
       <Surface size="md" style={styles.insight}>
         <Feather name="info" size={20} color={Colors.accent} />
-        <View style={styles.flex}><Txt variant="bodyBold">Tu mejor registro es información de valor.</Txt><Txt variant="bodySmall" color={Colors.textSecondary}>{highest ? componentDef(highest.componentIds[0]).shortLabel + ' · ' + formatPEN(highest.costPen ?? 0) + ' en ' + (highest.workshop ?? 'taller no indicado') : 'Registra tu primer servicio para empezar.'}</Txt></View>
+        <View style={styles.flex}><Txt variant="bodyBold">Tu mejor registro es información de valor.</Txt><Txt variant="bodySmall" color={Colors.textSecondary}>{highest ? componentDef(highest.componentIds[0], vehicleType).shortLabel + ' · ' + formatPEN(highest.costPen ?? 0) + ' en ' + (highest.workshop ?? 'taller no indicado') : 'Registra tu primer servicio para empezar.'}</Txt></View>
       </Surface>
 
       <Button label="Registrar un servicio" variant="primary" onPress={() => router.push('/registrar')} />

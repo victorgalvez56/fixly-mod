@@ -36,7 +36,7 @@ export const COPY = {
   },
   noSchedule: 'El manual no programa un cambio; se revisa si hay ruido o fuga.',
   noRecord: 'No registraste cuándo fue el último cambio.',
-  possiblyOverdue: 'Tu auto ya pasó ese kilometraje; si no sabes cuándo se hizo, pídele al taller que lo revise.',
+  possiblyOverdue: 'Ya pasaste ese kilometraje; si no sabes cuándo se hizo, pídele al taller que lo revise.',
   inspectionSaidReplace: 'El taller indicó que hay que cambiarlo.',
   inspectHint: 'El cambio depende de lo que mida el taller.',
   parkedHint: 'Mientras no manejes, no avanza.',
@@ -44,7 +44,7 @@ export const COPY = {
   staleKm: 'Actualiza tu kilometraje para afinar la estimación.',
   howItWorksTitle: 'Cómo se calcula',
   howItWorks:
-    'Fixly no tiene ningún dato del auto: no hay sensores ni conexión. El cálculo usa dos cosas: el intervalo del manual del propietario (en kilómetros y en meses, lo que ocurra primero) y lo que tú registras: tu kilometraje y los servicios que hiciste. Con tus lecturas de kilometraje estimamos cuántos km manejas por día para convertir lo que falta en días. Nada de esto mide el estado real de la pieza.',
+    'Fixly no recibe ningún dato del vehículo: no hay sensores ni conexión. El cálculo usa dos cosas: el intervalo del manual del propietario (en kilómetros y en meses, lo que ocurra primero) y lo que tú registras: tu kilometraje y los servicios que hiciste. Con tus lecturas de kilometraje estimamos cuántos km manejas por día para convertir lo que falta en días. Nada de esto mide el estado real de la pieza.',
   intervalCaption: 'Intervalo',
   doneAction: 'Registrar que ya lo hice',
   scheduleAction: 'Agendar este servicio',

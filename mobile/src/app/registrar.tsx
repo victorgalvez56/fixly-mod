@@ -23,7 +23,7 @@ const KINDS: { kind: ServiceKind; label: string }[] = [
 /** "¿Qué te hicieron?" — the only way the driver feeds the model. Saves a record AND an odometer reading. */
 export default function Registrar() {
   const { component } = useLocalSearchParams<{ component?: string }>();
-  const { spec } = useMaintenance();
+  const { spec, vehicleType } = useMaintenance();
   const { addRecord, lastReading } = useVehicle();
 
   const [selected, setSelected] = useState<string[]>(component ? [component] : []);
@@ -79,7 +79,7 @@ export default function Registrar() {
                 accessibilityState={{ checked: on }}
                 style={[styles.chip, on && styles.chipOn]}>
                 <Txt variant="bodyBold" color={on ? Colors.onAccent : Colors.textPrimary}>
-                  {componentDef(c.componentId).shortLabel}
+                  {componentDef(c.componentId, vehicleType).shortLabel}
                 </Txt>
               </Pressable>
             );

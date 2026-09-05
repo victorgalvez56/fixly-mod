@@ -3,28 +3,60 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
+import { vehicleCopy } from '@/lib/vehicle';
+import type { VehicleType } from '@/lib/wear/types';
+import { useVehicle } from '@/state/vehicle-context';
 import { Colors, Radius, Spacing } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
 import { Screen } from '@/ui/Screen';
 import { Txt } from '@/ui/Txt';
+import { VehicleTypePicker } from '@/ui/VehicleTypePicker';
 
-const SLIDES = [
-  { kicker: 'QUÉ ES', title: 'Una ficha clara para tu auto.', body: 'Fixly junta lo que normalmente está repartido: documentos, servicios y el gasto real de mantenerlo.', icon: 'clipboard' as const },
-  { kicker: 'QUÉ RESUELVE', title: 'Saber qué toca antes de que se vuelva caro.', body: 'Te dice qué está vencido, qué viene después y qué deberías revisar en el taller.', icon: 'shield' as const },
-  { kicker: 'CÓMO SE USA', title: 'Placa primero. Decisiones después.', body: 'Escribes tu placa, confirmas los datos de tu auto y guardas cada servicio. Lo demás se ordena solo.', icon: 'arrow-right-circle' as const },
-];
+type Slide = { kicker: string; title: string; body: string; icon: keyof typeof Feather.glyphMap };
+
+/**
+ * Step 0 asks what the driver rides, because it decides the manual, the map and
+ * the vocabulary of everything after it; the three slides that follow are then
+ * written about that vehicle instead of a generic one.
+ */
+function slidesFor(type: VehicleType): Slide[] {
+  const c = vehicleCopy(type);
+  return [
+    {
+      kicker: 'QUÉ ES',
+      title: `Una ficha clara para ${c.yours}.`,
+      body: `Fixly junta lo que normalmente está repartido: documentos, servicios y el gasto real de ${type === 'moto' ? 'mantenerla' : 'mantenerlo'}.`,
+      icon: 'clipboard',
+    },
+    {
+      kicker: 'QUÉ RESUELVE',
+      title: 'Saber qué toca antes de que se vuelva caro.',
+      body: 'Te dice qué está vencido, qué viene después y qué deberías revisar en el taller.',
+      icon: 'shield',
+    },
+    {
+      kicker: 'CÓMO SE USA',
+      title: 'Placa primero. Decisiones después.',
+      body: `Escribes tu placa, confirmas los datos de ${c.yours} y guardas cada servicio. Lo demás se ordena solo.`,
+      icon: 'arrow-right-circle',
+    },
+  ];
+}
 
 export default function Onboarding() {
-  const [index, setIndex] = useState(0);
-  const slide = SLIDES[index];
-  const last = index === SLIDES.length - 1;
+  const { vehicleType, setVehicleType } = useVehicle();
+  const [step, setStep] = useState(0); // 0 = vehicle type, 1..3 = slides
+  const slides = slidesFor(vehicleType);
+  const total = slides.length + 1;
+  const slide = step > 0 ? slides[step - 1] : null;
+  const last = step === total - 1;
 
   function next() {
     if (last) {
       router.replace('/');
       return;
     }
-    setIndex((current) => current + 1);
+    setStep((current) => current + 1);
   }
 
   return (
@@ -39,22 +71,39 @@ export default function Onboarding() {
         </Pressable>
       </View>
 
-      <View style={styles.body}>
-        <View style={styles.iconPanel} accessibilityLabel={slide.kicker}>
-          <Feather name={slide.icon} size={42} color={Colors.accent} />
-          <View style={styles.rule} />
-          <Txt variant="mono" color={Colors.textTertiary}>0{index + 1} / 03</Txt>
+      {slide ? (
+        <View style={styles.body}>
+          <View style={styles.iconPanel} accessibilityLabel={slide.kicker}>
+            <Feather name={slide.icon} size={42} color={Colors.accent} />
+            <View style={styles.rule} />
+            <Txt variant="mono" color={Colors.textTertiary}>0{step + 1} / 0{total}</Txt>
+          </View>
+          <Txt variant="label" color={Colors.accentLight}>{slide.kicker}</Txt>
+          <Txt variant="screenTitle">{slide.title}</Txt>
+          <Txt variant="body" color={Colors.textSecondary}>{slide.body}</Txt>
         </View>
-        <Txt variant="label" color={Colors.accentLight}>{slide.kicker}</Txt>
-        <Txt variant="screenTitle">{slide.title}</Txt>
-        <Txt variant="body" color={Colors.textSecondary}>{slide.body}</Txt>
-      </View>
+      ) : (
+        <View style={styles.body}>
+          <Txt variant="label" color={Colors.accentLight}>PARA EMPEZAR</Txt>
+          <Txt variant="screenTitle">¿Qué manejas?</Txt>
+          <Txt variant="body" color={Colors.textSecondary}>
+            El plan sale del manual de tu vehículo, y un auto y una moto no piden lo mismo ni con la misma frecuencia.
+          </Txt>
+          <VehicleTypePicker value={vehicleType} onChange={setVehicleType} />
+        </View>
+      )}
 
       <View style={styles.footer}>
-        <View style={styles.dots} accessibilityLabel={`Página ${index + 1} de ${SLIDES.length}`}>
-          {SLIDES.map((item, dotIndex) => <View key={item.kicker} style={[styles.dot, dotIndex === index && styles.dotActive]} />)}
+        <View style={styles.dots} accessibilityLabel={`Página ${step + 1} de ${total}`}>
+          {Array.from({ length: total }, (_, dotIndex) => (
+            <View key={dotIndex} style={[styles.dot, dotIndex === step && styles.dotActive]} />
+          ))}
         </View>
-        <Button label={last ? 'Empezar con mi placa' : 'Siguiente'} variant="primary" onPress={next} />
+        <Button
+          label={last ? 'Empezar con mi placa' : step === 0 ? `Continuar con ${vehicleCopy(vehicleType).noun}` : 'Siguiente'}
+          variant="primary"
+          onPress={next}
+        />
       </View>
     </Screen>
   );

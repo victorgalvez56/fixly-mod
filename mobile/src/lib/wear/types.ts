@@ -4,8 +4,23 @@
 
 export type ISODate = string; // 'YYYY-MM-DD', calendar date, no time zone
 
-export type Transmission = 'MT' | 'AT' | 'CVT' | 'DCT' | 'unknown';
+/** What the driver rides. Everything downstream (zones, catalog, drawing, policy) branches on this. */
+export type VehicleType = 'auto' | 'moto';
+
+export type Transmission =
+  | 'MT' // manual gearbox (car)
+  | 'AT'
+  | 'CVT' // also the scooter's automatic transmission
+  | 'DCT'
+  | 'secuencial' // motorcycle sequential gearbox with a chain final drive
+  | 'unknown';
 export type Fuel = 'gasolina' | 'diesel' | 'glp' | 'gnv' | 'hibrido' | 'electrico' | 'unknown';
+
+/** How a motorcycle sends power to the rear wheel. Decides which final-drive lines a manual has. */
+export type FinalDrive = 'cadena' | 'correa' | 'cardan';
+
+/** How the engine gets rid of its heat. Air-cooled bikes have no coolant line at all. */
+export type Cooling = 'aire' | 'liquido' | 'aceite' | 'unknown';
 
 /** Known component ids. The union is open so a manual can add model-specific lines. */
 export type ComponentId =
@@ -35,8 +50,25 @@ export type ComponentId =
   | 'ajuste_valvulas'
   | 'kit_gnv_glp'
   | 'aire_acondicionado'
+  // --- motorcycle lines ---
+  | 'bujia' // most bikes have a single plug; kept apart from the car's 'bujias'
+  | 'filtro_aceite'
+  | 'lubricacion_cadena' // clean, lube and tension the chain — the shortest interval on a bike
+  | 'kit_arrastre' // chain + front and rear sprockets, replaced as a set
+  | 'correa_transmision' // scooter CVT belt
+  | 'rodillos_variador' // scooter variator rollers
+  | 'embrague'
+  | 'zapatas_freno' // rear drum, still standard on small displacements
+  | 'aceite_horquilla'
+  | 'amortiguador_trasero'
+  | 'rayos_ruedas' // spoke tension on spoked wheels
   | (string & {});
 
+/**
+ * The regions the vehicle drawing knows how to highlight. Shared by cars and
+ * motorcycles: a car has no 'suspension' zone of its own and a motorcycle has
+ * no 'cabina'. Which of them apply is decided per vehicle type in data/zones.
+ */
 export type Zone =
   | 'motor'
   | 'transmision'
@@ -45,12 +77,17 @@ export type Zone =
   | 'llantas'
   | 'electrico'
   | 'cabina'
-  | 'suspension_direccion'
+  | 'suspension'
   | 'combustible';
 
-/** What the user tells us about how the car is used. Maps onto the manual's "severe conditions". */
+/**
+ * What the user tells us about how the vehicle is used. Maps onto the manual's
+ * "severe conditions". The same five flags read differently per vehicle type
+ * (rideHailing is taxi/aplicativo on a car, delivery/mototaxi on a bike); the
+ * wording lives in lib/vehicle.ts, never here.
+ */
 export type UsageProfile = {
-  rideHailing: boolean; // taxi / aplicativo: "heavy commercial use" in most manuals
+  rideHailing: boolean; // taxi / aplicativo / delivery: "heavy commercial use" in most manuals
   mostlyCity: boolean; // stop-and-go, extended idling
   dustyRoads: boolean; // unpaved or dusty roads
   shortTrips: boolean; // habitual trips under ~8 km
@@ -59,14 +96,21 @@ export type UsageProfile = {
 
 export type VehicleProfile = {
   id: string;
+  type: VehicleType;
   brand: string;
   model: string;
   year: number;
   engineCode?: string; // e.g. '1NZ-FE' — needed when the manual splits intervals by engine
+  /** Displacement in cc. Motorcycles are named by it ("una 150"); cars use engineCode instead. */
+  engineCc?: number;
   transmission: Transmission;
   fuel: Fuel;
+  /** Motorcycles only: chain, belt or shaft. Decides whether the final-drive lines apply. */
+  finalDrive?: FinalDrive;
+  /** Motorcycles only: an air-cooled bike has no coolant line in its manual. */
+  cooling?: Cooling;
   usage: UsageProfile;
-  /** How the user got the car. Drives the "unknown last service" logic for used cars. */
+  /** How the user got the vehicle. Drives the "unknown last service" logic for used ones. */
   acquisition?: { date?: ISODate; odometerKm?: number; wasUsed: boolean };
   /** Answer to "¿Cuántos km manejas por semana?" — used only when readings are insufficient. */
   declaredWeeklyKm?: number;
@@ -125,15 +169,16 @@ export type ComponentSpec = {
   replaceCriterion?: { measure: string; limit: number; unit: string } | null;
   /** Consumable facts (grade, capacity). Facts, not text. */
   consumable?: { grade?: string; capacityL?: number; partNote?: string };
-  /** When the manual splits the line by engine/transmission/fuel. Absent = applies to all variants. */
-  appliesTo?: { engines?: string[]; transmissions?: Transmission[]; fuels?: Fuel[] };
+  /** When the manual splits the line by engine/transmission/fuel/drive. Absent = applies to all variants. */
+  appliesTo?: { engines?: string[]; transmissions?: Transmission[]; fuels?: Fuel[]; finalDrives?: FinalDrive[]; coolings?: Cooling[] };
   criticality: 'safety' | 'engine' | 'comfort';
   source: SpecSource;
 };
 
-/** One manual = one MaintenanceSpec. Extracted once, reused for every car of that model/years. */
+/** One manual = one MaintenanceSpec. Extracted once, reused for every vehicle of that model/years. */
 export type MaintenanceSpec = {
   specId: string;
+  vehicleType: VehicleType;
   brand: string;
   model: string;
   yearFrom: number;

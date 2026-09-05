@@ -20,7 +20,7 @@ const KIND_LABEL = {
 
 export default function HistorialYear() {
   const { year } = useLocalSearchParams<{ year: string }>();
-  const { records } = useVehicle();
+  const { records, vehicleType } = useVehicle();
   const entries = records.filter((r) => r.date.startsWith(`${year}-`)).sort((a, b) => b.date.localeCompare(a.date));
 
   if (entries.length === 0) return null;
@@ -44,7 +44,7 @@ export default function HistorialYear() {
               </Txt>
               <View style={styles.rowBody}>
                 <Txt variant="cardTitle" style={styles.service}>
-                  {KIND_LABEL[entry.kind]}: {entry.componentIds.map((id) => componentDef(id).shortLabel).join(', ')}
+                  {KIND_LABEL[entry.kind]}: {entry.componentIds.map((id) => componentDef(id, vehicleType).shortLabel).join(', ')}
                 </Txt>
                 <Txt variant="bodySmall" color={Colors.textTertiary}>
                   {[entry.workshop, entry.odometerKm !== null ? formatKm(entry.odometerKm) : null, entry.note].filter(Boolean).join(' · ')}

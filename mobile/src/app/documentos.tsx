@@ -4,6 +4,9 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
 import { dueLabel, formatPEN } from '@/lib/format';
+import { vehicleCopy } from '@/lib/vehicle';
+import type { VehicleType } from '@/lib/wear/types';
+import { useVehicle } from '@/state/vehicle-context';
 import { Colors, Spacing, StatusMeta } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
 import { DetailHeader } from '@/ui/DetailHeader';
@@ -13,17 +16,34 @@ import { Surface } from '@/ui/Surface';
 import { Txt } from '@/ui/Txt';
 
 type DocumentItem = { id: string; title: string; subtitle: string; status: 'ok' | 'warn' | 'expired'; dueDate: string; fineAmount?: number; icon: keyof typeof Feather.glyphMap };
-const DOCUMENTS: DocumentItem[] = [
-  { id: 'soat', title: 'SOAT', subtitle: 'Seguro obligatorio', status: 'expired', dueDate: '2026-08-20', fineAmount: 660, icon: 'shield' },
-  { id: 'revision', title: 'Revisión técnica', subtitle: 'Certificado vigente', status: 'warn', dueDate: '2026-09-14', fineAmount: 2475, icon: 'check-circle' },
-  { id: 'licencia', title: 'Licencia de conducir', subtitle: 'Licencia personal', status: 'ok', dueDate: '2029-03-02', icon: 'credit-card' },
-  { id: 'lunas', title: 'Lunas polarizadas', subtitle: 'Certificado de autorización', status: 'ok', dueDate: '2028-11-12', icon: 'eye' },
-  { id: 'propiedad', title: 'Tarjeta de propiedad', subtitle: 'Documento del vehículo', status: 'ok', dueDate: '2030-01-01', icon: 'file-text' },
-];
+
+/** The folder a driver carries. Only the last two entries differ per vehicle. */
+function documentsFor(type: VehicleType): DocumentItem[] {
+  const shared: DocumentItem[] = [
+    { id: 'soat', title: 'SOAT', subtitle: 'Seguro obligatorio', status: 'expired', dueDate: '2026-08-20', fineAmount: 660, icon: 'shield' },
+    { id: 'revision', title: 'Revisión técnica', subtitle: 'Certificado vigente', status: 'warn', dueDate: '2026-09-14', fineAmount: type === 'moto' ? 1237 : 2475, icon: 'check-circle' },
+    {
+      id: 'licencia',
+      title: type === 'moto' ? 'Licencia de conducir (A-I)' : 'Licencia de conducir',
+      subtitle: 'Licencia personal',
+      status: 'ok',
+      dueDate: '2029-03-02',
+      icon: 'credit-card',
+    },
+  ];
+  const specific: DocumentItem[] =
+    type === 'moto'
+      ? [{ id: 'casco', title: 'Casco certificado', subtitle: 'Con el número de placa visible', status: 'ok', dueDate: '2028-11-12', icon: 'shield' }]
+      : [{ id: 'lunas', title: 'Lunas polarizadas', subtitle: 'Certificado de autorización', status: 'ok', dueDate: '2028-11-12', icon: 'eye' }];
+  return [...shared, ...specific, { id: 'propiedad', title: 'Tarjeta de propiedad', subtitle: 'Documento del vehículo', status: 'ok', dueDate: '2030-01-01', icon: 'file-text' }];
+}
 
 export default function Documentos() {
   const [uploaded, setUploaded] = useState(false);
-  const documents = uploaded ? DOCUMENTS.map((doc) => doc.id === 'soat' ? { ...doc, status: 'ok' as const, dueDate: '2027-08-20' } : doc) : DOCUMENTS;
+  const { vehicleType } = useVehicle();
+  const copy = vehicleCopy(vehicleType);
+  const all = documentsFor(vehicleType);
+  const documents = uploaded ? all.map((doc) => doc.id === 'soat' ? { ...doc, status: 'ok' as const, dueDate: '2027-08-20' } : doc) : all;
   const expired = documents.filter((doc) => doc.status === 'expired').length;
   const next = documents.find((doc) => doc.status === 'warn');
 
@@ -32,7 +52,7 @@ export default function Documentos() {
       <DetailHeader title="Registro de documentos" />
 
       <View style={styles.hero}>
-        <Txt variant="label" color={Colors.accentLight}>DOCUMENTOS DEL AUTO</Txt>
+        <Txt variant="label" color={Colors.accentLight}>DOCUMENTOS {copy.ofThe.toUpperCase()}</Txt>
         <Txt variant="screenTitle">{expired === 0 ? 'Todo en regla.' : 'Uno necesita atención.'}</Txt>
         <Txt variant="body" color={Colors.textSecondary}>{expired === 0 ? 'Tu carpeta está lista para salir.' : 'Revisa el vencido antes de volver a trabajar.'}</Txt>
         <View style={styles.summaryRow}>
@@ -67,7 +87,7 @@ export default function Documentos() {
         <Button label={uploaded ? 'PDF agregado' : 'Subir PDF'} variant={uploaded ? 'secondary' : 'primary'} onPress={() => setUploaded(true)} />
       </Surface>
 
-      <Button label="Subir manual del auto" variant="tertiary" onPress={() => router.push('/manual')} />
+      <Button label={`Subir manual ${copy.ofThe}`} variant="tertiary" onPress={() => router.push('/manual')} />
     </Screen>
   );
 }

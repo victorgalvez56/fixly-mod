@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { componentDef } from '@/data/catalog';
 import { isPending, remainingLine, statusWord } from '@/lib/wear/selectors';
 import type { WearEstimate } from '@/lib/wear/types';
+import { useVehicle } from '@/state/vehicle-context';
 import { CardShadow, Colors, ComponentStatusMeta, Radius } from '@/theme/tokens';
 import { IntervalBar } from '@/ui/IntervalBar';
 import { Txt } from '@/ui/Txt';
@@ -16,7 +17,8 @@ type Props = { estimate: WearEstimate; onPress?: () => void; showBar?: boolean; 
  * dot is never the only signal.
  */
 export function ComponentRow({ estimate, onPress, showBar = true, compact }: Props) {
-  const def = componentDef(estimate.componentId);
+  const { vehicleType } = useVehicle();
+  const def = componentDef(estimate.componentId, vehicleType);
   const meta = ComponentStatusMeta[estimate.status];
   const pending = isPending(estimate);
   return (

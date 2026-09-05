@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { componentDef } from '@/data/catalog';
 import { formatKm } from '@/lib/format';
+import { vehicleCopy } from '@/lib/vehicle';
 import { COPY } from '@/lib/wear/copy';
 import { confidenceLabel, explanation, formatDateEs, intervalSentence, isInspect, kmPerDayLabel, statusWord } from '@/lib/wear/selectors';
 import { useMaintenance } from '@/state/use-maintenance';
@@ -17,18 +18,19 @@ import { Txt } from '@/ui/Txt';
 
 export default function ServicioDetalle() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { byId, specFor } = useMaintenance();
+  const { byId, specFor, vehicleType } = useMaintenance();
   const [help, setHelp] = useState(false);
   const estimate = id ? byId(id) : null;
   const spec = id ? specFor(id) : null;
-  const def = componentDef(id ?? '');
+  const def = componentDef(id ?? '', vehicleType);
+  const copy = vehicleCopy(vehicleType);
 
   if (!estimate || !spec) {
     return (
       <Screen>
         <DetailHeader title="Servicio" />
         <Txt variant="body" color={Colors.textSecondary}>
-          No encontramos este componente en el manual de tu auto.
+          No encontramos este componente en el manual de {copy.yours}.
         </Txt>
       </Screen>
     );
@@ -37,7 +39,10 @@ export default function ServicioDetalle() {
   const meta = ComponentStatusMeta[estimate.status];
   const confidence = confidenceLabel(estimate);
   const interval = estimate.severeApplied && spec.severe ? spec.severe : spec.normal;
-  const intervalShort = [interval.km !== null ? `${(interval.km / 1000).toLocaleString('es-PE')} mil km` : null, interval.months !== null ? `${interval.months} meses` : null]
+  const intervalShort = [
+    interval.km !== null ? (interval.km >= 1000 ? `${(interval.km / 1000).toLocaleString('es-PE')} mil km` : formatKm(interval.km)) : null,
+    interval.months !== null ? `${interval.months} ${interval.months === 1 ? 'mes' : 'meses'}` : null,
+  ]
     .filter(Boolean)
     .join(' o ');
 

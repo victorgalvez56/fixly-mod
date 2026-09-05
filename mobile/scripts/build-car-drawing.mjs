@@ -4,191 +4,21 @@
  *   src/assets/car/drawing.ts     (typed path list, lengths + anchors computed here)
  *   assets/car/car-drawing.svg    (same paths grouped per layer, for Figma)
  *
- * All geometry lives in this file. Lengths and anchors are computed with
- * scripts/svg-path-length.mjs so nothing numeric in drawing.ts is typed by hand.
+ * All geometry lives in this file; measuring, validation and emission are
+ * shared with the motorcycle generator in scripts/lib/drawing-emit.mjs.
  *
  *   node scripts/build-car-drawing.mjs                 # write both files + print report
  *   node scripts/build-car-drawing.mjs --preview DIR   # also write styled preview SVGs into DIR
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join as joinPath, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { firstSubpathBBox, pathBBox, pathLength } from './svg-path-length.mjs';
+
+import { emitDrawing } from './lib/drawing-emit.mjs';
+import { arcSegs, belt, caliper, cat, circle, ellipse, line, P, pipe, polar, rect, roundedPoly, rrect } from './lib/svg-geometry.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VIEWBOX = { x: 0, y: 0, w: 240, h: 400 };
-const LIMITS = { maxPaths: 220, maxLength: 900, minStroke: 0.75, minHit: 40 };
-const STROKE = { silhouette: 1.3, glass: 1.0, wheels: 1.2, zones: 1.3, enginebay: 0.75, hoses: 0.9, hit: 0 };
 const ZONES = ['motor', 'refrigeracion', 'transmision', 'frenos', 'llantas', 'electrico', 'cabina', 'combustible'];
-
-// ---------------------------------------------------------------------------
-// Geometry helpers (absolute M L C Q Z only; 2-decimal output)
-// ---------------------------------------------------------------------------
-const K = 0.5522847498; // cubic Bezier quarter-circle constant
-const f = (n) => {
-  const r = Math.round(n * 100) / 100;
-  return (Object.is(r, -0) ? 0 : r).toString();
-};
-const P = (x, y) => `${f(x)} ${f(y)}`;
-const cat = (...parts) => parts.join(' ');
-const rad = (deg) => (deg * Math.PI) / 180;
-const vsub = (a, b) => [a[0] - b[0], a[1] - b[1]];
-const vadd = (a, b) => [a[0] + b[0], a[1] + b[1]];
-const vmul = (a, s) => [a[0] * s, a[1] * s];
-const vlen = (a) => Math.hypot(a[0], a[1]);
-const vunit = (a) => vmul(a, 1 / vlen(a));
-const polar = (cx, cy, r, deg) => [cx + r * Math.cos(rad(deg)), cy + r * Math.sin(rad(deg))];
-
-const line = (x1, y1, x2, y2) => `M ${P(x1, y1)} L ${P(x2, y2)}`;
-const rect = (x, y, w, h) => `M ${P(x, y)} L ${P(x + w, y)} L ${P(x + w, y + h)} L ${P(x, y + h)} Z`;
-
-function rrect(x, y, w, h, r) {
-  r = Math.min(r, w / 2, h / 2);
-  if (r <= 0) return rect(x, y, w, h);
-  const k = K * r;
-  return [
-    `M ${P(x + r, y)}`,
-    `L ${P(x + w - r, y)}`,
-    `C ${P(x + w - r + k, y)} ${P(x + w, y + r - k)} ${P(x + w, y + r)}`,
-    `L ${P(x + w, y + h - r)}`,
-    `C ${P(x + w, y + h - r + k)} ${P(x + w - r + k, y + h)} ${P(x + w - r, y + h)}`,
-    `L ${P(x + r, y + h)}`,
-    `C ${P(x + r - k, y + h)} ${P(x, y + h - r + k)} ${P(x, y + h - r)}`,
-    `L ${P(x, y + r)}`,
-    `C ${P(x, y + r - k)} ${P(x + r - k, y)} ${P(x + r, y)}`,
-    'Z',
-  ].join(' ');
-}
-
-function ellipse(cx, cy, rx, ry) {
-  const kx = K * rx;
-  const ky = K * ry;
-  return [
-    `M ${P(cx + rx, cy)}`,
-    `C ${P(cx + rx, cy + ky)} ${P(cx + kx, cy + ry)} ${P(cx, cy + ry)}`,
-    `C ${P(cx - kx, cy + ry)} ${P(cx - rx, cy + ky)} ${P(cx - rx, cy)}`,
-    `C ${P(cx - rx, cy - ky)} ${P(cx - kx, cy - ry)} ${P(cx, cy - ry)}`,
-    `C ${P(cx + kx, cy - ry)} ${P(cx + rx, cy - ky)} ${P(cx + rx, cy)}`,
-    'Z',
-  ].join(' ');
-}
-const circle = (cx, cy, r) => ellipse(cx, cy, r, r);
-
-/** Cubic segments approximating an arc from angle a0 to a1 (degrees, SVG orientation). */
-function arcSegs(cx, cy, r, a0, a1) {
-  const sweep = rad(a1 - a0);
-  const n = Math.max(1, Math.ceil(Math.abs(sweep) / (Math.PI / 2) - 1e-9));
-  const phi = sweep / n;
-  const k = (4 / 3) * Math.tan(phi / 4);
-  let th = rad(a0);
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const c0 = Math.cos(th);
-    const s0 = Math.sin(th);
-    const c1 = Math.cos(th + phi);
-    const s1 = Math.sin(th + phi);
-    const p1 = [cx + r * (c0 - k * s0), cy + r * (s0 + k * c0)];
-    const p2 = [cx + r * (c1 + k * s1), cy + r * (s1 - k * c1)];
-    const p3 = [cx + r * c1, cy + r * s1];
-    out.push(`C ${P(...p1)} ${P(...p2)} ${P(...p3)}`);
-    th += phi;
-  }
-  return out.join(' ');
-}
-
-/** Closed C-shaped bracket between two radii, spanning angles a0..a1. */
-function caliper(cx, cy, rIn, rOut, a0, a1) {
-  return cat(
-    `M ${P(...polar(cx, cy, rOut, a0))}`,
-    arcSegs(cx, cy, rOut, a0, a1),
-    `L ${P(...polar(cx, cy, rIn, a1))}`,
-    arcSegs(cx, cy, rIn, a1, a0),
-    'Z',
-  );
-}
-
-/** Orthogonal polyline with small rounded corners (short cubics), like a pipe run. */
-function pipe(points, r = 2) {
-  const n = points.length;
-  let d = `M ${P(...points[0])}`;
-  for (let i = 1; i < n; i++) {
-    const p = points[i];
-    if (i === n - 1) {
-      d += ` L ${P(...p)}`;
-      break;
-    }
-    const prev = points[i - 1];
-    const next = points[i + 1];
-    const din = vunit(vsub(p, prev));
-    const dout = vunit(vsub(next, p));
-    const rr = Math.min(r, vlen(vsub(p, prev)) / 2, vlen(vsub(next, p)) / 2);
-    const a = vadd(p, vmul(din, -rr));
-    const b = vadd(p, vmul(dout, rr));
-    d += ` L ${P(...a)} C ${P(...vadd(a, vmul(din, K * rr)))} ${P(...vadd(b, vmul(dout, -K * rr)))} ${P(...b)}`;
-  }
-  return d;
-}
-
-/** Closed polygon with corners rounded by quadratic curves. */
-function roundedPoly(points, r) {
-  const n = points.length;
-  const corner = (i) => {
-    const p = points[i];
-    const prev = points[(i - 1 + n) % n];
-    const next = points[(i + 1) % n];
-    const din = vunit(vsub(p, prev));
-    const dout = vunit(vsub(next, p));
-    const rr = Math.min(r, vlen(vsub(p, prev)) / 2, vlen(vsub(next, p)) / 2);
-    return { a: vadd(p, vmul(din, -rr)), b: vadd(p, vmul(dout, rr)), p };
-  };
-  const c0 = corner(0);
-  const parts = [`M ${P(...c0.b)}`];
-  for (let i = 1; i < n; i++) {
-    const c = corner(i);
-    parts.push(`L ${P(...c.a)} Q ${P(...c.p)} ${P(...c.b)}`);
-  }
-  parts.push(`L ${P(...c0.a)} Q ${P(...c0.p)} ${P(...c0.b)} Z`);
-  return parts.join(' ');
-}
-
-/** Belt wrapped around a set of pulleys: outer tangents + arcs (convex hull of circles). */
-function belt(circles) {
-  const gx = circles.reduce((s, c) => s + c.cx, 0) / circles.length;
-  const gy = circles.reduce((s, c) => s + c.cy, 0) / circles.length;
-  const ang = (c) => Math.atan2(c.cy - gy, c.cx - gx);
-  const cs = circles.slice().sort((a, b) => ang(a) - ang(b));
-  const n = cs.length;
-  const normals = cs.map((A, i) => {
-    const B = cs[(i + 1) % n];
-    const dx = B.cx - A.cx;
-    const dy = B.cy - A.cy;
-    const L = Math.hypot(dx, dy);
-    const ux = dx / L;
-    const uy = dy / L;
-    const c = (A.r - B.r) / L;
-    const s = Math.sqrt(Math.max(0, 1 - c * c));
-    const cands = [1, -1].map((sg) => [c * ux - sg * s * uy, c * uy + sg * s * ux]);
-    const mx = (A.cx + B.cx) / 2 - gx;
-    const my = (A.cy + B.cy) / 2 - gy;
-    return cands.sort((p, q) => q[0] * mx + q[1] * my - (p[0] * mx + p[1] * my))[0];
-  });
-  const deg = (v) => (Math.atan2(v[1], v[0]) * 180) / Math.PI;
-  let d = '';
-  for (let i = 0; i < n; i++) {
-    const A = cs[i];
-    const B = cs[(i + 1) % n];
-    const nA = normals[i];
-    const nB = normals[(i + 1) % n];
-    const pA = [A.cx + A.r * nA[0], A.cy + A.r * nA[1]];
-    const pB = [B.cx + B.r * nA[0], B.cy + B.r * nA[1]];
-    if (i === 0) d += `M ${P(...pA)}`;
-    d += ` L ${P(...pB)}`;
-    const a0 = deg(nA);
-    const sweep = (((deg(nB) - a0) % 360) + 360) % 360;
-    d += ' ' + arcSegs(B.cx, B.cy, B.r, a0, a0 + sweep);
-  }
-  return d + ' Z';
-}
 
 // ---------------------------------------------------------------------------
 // Drawing definition
@@ -436,186 +266,37 @@ const ZONE_FOCUS = {
 };
 
 // ---------------------------------------------------------------------------
-// Measure, validate, emit
+// Emit
 // ---------------------------------------------------------------------------
-const round2 = (n) => Math.round(n * 100) / 100;
-const CMD_RE = /^[MLHVCQZ0-9.\s-]+$/;
-
-for (const p of paths) {
-  p.strokeWidth = STROKE[p.layer];
-  if (!CMD_RE.test(p.d)) throw new Error(`${p.id}: path contains unsupported characters`);
-  p.length = round2(pathLength(p.d));
-  const bb = firstSubpathBBox(p.d);
-  p.anchor = { x: round2((bb.minX + bb.maxX) / 2), y: round2((bb.minY + bb.maxY) / 2) };
-}
-
-const REQUIRED_IDS = [
-  'wheel_di', 'wheel_dd', 'wheel_ti', 'wheel_td',
-  ...ZONES.map((z) => `zone_${z}`),
-  'comp_aceite_motor', 'comp_bujias', 'comp_filtro_aire_motor', 'comp_correa_distribucion', 'comp_correa_accesorios',
-  'comp_refrigerante', 'comp_bateria', 'comp_liquido_frenos', 'comp_aceite_caja', 'comp_filtro_cabina', 'comp_plumillas',
-  'comp_pastillas_freno', 'comp_llantas', 'comp_filtro_combustible',
-  'hose_coolant_1', 'hose_coolant_2', 'hose_oil_1', 'hose_brake_1',
-  'hit_motor', 'hit_refrigeracion', 'hit_electrico', 'hit_transmision', 'hit_cabina', 'hit_combustible',
-  'hit_esquina_di', 'hit_esquina_dd', 'hit_esquina_ti', 'hit_esquina_td',
-];
-
-const problems = [];
-const ids = new Map();
-for (const p of paths) ids.set(p.id, (ids.get(p.id) ?? 0) + 1);
-for (const [id, n] of ids) if (n > 1) problems.push(`duplicate id ${id} (${n}x)`);
-for (const id of REQUIRED_IDS) if (!ids.has(id)) problems.push(`missing required id ${id}`);
-if (paths.length >= LIMITS.maxPaths) problems.push(`too many paths: ${paths.length} (limit ${LIMITS.maxPaths})`);
-for (const p of paths) {
-  if (p.length >= LIMITS.maxLength) problems.push(`${p.id}: length ${p.length} >= ${LIMITS.maxLength}`);
-  if (p.layer !== 'hit' && p.strokeWidth < LIMITS.minStroke) problems.push(`${p.id}: strokeWidth ${p.strokeWidth} < ${LIMITS.minStroke}`);
-  if (p.zone && !ZONES.includes(p.zone)) problems.push(`${p.id}: unknown zone ${p.zone}`);
-  if (p.layer === 'enginebay' && !(p.zone && p.componentId)) problems.push(`${p.id}: enginebay paths need zone + componentId`);
-  if (p.layer === 'hit' && !p.d.trim().endsWith('Z')) problems.push(`${p.id}: hit polygon must be closed`);
-}
-const hits = paths.filter((p) => p.layer === 'hit').map((p) => ({ id: p.id, ...pathBBox(p.d) }));
-for (const h of hits) {
-  const w = h.maxX - h.minX;
-  const hh = h.maxY - h.minY;
-  if (w < LIMITS.minHit || hh < LIMITS.minHit) problems.push(`${h.id}: hit box ${w}x${hh} smaller than ${LIMITS.minHit}x${LIMITS.minHit}`);
-}
-for (let i = 0; i < hits.length; i++) {
-  for (let j = i + 1; j < hits.length; j++) {
-    const a = hits[i];
-    const b = hits[j];
-    const overlap = a.minX < b.maxX && b.minX < a.maxX && a.minY < b.maxY && b.minY < a.maxY;
-    if (overlap) problems.push(`hit boxes overlap: ${a.id} x ${b.id}`);
-  }
-}
-if (problems.length) {
-  console.error('build-car-drawing: validation failed');
-  for (const p of problems) console.error(' - ' + p);
-  process.exit(1);
-}
-
-const ZONE_ANCHORS = Object.fromEntries(ZONES.map((z) => [z, paths.find((p) => p.id === `zone_${z}`).anchor]));
-
-// --- drawing.ts ---
-const q = (s) => `'${s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
-const tsEntry = (p) => {
-  const fields = [`id: ${q(p.id)}`, `layer: ${q(p.layer)}`];
-  if (p.zone) fields.push(`zone: ${q(p.zone)}`);
-  if (p.componentId) fields.push(`componentId: ${q(p.componentId)}`);
-  if (p.fluid) fields.push(`fluid: ${q(p.fluid)}`);
-  fields.push(`d: ${q(p.d)}`, `strokeWidth: ${p.strokeWidth}`, `length: ${p.length}`, `anchor: { x: ${p.anchor.x}, y: ${p.anchor.y} }`);
-  return `  { ${fields.join(', ')} },`;
-};
-const ts = `/* eslint-disable */
-/**
- * GENERATED by scripts/build-car-drawing.mjs — do not edit by hand.
- * Top-down 5-door hatchback wireframe (hood at the top) plus an engine-bay
- * schematic drawn inside the hood region of the same 240x400 coordinate space.
- * Paths use absolute M L H V C Q Z only; lengths are flattened-curve lengths;
- * anchors are the bbox centroid of each path's first subpath.
- */
-export type CarLayer = 'silhouette' | 'glass' | 'wheels' | 'zones' | 'enginebay' | 'hoses' | 'hit';
-export type CarZone =
-  | 'motor'
-  | 'refrigeracion'
-  | 'transmision'
-  | 'frenos'
-  | 'llantas'
-  | 'electrico'
-  | 'cabina'
-  | 'combustible';
-export type CarPath = {
-  id: string;
-  layer: CarLayer;
-  zone?: CarZone;
-  componentId?: string;
-  fluid?: 'oil' | 'coolant' | 'brake';
-  d: string;
-  strokeWidth: number;
-  length: number;
-  anchor: { x: number; y: number };
-};
-
-export const CAR_VIEWBOX = { x: ${VIEWBOX.x}, y: ${VIEWBOX.y}, w: ${VIEWBOX.w}, h: ${VIEWBOX.h} } as const;
-
-export const CAR_PATHS: CarPath[] = [
-${paths.map(tsEntry).join('\n')}
-];
-
-/** Centroid of each zone's main shape (bbox centre of zone_<zone>). */
-export const ZONE_ANCHORS: Record<CarZone, { x: number; y: number }> = {
-${ZONES.map((z) => `  ${z}: { x: ${ZONE_ANCHORS[z].x}, y: ${ZONE_ANCHORS[z].y} },`).join('\n')}
-};
-
-/** Where to zoom for each zone: centre point (car coordinates) and scale factor. */
-export const ZONE_FOCUS: Record<CarZone, { cx: number; cy: number; scale: number }> = {
-${ZONES.map((z) => `  ${z}: { cx: ${ZONE_FOCUS[z].cx}, cy: ${ZONE_FOCUS[z].cy}, scale: ${ZONE_FOCUS[z].scale} },`).join('\n')}
-};
-`;
-mkdirSync(joinPath(ROOT, 'src/assets/car'), { recursive: true });
-writeFileSync(joinPath(ROOT, 'src/assets/car/drawing.ts'), ts);
-
-// --- car-drawing.svg (for designers) ---
-const LAYER_ORDER = ['silhouette', 'glass', 'wheels', 'zones', 'enginebay', 'hoses', 'hit'];
-const SVG_STROKE = { silhouette: '#c3c9d1', glass: '#c3c9d1', wheels: '#c3c9d1', zones: '#8f99a8', enginebay: '#3b4552', hoses: '#3b4552' };
-const attrs = (p) =>
-  [p.zone && `data-zone="${p.zone}"`, p.componentId && `data-component="${p.componentId}"`, p.fluid && `data-fluid="${p.fluid}"`]
-    .filter(Boolean)
-    .join(' ');
-const svgGroups = LAYER_ORDER.map((layer) => {
-  const members = paths.filter((p) => p.layer === layer);
-  const head =
-    layer === 'hit'
-      ? `<g id="hit" fill="#000" opacity="0" stroke="none">`
-      : `<g id="${layer}" fill="none" stroke="${SVG_STROKE[layer]}" stroke-width="${STROKE[layer]}">`;
-  const body = members.map((p) => `    <path id="${p.id}" ${attrs(p)} d="${p.d}"/>`.replace(/"  d=/, '" d=')).join('\n');
-  return `  ${head}\n${body}\n  </g>`;
+emitDrawing({
+  vehicleType: 'auto',
+  constName: 'CAR_DRAWING',
+  viewBox: VIEWBOX,
+  paths,
+  zones: ZONES,
+  zoneFocus: ZONE_FOCUS,
+  // The four corner hit boxes open 'frenos'; tyres are reached from their chip.
+  zonesWithoutHit: ['llantas'],
+  cardCrop: 0.66,
+  home: { cx: 120, cy: 200 },
+  doc: `Top-down 5-door hatchback wireframe (hood at the top) plus an engine-bay
+schematic drawn inside the hood region of the same 240x400 coordinate space.`,
+  requiredIds: [
+    'wheel_di', 'wheel_dd', 'wheel_ti', 'wheel_td',
+    ...ZONES.map((z) => `zone_${z}`),
+    'comp_aceite_motor', 'comp_bujias', 'comp_filtro_aire_motor', 'comp_correa_distribucion', 'comp_correa_accesorios',
+    'comp_refrigerante', 'comp_bateria', 'comp_liquido_frenos', 'comp_aceite_caja', 'comp_filtro_cabina', 'comp_plumillas',
+    'comp_pastillas_freno', 'comp_llantas', 'comp_filtro_combustible',
+    'hose_coolant_1', 'hose_coolant_2', 'hose_oil_1', 'hose_brake_1',
+    'hit_motor', 'hit_refrigeracion', 'hit_electrico', 'hit_transmision', 'hit_cabina', 'hit_combustible',
+    'hit_esquina_di', 'hit_esquina_dd', 'hit_esquina_ti', 'hit_esquina_td',
+  ],
+  tsOut: joinPath(ROOT, 'src/assets/car/drawing.ts'),
+  svgOut: joinPath(ROOT, 'assets/car/car-drawing.svg'),
+  previews: {
+    'preview-full': { viewBox: '-80 0 400 400', size: 800 },
+    'preview-hood': { viewBox: '30 0 180 180', size: 1440 },
+    'preview-debug': { viewBox: '-80 0 400 400', size: 1600, hits: true },
+    'preview-rear': { viewBox: '20 230 200 200', size: 1200 },
+  },
 });
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.w} ${VIEWBOX.h}" width="${VIEWBOX.w}" height="${VIEWBOX.h}" stroke-linecap="round" stroke-linejoin="round">
-${svgGroups.join('\n')}
-</svg>
-`;
-mkdirSync(joinPath(ROOT, 'assets/car'), { recursive: true });
-writeFileSync(joinPath(ROOT, 'assets/car/car-drawing.svg'), svg);
-
-// --- optional styled previews (scan look: gray wireframe, dark components, colored fluids) ---
-const previewIdx = process.argv.indexOf('--preview');
-if (previewIdx !== -1) {
-  const dir = resolve(process.argv[previewIdx + 1] || '.');
-  mkdirSync(dir, { recursive: true });
-  const FLUID = { oil: '#b07a1f', coolant: '#2b7bd6', brake: '#c43d3d' };
-  const style = (p) => {
-    if (p.layer === 'hit') return null;
-    if (p.layer === 'zones') return `stroke="#a9b2bf" stroke-dasharray="1.5 1.5" stroke-width="${p.strokeWidth * 0.6}"`;
-    if (p.layer === 'enginebay') return `stroke="#2f3742" stroke-width="${p.strokeWidth}"`;
-    if (p.layer === 'hoses') return `stroke="${FLUID[p.fluid]}" stroke-width="${p.strokeWidth}"`;
-    return `stroke="#c3c9d1" stroke-width="${p.strokeWidth}"`;
-  };
-  const body = (withHits) =>
-    paths
-      .map((p) => {
-        const s = style(p);
-        if (!s) {
-          return withHits ? `<path d="${p.d}" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-width="0.4" stroke-dasharray="2 1"/>` : '';
-        }
-        return `<path d="${p.d}" fill="none" ${s}/>`;
-      })
-      .join('\n');
-  const anchors = ZONES.map((z) => `<circle cx="${ZONE_ANCHORS[z].x}" cy="${ZONE_ANCHORS[z].y}" r="1.4" fill="#e11d48"/>`).join('\n');
-  const wrap = (vb, w, h, inner) =>
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${w}" height="${h}" stroke-linecap="round" stroke-linejoin="round"><rect x="-1000" y="-1000" width="3000" height="3000" fill="#ffffff"/>\n${inner}\n</svg>\n`;
-  writeFileSync(joinPath(dir, 'preview-full.svg'), wrap('-80 0 400 400', 800, 800, body(false)));
-  writeFileSync(joinPath(dir, 'preview-hood.svg'), wrap('30 0 180 180', 1440, 1440, body(false)));
-  writeFileSync(joinPath(dir, 'preview-debug.svg'), wrap('-80 0 400 400', 1600, 1600, body(true) + '\n' + anchors));
-  writeFileSync(joinPath(dir, 'preview-rear.svg'), wrap('20 230 200 200', 1200, 1200, body(false)));
-  console.log(`previews written to ${dir}`);
-}
-
-// --- report ---
-const byLayer = {};
-for (const p of paths) byLayer[p.layer] = (byLayer[p.layer] ?? 0) + 1;
-const sorted = paths.slice().sort((a, b) => a.length - b.length);
-console.log(`paths: ${paths.length} total`, byLayer);
-console.log(`length: min ${sorted[0].length} (${sorted[0].id}), max ${sorted[sorted.length - 1].length} (${sorted[sorted.length - 1].id})`);
-console.log('ZONE_ANCHORS:', ZONE_ANCHORS);
-console.log(`required ids: ${REQUIRED_IDS.length}/${REQUIRED_IDS.length} present; hit boxes: ${hits.length}, no overlaps, all >= ${LIMITS.minHit}x${LIMITS.minHit}`);
-console.log('wrote src/assets/car/drawing.ts and assets/car/car-drawing.svg');
