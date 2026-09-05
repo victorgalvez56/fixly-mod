@@ -104,7 +104,7 @@ export default function Registrar() {
       <Field label="Fecha (AAAA-MM-DD)" value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" />
       <Field label="Kilometraje en ese momento" value={km} onChangeText={setKm} keyboardType="number-pad" />
       {kmLower && lastReading ? (
-        <Txt variant="bodySmall" color="#b45309">
+        <Txt variant="bodySmall" color={Colors.warningText}>
           Es menor que tu último registro de {formatKm(lastReading.km)}. Si está bien, sigue.
         </Txt>
       ) : null}

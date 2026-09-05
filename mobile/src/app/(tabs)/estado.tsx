@@ -7,9 +7,10 @@ import { documentStatuses } from '@/mock/data';
 import { useMockQuery } from '@/mock/use-mock-query';
 import { useMaintenance } from '@/state/use-maintenance';
 import { useVehicle } from '@/state/vehicle-context';
-import { Colors, Radius, Spacing, StatusMeta } from '@/theme/tokens';
+import { BorderWidth, Colors, Radius, Spacing, StatusMeta } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
 import { CarHealthCard } from '@/ui/CarHealthCard';
+import { IconCircleButton } from '@/ui/IconCircleButton';
 import { Screen } from '@/ui/Screen';
 import { Skeleton } from '@/ui/Skeleton';
 import { StatusChip } from '@/ui/StatusChip';
@@ -23,43 +24,34 @@ export default function Estado() {
   const worstDoc = statuses?.find((item) => item.status === 'expired');
   const pendingMaintenance = estimates.filter((item) => ['vencido', 'toca', 'pronto'].includes(item.status)).length;
 
+  const allGood = !worstDoc && pendingMaintenance === 0;
+
   return (
     <Screen edges={['top']}>
       <View style={styles.header}>
-        <Pressable style={styles.identity} onPress={() => router.push('/vehiculo')} accessibilityRole="button" accessibilityLabel="Abrir ficha del vehículo">
-          <View style={styles.plateChip}><View style={styles.plateStripe} /><Txt variant="mono" color={Colors.dark} style={styles.plateText}>{vehicle?.plate ?? '---'}</Txt></View>
-          <View style={styles.identityText}>
-            <Txt variant="cardTitle" numberOfLines={1}>{vehicle ? vehicle.brand + ' ' + vehicle.model : 'Tu vehículo'}</Txt>
-            <Txt variant="monoSmall" color={Colors.textTertiary}>{vehicle ? String(vehicle.year) + ' · ' + vehicle.color : 'Completa tu ficha'}</Txt>
-          </View>
-        </Pressable>
-        <Pressable onPress={() => router.push('/avisos')} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Abrir avisos">
-          <Feather name="bell" size={20} color={Colors.textPrimary} />
-          <View style={styles.notificationDot} />
-        </Pressable>
-      </View>
-
-      <View style={styles.hero}>
-        <Txt variant="label" color={Colors.accentLight}>ESTADO DE HOY</Txt>
-        <Txt variant="screenTitle">¿Puedes salir hoy?</Txt>
-        {loading ? <Skeleton width="70%" height={20} /> : (
-          <Txt variant="body" color={Colors.textSecondary}>
-            {worstDoc ? 'Hay ' + (pendingMaintenance + 1) + ' cosas que conviene resolver.' : 'Tus documentos están en regla.'}
-          </Txt>
-        )}
-        <View style={styles.heroRule} />
-        <View style={styles.countRow}>
-          <View>
-            <Txt variant="bigNumber" color={worstDoc ? Colors.statusExpired : Colors.statusOk}>{worstDoc ? '01' : '00'}</Txt>
-            <Txt variant="label" color={Colors.textTertiary}>DOCUMENTOS VENCIDOS</Txt>
-          </View>
-          <View style={styles.countDivider} />
-          <View>
-            <Txt variant="bigNumber" color={pendingMaintenance > 0 ? Colors.statusWarn : Colors.statusOk}>{String(pendingMaintenance).padStart(2, '0')}</Txt>
-            <Txt variant="label" color={Colors.textTertiary}>SERVICIOS PRÓXIMOS</Txt>
-          </View>
+        <View style={styles.avatar}>
+          <Feather name="truck" size={20} color={Colors.onAccent} />
+        </View>
+        <View style={styles.headerActions}>
+          <IconCircleButton icon="bell" onPress={() => router.push('/avisos')} accessibilityLabel="Abrir avisos" badge />
+          <IconCircleButton icon="settings" onPress={() => router.push('/ajustes')} accessibilityLabel="Abrir ajustes" />
         </View>
       </View>
+
+      <Pressable style={styles.identity} onPress={() => router.push('/vehiculo')} accessibilityRole="button" accessibilityLabel="Abrir ficha del vehículo">
+        <View style={styles.identityRow}>
+          <Txt variant="sectionTitle" numberOfLines={1} style={styles.flex}>{vehicle ? vehicle.brand + ' ' + vehicle.model : 'Tu vehículo'}</Txt>
+          <View style={styles.statusPill}>
+            <View style={[styles.statusDot, { backgroundColor: allGood ? Colors.statusOk : Colors.statusExpired }]} />
+            <Txt variant="label" color={allGood ? Colors.statusOk : Colors.statusExpired}>{allGood ? 'Al día' : 'Pendiente'}</Txt>
+          </View>
+        </View>
+        {loading ? <Skeleton width="55%" height={18} /> : (
+          <Txt variant="body" color={Colors.textSecondary}>
+            {vehicle ? String(vehicle.year) + ' · ' + vehicle.plate : 'Completa tu ficha'}
+          </Txt>
+        )}
+      </Pressable>
 
       {worstDoc ? (
         <Surface size="md" style={styles.urgent}>
@@ -127,17 +119,12 @@ function Tool({ title, body, icon, onPress }: { title: string; body: string; ico
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  identity: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  plateChip: { height: 44, width: 82, borderRadius: 10, backgroundColor: Colors.paper, overflow: 'hidden', justifyContent: 'center' },
-  plateStripe: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 7, backgroundColor: Colors.accent },
-  plateText: { textAlign: 'center', letterSpacing: 1.4 },
-  identityText: { flex: 1, gap: 3 },
-  iconButton: { width: 56, height: 56, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.borderSoft },
-  notificationDot: { position: 'absolute', top: 14, right: 14, width: 7, height: 7, borderRadius: 4, backgroundColor: Colors.statusExpired },
-  hero: { gap: 12, paddingTop: Spacing.lg },
-  heroRule: { height: 1, backgroundColor: Colors.border, marginTop: Spacing.sm },
-  countRow: { flexDirection: 'row', alignItems: 'center', gap: 20 },
-  countDivider: { width: 1, height: 54, backgroundColor: Colors.border },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.accent, alignItems: 'center', justifyContent: 'center' },
+  headerActions: { flexDirection: 'row', gap: 10 },
+  identity: { gap: 4, paddingTop: Spacing.lg },
+  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.pill, backgroundColor: Colors.surfaceAlt },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
   urgent: { flexDirection: 'row', padding: 0, overflow: 'hidden' },
   stateBar: { width: 4 },
   urgentBody: { flex: 1, padding: Spacing.lg, gap: 7 },
@@ -147,10 +134,10 @@ const styles = StyleSheet.create({
   documentCard: { paddingHorizontal: Spacing.lg },
   documentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 78, paddingVertical: 10 },
   documentBody: { flex: 1, gap: 5 },
-  divider: { borderBottomWidth: 1, borderBottomColor: Colors.borderSoft },
+  divider: { borderBottomWidth: BorderWidth, borderBottomColor: Colors.borderSoft },
   loadingCard: { padding: Spacing.lg, gap: 14 },
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  tool: { width: '47%', minHeight: 150, borderRadius: Radius.md, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.borderSoft, padding: Spacing.lg, gap: 9 },
+  tool: { width: '47%', minHeight: 150, borderRadius: Radius.md, backgroundColor: Colors.surface, borderWidth: BorderWidth, borderColor: Colors.borderSoft, padding: Spacing.lg, gap: 9 },
   toolIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: Colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   toolArrow: { position: 'absolute', right: 16, top: 17 },
   pressed: { opacity: 0.84 },

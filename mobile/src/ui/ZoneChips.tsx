@@ -5,7 +5,7 @@ import { ZONE_META, ZONE_ORDER, type ZoneId } from '@/data/zones';
 import { COPY } from '@/lib/wear/copy';
 import { statusWord } from '@/lib/wear/selectors';
 import type { ZoneState } from '@/state/use-maintenance';
-import { Colors, ComponentStatusMeta, Radius } from '@/theme/tokens';
+import { CardShadow, Colors, ComponentStatusMeta, Radius } from '@/theme/tokens';
 import { Txt } from '@/ui/Txt';
 
 type Props = {
@@ -63,11 +63,7 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 4,
     paddingVertical: 8,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...CardShadow,
   },
   pressed: { opacity: 0.85 },
   dot: { position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: 4 },

@@ -7,10 +7,10 @@ import { Colors } from '@/theme/tokens';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const STROKE_SILHOUETTE = '#9aa3ad';
-const STROKE_GLASS = '#b9c0c8';
-const STROKE_ZONE_MUTED = '#c3c9d1';
-const STROKE_COMPONENT = '#4b5563';
+const STROKE_SILHOUETTE = Colors.textTertiary;
+const STROKE_GLASS = Colors.border;
+const STROKE_ZONE_MUTED = Colors.borderSoft;
+const STROKE_COMPONENT = Colors.textSecondary;
 
 export type ZoneVisual = { color: string; pending: boolean };
 

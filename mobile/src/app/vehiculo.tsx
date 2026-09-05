@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
   },
-  plateStripe: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, backgroundColor: Colors.accent },
+  plateStripe: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 12, backgroundColor: Colors.accent },
   plateText: {
     fontSize: 15,
     fontWeight: '700',

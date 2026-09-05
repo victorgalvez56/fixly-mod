@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
   body: { flex: 1, gap: 6 },
   headerLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { flex: 1 },
-  fine: { fontSize: 32, lineHeight: 34, marginTop: 2 },
+  fine: { marginTop: 2 },
 });
