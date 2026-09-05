@@ -7,7 +7,7 @@ import { formatKm } from '@/lib/format';
 import { COPY } from '@/lib/wear/copy';
 import { daysLabel, gaugeParts, isInspect, statusWord } from '@/lib/wear/selectors';
 import type { WearEstimate } from '@/lib/wear/types';
-import { Colors, ComponentStatusMeta, Motion } from '@/theme/tokens';
+import { Colors, ComponentStatusMeta, Motion, Radius } from '@/theme/tokens';
 import { Txt } from '@/ui/Txt';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', gap: 10 },
   center: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   main: { textAlign: 'center' },
-  pill: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  pill: { borderRadius: Radius.pill, paddingHorizontal: 8, paddingVertical: 3 },
   captionBlock: { alignItems: 'center', gap: 2 },
   captionText: { textAlign: 'center' },
   captionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

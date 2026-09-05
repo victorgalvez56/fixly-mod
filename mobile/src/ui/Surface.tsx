@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { CardShadow, Colors, Radius } from '@/theme/tokens';
+import { BorderWidth, CardShadow, Colors, Radius } from '@/theme/tokens';
 
 type Size = 'sm' | 'md' | 'lg';
 type Props = { children: ReactNode; size?: Size; style?: StyleProp<ViewStyle>; accessibilityLabel?: string };
@@ -16,5 +16,5 @@ export function Surface({ children, size = 'md', style, accessibilityLabel }: Pr
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.borderSoft, ...CardShadow },
+  card: { backgroundColor: Colors.surface, borderWidth: BorderWidth, borderColor: Colors.borderSoft, ...CardShadow },
 });

@@ -87,7 +87,7 @@ export default function ServicioDetalle() {
 
       {def.whatIfSkipped ? (
         <View style={[styles.warnBlock, { backgroundColor: Colors.statusWarnSoft }]}>
-          <Txt variant="label" color="#b45309">
+          <Txt variant="label" color={Colors.warningText}>
             {COPY.ifSkipped}
           </Txt>
           <Txt variant="body" color={Colors.textSecondary}>

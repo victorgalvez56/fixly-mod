@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { ZONE_ANCHORS, type CarZone } from '@/data/car-drawing';
@@ -9,18 +8,19 @@ import { componentDef } from '@/data/catalog';
 import { type ZoneId } from '@/data/zones';
 import { formatKm } from '@/lib/format';
 import { COPY } from '@/lib/wear/copy';
-import { confidenceLabel, freshnessLabel, remainingLine, statusWord } from '@/lib/wear/selectors';
+import { freshnessLabel } from '@/lib/wear/selectors';
 import { useMaintenance } from '@/state/use-maintenance';
 import { useVehicle } from '@/state/vehicle-context';
-import { Colors, ComponentStatusMeta, Radius, Spacing } from '@/theme/tokens';
+import { BorderWidth, Colors, ComponentStatusMeta, Radius, Spacing } from '@/theme/tokens';
 import { AlertBanner } from '@/ui/AlertBanner';
 import { Button } from '@/ui/Button';
 import { CarMap, carMapHeight, unitScale, type ZoneVisual } from '@/ui/CarMap';
-import { IntervalRing } from '@/ui/IntervalRing';
 import { KmPrompt } from '@/ui/KmPrompt';
 import { Skeleton } from '@/ui/Skeleton';
+import { StatTile } from '@/ui/StatTile';
 import { Surface } from '@/ui/Surface';
 import { Txt } from '@/ui/Txt';
+import { WorstTile } from '@/ui/WorstTile';
 
 const MAP_W = 132;
 
@@ -39,16 +39,22 @@ export function CarHealthCard() {
 
   if (!hydrated) {
     return (
-      <Surface size="md" style={styles.card}>
-        <View style={styles.row}>
-          <Skeleton width={MAP_W} height={carMapHeight(MAP_W) * 0.7} />
-          <View style={styles.ringCol}>
-            <Skeleton width={112} height={112} radius={56} />
+      <View style={styles.wrap}>
+        <Surface size="lg" style={styles.mapCard}>
+          <Skeleton width="100%" height={carMapHeight(MAP_W) * 0.9} radius={Radius.md} />
+        </Surface>
+        <View style={styles.statsGrid}>
+          <Surface size="md" style={styles.bigTile}>
+            <Skeleton width="60%" height={16} />
+            <Skeleton width="40%" height={30} />
+            <Skeleton width="100%" height={26} />
+          </Surface>
+          <View style={styles.smallCol}>
+            <Skeleton width="100%" height={78} radius={Radius.md} />
+            <Skeleton width="100%" height={78} radius={Radius.md} />
           </View>
         </View>
-        <Skeleton width="80%" height={20} />
-        <Skeleton width="55%" height={16} />
-      </Surface>
+      </View>
     );
   }
 
@@ -88,11 +94,13 @@ export function CarHealthCard() {
   const stale = (worst?.lastReadingAgeDays ?? 0) > 45;
   const worstDef = worst ? componentDef(worst.componentId) : null;
   const worstMeta = worst ? ComponentStatusMeta[worst.status] : null;
+  const lifeLeft = worst?.percentConsumed != null ? Math.round((1 - worst.percentConsumed) * 100) : null;
+  const pendingCount = (Object.keys(zones) as ZoneId[]).reduce((sum, z) => sum + zones[z].pending, 0);
 
   return (
-    <Surface size="md" style={styles.card}>
-      <View style={styles.row}>
-        <Pressable onPress={() => router.push('/mapa')} accessibilityRole="button" accessibilityLabel="Ver el mapa del auto" style={{ width: MAP_W, height: mapH * 0.72, overflow: 'hidden' }}>
+    <View style={styles.wrap}>
+      <Surface size="lg" style={styles.mapCard}>
+        <Pressable onPress={() => router.push('/mapa')} accessibilityRole="button" accessibilityLabel="Ver el mapa del auto" style={{ width: '100%', height: mapH * 0.66, alignItems: 'center', overflow: 'hidden' }}>
           <View style={{ marginTop: -8 }}>
             <CarMap
               width={MAP_W}
@@ -111,46 +119,18 @@ export function CarHealthCard() {
               ))}
           </View>
         </Pressable>
-        <View style={styles.ringCol}>
-          {worst ? <IntervalRing estimate={worst} size={116} /> : null}
-          {worstDef ? (
-            <Txt variant="bodySmall" color={Colors.textSecondary} style={styles.ringLabel} numberOfLines={1}>
-              {worstDef.shortLabel}
-            </Txt>
-          ) : null}
+      </Surface>
+
+      <View style={styles.statsGrid}>
+        {worst && worstDef && worstMeta && lifeLeft !== null ? (
+          <WorstTile worst={worst} worstDef={worstDef} worstMeta={worstMeta} lifeLeft={lifeLeft} onPress={() => router.push({ pathname: '/mapa', params: { zone: worstDef.zone } })} />
+        ) : null}
+
+        <View style={styles.smallCol}>
+          <StatTile icon="activity" label="Kilometraje actual" value={formatKm(lastReading.km)} />
+          <StatTile icon="alert-circle" label="Pendientes" value={String(pendingCount)} valueColor={pendingCount > 0 ? Colors.statusWarn : Colors.statusOk} />
         </View>
       </View>
-
-      {worst && worstDef && worstMeta ? (
-        <Pressable
-          onPress={() => router.push({ pathname: '/mapa', params: { zone: worstDef.zone } })}
-          accessibilityRole="button"
-          accessibilityLabel={`${worstDef.label}: ${statusWord(worst)}, ${remainingLine(worst)}`}
-          style={styles.worstRow}>
-          <View style={[styles.bar, { backgroundColor: worstMeta.color }]} />
-          <View style={styles.worstBody}>
-            <View style={styles.worstTitle}>
-              <Txt variant="cardTitle" numberOfLines={1} style={styles.flex}>
-                {worstDef.label}
-              </Txt>
-              <View style={[styles.chip, { backgroundColor: worstMeta.soft }]}>
-                <Txt variant="label" color={worstMeta.text}>
-                  {statusWord(worst)}
-                </Txt>
-              </View>
-            </View>
-            <Txt variant="mono" color={Colors.textSecondary} numberOfLines={1}>
-              {remainingLine(worst)}
-            </Txt>
-            {confidenceLabel(worst) ? (
-              <Txt variant="bodySmall" color={Colors.textTertiary} numberOfLines={1}>
-                {confidenceLabel(worst)}
-              </Txt>
-            ) : null}
-          </View>
-          <Feather name="chevron-right" size={18} color={Colors.textTertiary} />
-        </Pressable>
-      ) : null}
 
       {stale ? (
         <AlertBanner title="Kilometraje desactualizado" description={COPY.staleKm} tone="warn" actionLabel="Actualizar" onAction={() => setKmPrompt(true)} />
@@ -164,21 +144,17 @@ export function CarHealthCard() {
       )}
 
       <KmPrompt visible={kmPrompt} lastKm={lastReading.km} onClose={() => setKmPrompt(false)} onSave={(km) => addReading(km)} />
-    </Surface>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: { padding: Spacing.lg, gap: Spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  ringCol: { flex: 1, alignItems: 'center', gap: 4 },
-  ringLabel: { textAlign: 'center' },
+  wrap: { gap: Spacing.md },
+  mapCard: { alignItems: 'center', paddingVertical: Spacing.sm, paddingHorizontal: 0 },
   zoneDot: { position: 'absolute', width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.background },
-  worstRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },
-  bar: { width: 4, alignSelf: 'stretch', borderRadius: 2 },
-  worstBody: { flex: 1, gap: 3 },
-  worstTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  flex: { flex: 1 },
-  chip: { borderRadius: Radius.pill, paddingHorizontal: 8, paddingVertical: 3 },
+  statsGrid: { flexDirection: 'row', gap: Spacing.md },
+  bigTile: { flex: 1.3, backgroundColor: Colors.surface, borderRadius: Radius.md, borderWidth: BorderWidth, borderColor: Colors.borderSoft, padding: Spacing.lg, gap: 10 },
+  smallCol: { flex: 1, gap: Spacing.md },
   freshness: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 44 },
 });

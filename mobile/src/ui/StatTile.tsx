@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { Colors, Radius, Spacing } from '@/theme/tokens';
+import { BorderWidth, Colors, Radius, Spacing } from '@/theme/tokens';
 import { Txt } from '@/ui/Txt';
 
 type Props = {
@@ -37,6 +37,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
+    borderWidth: BorderWidth,
+    borderColor: Colors.borderSoft,
     padding: Spacing.lg,
     gap: 4,
   },

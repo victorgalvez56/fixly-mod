@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { componentDef } from '@/data/catalog';
 import { isPending, remainingLine, statusWord } from '@/lib/wear/selectors';
 import type { WearEstimate } from '@/lib/wear/types';
-import { Colors, ComponentStatusMeta, Radius } from '@/theme/tokens';
+import { CardShadow, Colors, ComponentStatusMeta, Radius } from '@/theme/tokens';
 import { IntervalBar } from '@/ui/IntervalBar';
 import { Txt } from '@/ui/Txt';
 
@@ -60,11 +60,7 @@ const styles = StyleSheet.create({
     minHeight: 72,
     borderRadius: Radius.sm,
     backgroundColor: Colors.background,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...CardShadow,
   },
   rowCompact: { padding: 12, minHeight: 60 },
   pressed: { opacity: 0.9 },
