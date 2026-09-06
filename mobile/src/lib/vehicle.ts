@@ -19,6 +19,8 @@ export type VehicleCopy = {
   ofThe: string;
   /** 'el auto' / 'la moto'. */
   theOne: string;
+  /** 'al auto' / 'a la moto' — Spanish contracts a+el, so this cannot be built by hand. */
+  toThe: string;
   /** 'Autos' / 'Motos' — the picker's plural. */
   plural: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -40,6 +42,7 @@ export const VEHICLE_COPY: Record<VehicleType, VehicleCopy> = {
     yours: 'tu auto',
     ofThe: 'del auto',
     theOne: 'el auto',
+    toThe: 'al auto',
     plural: 'Autos',
     icon: 'car-hatchback',
     pickerHint: 'Sedán, hatchback, SUV o camioneta.',
@@ -54,6 +57,7 @@ export const VEHICLE_COPY: Record<VehicleType, VehicleCopy> = {
     yours: 'tu moto',
     ofThe: 'de la moto',
     theOne: 'la moto',
+    toThe: 'a la moto',
     plural: 'Motos',
     icon: 'motorbike',
     pickerHint: 'Naked, scooter, de trabajo o mototaxi.',
