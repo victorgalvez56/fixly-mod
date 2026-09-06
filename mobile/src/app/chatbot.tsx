@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
@@ -57,8 +57,7 @@ export default function Chatbot() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Screen contentStyle={styles.screen}>
+    <Screen contentStyle={styles.screen}>
         <DetailHeader title="Chatbot Fixly" />
         <View style={styles.intro}><Txt variant="label" color={Colors.accentLight}>ASISTENTE {copy.ofThe.toUpperCase()}</Txt><Txt variant="screenTitle">Pregunta sin jerga.</Txt><Txt variant="body" color={Colors.textSecondary}>Respuestas sobre tus datos y tu manual. Si algo no está registrado, te lo diremos.</Txt></View>
         <View style={styles.messages} accessibilityLiveRegion="polite">
@@ -72,13 +71,11 @@ export default function Chatbot() {
           <Pressable onPress={() => ask()} style={styles.send} accessibilityRole="button" accessibilityLabel="Enviar pregunta"><Feather name="arrow-up" size={20} color={Colors.onAccent} /></Pressable>
         </Surface>
         <Button label="Volver al estado" variant="tertiary" onPress={() => router.replace('/estado')} />
-      </Screen>
-    </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
   screen: { paddingBottom: Spacing.xl },
   intro: { gap: 14, paddingTop: Spacing.lg },
   messages: { gap: 10 },

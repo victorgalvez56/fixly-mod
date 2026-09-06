@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { formatKm } from '@/lib/format';
 import { Colors, Radius, Spacing } from '@/theme/tokens';
@@ -29,8 +29,12 @@ export function KmPrompt({ visible, lastKm, onClose, onSave }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
+      {/* The field autofocuses, so the keyboard rises the moment the sheet opens
+          and covered it whole: the driver could not see what they were typing
+          nor reach "Guardar". Lift the sheet above it. */}
+      <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Pressable style={styles.backdrop} onPress={onClose}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
           <Txt variant="sectionTitle">¿Cuántos km marca hoy?</Txt>
           {lastKm !== null ? (
             <Txt variant="bodySmall" color={Colors.textSecondary}>
@@ -53,17 +57,19 @@ export function KmPrompt({ visible, lastKm, onClose, onSave }: Props) {
               Es menor que tu último registro. Si está bien, guarda igual.
             </Txt>
           ) : null}
-          <View style={styles.actions}>
-            <Button label="Guardar" variant="primary" onPress={save} disabled={!valid} />
-            <Button label="Ahora no" variant="tertiary" onPress={onClose} />
-          </View>
+            <View style={styles.actions}>
+              <Button label="Guardar" variant="primary" onPress={save} disabled={!valid} />
+              <Button label="Ahora no" variant="tertiary" onPress={onClose} />
+            </View>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(17,24,39,0.45)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: Colors.background, borderTopLeftRadius: Radius.lg, borderTopRightRadius: Radius.lg, padding: 24, gap: 12, paddingBottom: 36 },
   input: { height: 64, borderRadius: Radius.sm, backgroundColor: Colors.surface, paddingHorizontal: Spacing.lg, fontSize: 28, fontWeight: '700', color: Colors.textPrimary, fontVariant: ['tabular-nums'] },
