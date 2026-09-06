@@ -1,15 +1,16 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { dueLabel, formatPEN } from '@/lib/format';
-import { documentStatuses } from '@/mock/data';
+import { vehicleCopy } from '@/lib/vehicle';
+import { documentStatusesFor } from '@/mock/data';
 import { useMockQuery } from '@/mock/use-mock-query';
 import { useMaintenance } from '@/state/use-maintenance';
 import { useVehicle } from '@/state/vehicle-context';
 import { BorderWidth, Colors, Radius, Spacing, StatusMeta } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
-import { CarHealthCard } from '@/ui/CarHealthCard';
+import { VehicleHealthCard } from '@/ui/VehicleHealthCard';
 import { IconCircleButton } from '@/ui/IconCircleButton';
 import { Screen } from '@/ui/Screen';
 import { Skeleton } from '@/ui/Skeleton';
@@ -18,9 +19,10 @@ import { Surface } from '@/ui/Surface';
 import { Txt } from '@/ui/Txt';
 
 export default function Estado() {
-  const { vehicle } = useVehicle();
+  const { vehicle, vehicleType } = useVehicle();
   const { estimates } = useMaintenance();
-  const { data: statuses, loading } = useMockQuery(() => documentStatuses);
+  const copy = vehicleCopy(vehicleType);
+  const { data: statuses, loading } = useMockQuery(() => documentStatusesFor(vehicleType));
   const worstDoc = statuses?.find((item) => item.status === 'expired');
   const pendingMaintenance = estimates.filter((item) => ['vencido', 'toca', 'pronto'].includes(item.status)).length;
 
@@ -30,7 +32,7 @@ export default function Estado() {
     <Screen edges={['top']}>
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Feather name="truck" size={20} color={Colors.onAccent} />
+          <MaterialCommunityIcons name={copy.icon} size={22} color={Colors.onAccent} />
         </View>
         <View style={styles.headerActions}>
           <IconCircleButton icon="bell" onPress={() => router.push('/avisos')} accessibilityLabel="Abrir avisos" badge />
@@ -62,7 +64,7 @@ export default function Estado() {
               <StatusChip status={worstDoc.status} />
             </View>
             <Txt variant="mono" color={Colors.textSecondary}>{dueLabel(worstDoc.dueDate) + ' · Multa de ' + formatPEN(worstDoc.fineAmount ?? 0)}</Txt>
-            <Txt variant="bodySmall" color={Colors.textMuted}>Resuélvelo antes de volver a trabajar con el auto.</Txt>
+            <Txt variant="bodySmall" color={Colors.textMuted}>Resuélvelo antes de volver a trabajar con {copy.theOne}.</Txt>
           </View>
         </Surface>
       ) : null}
@@ -97,11 +99,11 @@ export default function Estado() {
       <View style={styles.tools}>
         <Tool title="Plan de mantenimiento" body="Lo que sigue según tu manual." icon="tool" onPress={() => router.push('/plan')} />
         <Tool title="Revisar proforma" body="Compara lo que te están cobrando." icon="camera" onPress={() => router.push('/proforma')} />
-        <Tool title="Hablar con Fixly" body="Una respuesta clara sobre tu auto." icon="message-circle" onPress={() => router.push('/chatbot')} />
+        <Tool title="Hablar con Fixly" body={`Una respuesta clara sobre ${copy.yours}.`} icon="message-circle" onPress={() => router.push('/chatbot')} />
         <Tool title="Ver reportes" body="Gasto, servicios y documentos." icon="bar-chart-2" onPress={() => router.push('/reportes')} />
       </View>
 
-      <CarHealthCard />
+      <VehicleHealthCard />
     </Screen>
   );
 }

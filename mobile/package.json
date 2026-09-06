@@ -38,7 +38,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "drawings": "node scripts/build-car-drawing.mjs && node scripts/build-moto-drawing.mjs"
   },
   "private": true
 }

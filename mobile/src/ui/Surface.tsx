@@ -8,8 +8,17 @@ type Props = { children: ReactNode; size?: Size; style?: StyleProp<ViewStyle>; a
 const radiusFor: Record<Size, number> = { sm: Radius.sm, md: Radius.md, lg: Radius.lg };
 
 export function Surface({ children, size = 'md', style, accessibilityLabel }: Props) {
+  // iOS builds a shadow path from the layer's alpha channel when no explicit one
+  // is set, so a card whose background a caller made translucent casts a shadow
+  // of its own text — the content comes out embossed. Drop the shadow there; the
+  // border still separates the card from the page.
+  const background = (StyleSheet.flatten(style) as ViewStyle | undefined)?.backgroundColor;
+  const translucent = typeof background === 'string' && /^(rgba|hsla)\(/i.test(background);
+
   return (
-    <View accessibilityLabel={accessibilityLabel} style={[styles.card, { borderRadius: radiusFor[size] }, style]}>
+    <View
+      accessibilityLabel={accessibilityLabel}
+      style={[styles.card, { borderRadius: radiusFor[size] }, style, translucent ? styles.flat : null]}>
       {children}
     </View>
   );
@@ -17,4 +26,5 @@ export function Surface({ children, size = 'md', style, accessibilityLabel }: Pr
 
 const styles = StyleSheet.create({
   card: { backgroundColor: Colors.surface, borderWidth: BorderWidth, borderColor: Colors.borderSoft, ...CardShadow },
+  flat: { shadowOpacity: 0, elevation: 0 },
 });

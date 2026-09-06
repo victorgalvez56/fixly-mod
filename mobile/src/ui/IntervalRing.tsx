@@ -232,7 +232,16 @@ export function IntervalRing({ estimate, size = 132, delayMs = 0, durationMs = 6
           ) : null}
           {!unknown ? (
             <View style={[styles.pill, { backgroundColor: meta.soft, marginTop: 4 * scale }]}>
-              <Txt variant="label" color={meta.text} style={{ fontSize: 10 * scale, lineHeight: 12 * scale }}>
+              {/* Keep the full wording — "Revisión vencida" says it is an inspection,
+                  which "Vencido" does not — and shrink it to one line the way the
+                  number above already does, so it can never spill out of the pill. */}
+              <Txt
+                variant="label"
+                color={meta.text}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+                style={{ fontSize: 10 * scale, lineHeight: 12 * scale }}>
                 {statusWord(estimate)}
               </Txt>
             </View>
@@ -274,7 +283,7 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', gap: 10 },
   center: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   main: { textAlign: 'center' },
-  pill: { borderRadius: Radius.pill, paddingHorizontal: 8, paddingVertical: 3 },
+  pill: { borderRadius: Radius.pill, paddingHorizontal: 8, paddingVertical: 3, maxWidth: '100%' },
   captionBlock: { alignItems: 'center', gap: 2 },
   captionText: { textAlign: 'center' },
   captionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

@@ -58,7 +58,8 @@ function roundTo(n: number, step: number): number {
 /** The one-line remaining/overdue sentence under a status word. */
 export function remainingLine(e: WearEstimate): string {
   if (e.status === 'sin_datos') {
-    return e.action === 'no_schedule' ? COPY.noSchedule : COPY.noRecord;
+    if (e.action === 'no_schedule') return COPY.noSchedule;
+    return isInspect(e) ? COPY.noRecordInspect : COPY.noRecord;
   }
   if (e.reasons.includes('inspection_said_replace')) return COPY.inspectionSaidReplace;
 
@@ -94,7 +95,7 @@ export function intervalSentence(spec: ComponentSpec, e: WearEstimate): string {
   if (spec.action === 'no_schedule') return `${basis}, no programa un cambio.`;
   const parts: string[] = [];
   if (interval.km !== null) parts.push(formatKm(interval.km));
-  if (interval.months !== null) parts.push(`${interval.months} meses`);
+  if (interval.months !== null) parts.push(`${interval.months} ${interval.months === 1 ? 'mes' : 'meses'}`);
   if (parts.length === 0) return `${basis}, sin intervalo.`;
   const verb = isInspect(e) ? 'revisar' : e.action === 'rotate' ? 'rotar' : 'cambiar';
   const tail = parts.length === 2 ? `, ${COPY.basis.whicheverFirst}` : '';
@@ -112,7 +113,9 @@ export function kmPerDayLabel(e: WearEstimate): string {
 
 export function confidenceLabel(e: WearEstimate): string | null {
   if (e.confidence === 'ninguna') return null;
-  if (e.confidence === 'baja' && e.anchor.kind === 'assumed_at_acquisition') return COPY.confidence.bajaAssumed;
+  if (e.confidence === 'baja' && e.anchor.kind === 'assumed_at_acquisition') {
+    return isInspect(e) ? COPY.confidence.bajaAssumedInspect : COPY.confidence.bajaAssumed;
+  }
   return COPY.confidence[e.confidence];
 }
 
@@ -121,18 +124,21 @@ export function explanation(e: WearEstimate, spec: ComponentSpec, name: string):
   const sentences: string[] = [intervalSentence(spec, e)];
   if (e.status === 'sin_datos') {
     if (spec.action === 'no_schedule') return `${name}: ${COPY.noSchedule}`;
-    sentences.push(`${COPY.noRecord}`);
+    sentences.push(isInspect(e) ? COPY.noRecordInspect : COPY.noRecord);
     if (e.reasons.includes('possibly_overdue_never_recorded')) sentences.push(COPY.possiblyOverdue);
     return sentences.join(' ');
   }
   if (e.anchor.date) {
-    const what = isInspect(e) ? 'revisión' : 'cambio';
+    // "revisión" is feminine, "cambio" masculine — carry the article with the
+    // noun. Inspect items dominate a motorcycle's plan, so "el último revisión"
+    // was on screen far more often than on a car.
+    const what = isInspect(e) ? 'la última revisión' : 'el último cambio';
     const anchorKm = e.anchor.km !== null ? ` a los ${formatKm(Math.round(e.anchor.km))}` : '';
     const usedKm = e.kmTrack ? `${formatKm(e.kmTrack.used)}` : null;
     const usedDays = e.timeTrack ? daysLabel(e.timeTrack.used) : null;
     const used = [usedKm, usedDays].filter(Boolean).join(' y ');
     const assumed = e.anchor.kind === 'assumed_at_acquisition' ? ' (asumido, no registrado)' : '';
-    sentences.push(`Desde el último ${what} que registraste (${formatDateEs(e.anchor.date)}${anchorKm})${assumed} llevas ${used}.`);
+    sentences.push(`Desde ${what} que registraste (${formatDateEs(e.anchor.date)}${anchorKm})${assumed} llevas ${used}.`);
   }
   const rem = remainingLine(e);
   const projected = projectedLabel(e);
@@ -153,6 +159,12 @@ export function freshnessLabel(e: Pick<WearEstimate, 'lastReadingDate' | 'lastRe
   const age = e.lastReadingAgeDays ?? 0;
   const when = age === 0 ? 'hoy' : age === 1 ? 'ayer' : `hace ${age} días`;
   return `${formatKm(lastReadingKm)} · ${when}`;
+}
+
+/** The label of the "I already did it" button: a bike's plan is mostly inspections. */
+export function recordActionLabel(e: Pick<WearEstimate, 'action' | 'status'>): string {
+  if (e.status !== 'sin_datos') return COPY.doneAction;
+  return isInspect(e) ? COPY.recordLastInspect : COPY.recordLastChange;
 }
 
 /** Percent of the binding interval consumed, clamped for a gauge (0..1) plus the excess (0..0.5). */

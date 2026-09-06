@@ -20,6 +20,7 @@ import type {
   TrackEstimate,
   UsageProfile,
   VehicleProfile,
+  VehicleType,
   WearEstimate,
   WearStatus,
 } from './types';
@@ -57,6 +58,9 @@ export type Policy = {
   staleReadingDays: number;
   veryStaleReadingDays: number;
   daysPerMonth: number;
+  /** How the two default-km assumptions name themselves. A rider is not "conductor de aplicativo". */
+  rideHailingLabel: string;
+  privateLabel: string;
 };
 
 export const DEFAULT_POLICY: Policy = {
@@ -77,7 +81,35 @@ export const DEFAULT_POLICY: Policy = {
   staleReadingDays: 45,
   veryStaleReadingDays: 120,
   daysPerMonth: 30.4375,
+  rideHailingLabel: 'conductor de aplicativo',
+  privateLabel: 'uso particular',
 };
+
+/**
+ * A motorcycle's manual works in much shorter intervals — engine oil every
+ * 4,000 km, chain every 500 — so the car's absolute windows ("pronto" no
+ * closer than 500 km, "toca" inside 300) would fire on the same day the
+ * service was done. These are the same policy scaled to that.
+ *
+ * ASSUMPTIONS, not measurements: secondary sources put a Lima delivery rider
+ * near 110 km/day and a private rider near 18; both are deliberately
+ * conservative so a stale odometer cannot flip an item on an assumption alone.
+ */
+export const MOTO_POLICY: Partial<Policy> = {
+  defaultDailyKmRideHailing: 110,
+  defaultDailyKmPrivate: 18,
+  maxPlausibleDailyKm: 400,
+  prontoMinKm: 100,
+  prontoMaxKm: 2000,
+  tocaKm: 80,
+  rideHailingLabel: 'reparto o mototaxi',
+  privateLabel: 'uso particular',
+};
+
+/** The tuning that fits the given vehicle. Pass the result into estimateAll. */
+export function policyFor(type: VehicleType): Partial<Policy> | undefined {
+  return type === 'moto' ? MOTO_POLICY : undefined;
+}
 
 export type EstimateContext = {
   usage?: Partial<UsageProfile>;
@@ -243,8 +275,8 @@ export function estimateDailyKm(
     readingsUsed: 0,
     spanDays: 0,
     assumptionLabel: ride
-      ? `Supuesto: ${policy.defaultDailyKmRideHailing} km por día (conductor de aplicativo). Cámbialo en tu perfil.`
-      : `Supuesto: ${policy.defaultDailyKmPrivate} km por día (uso particular). Cámbialo en tu perfil.`,
+      ? `Supuesto: ${policy.defaultDailyKmRideHailing} km por día (${policy.rideHailingLabel}). Cámbialo en tu perfil.`
+      : `Supuesto: ${policy.defaultDailyKmPrivate} km por día (${policy.privateLabel}). Cámbialo en tu perfil.`,
   };
 }
 
@@ -712,6 +744,8 @@ export function estimateAll(
     if (a.engines && vehicle.engineCode && !a.engines.includes(vehicle.engineCode)) return false;
     if (a.transmissions && vehicle.transmission !== 'unknown' && !a.transmissions.includes(vehicle.transmission)) return false;
     if (a.fuels && vehicle.fuel !== 'unknown' && !a.fuels.includes(vehicle.fuel)) return false;
+    if (a.finalDrives && vehicle.finalDrive && !a.finalDrives.includes(vehicle.finalDrive)) return false;
+    if (a.coolings && vehicle.cooling && vehicle.cooling !== 'unknown' && !a.coolings.includes(vehicle.cooling)) return false;
     return true;
   };
   return spec.components.filter(applies).map((c) =>

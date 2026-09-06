@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { notificationSettings, type NotificationSetting } from '@/mock/data';
+import { useVehicle } from '@/state/vehicle-context';
 import { Colors, Spacing } from '@/theme/tokens';
 import { DetailHeader } from '@/ui/DetailHeader';
 import { HairlineRow } from '@/ui/HairlineRow';
@@ -10,20 +10,25 @@ import { Surface } from '@/ui/Surface';
 import { Switch } from '@/ui/Switch';
 import { Txt } from '@/ui/Txt';
 
-export default function Avisos() {
-  const [settings, setSettings] = useState(notificationSettings);
+const LEAD_TIMES = [7, 15, 30];
 
-  function toggle(id: string) {
-    setSettings((prev) => prev.map((setting) => setting.id === id ? { ...setting, enabled: !setting.enabled } : setting));
+export default function Avisos() {
+  // Preferences live in the persisted store: as component state they were lost
+  // the moment the driver navigated away.
+  const { notices, setNotice } = useVehicle();
+  const settings: NotificationSetting[] = notificationSettings.map((setting) => ({
+    ...setting,
+    enabled: notices[setting.id]?.enabled ?? setting.enabled,
+    leadTimeDays: notices[setting.id]?.leadTimeDays ?? setting.leadTimeDays,
+  }));
+
+  function toggle(setting: NotificationSetting) {
+    setNotice(setting.id, { enabled: !setting.enabled, leadTimeDays: setting.leadTimeDays });
   }
 
-  function advanceLeadTime(id: string) {
-    setSettings((prev) => prev.map((setting) => {
-      if (setting.id !== id) return setting;
-      const options = [7, 15, 30];
-      const currentIndex = Math.max(0, options.indexOf(setting.leadTimeDays ?? 7));
-      return { ...setting, leadTimeDays: options[(currentIndex + 1) % options.length] };
-    }));
+  function advanceLeadTime(setting: NotificationSetting) {
+    const currentIndex = Math.max(0, LEAD_TIMES.indexOf(setting.leadTimeDays ?? LEAD_TIMES[0]));
+    setNotice(setting.id, { enabled: setting.enabled, leadTimeDays: LEAD_TIMES[(currentIndex + 1) % LEAD_TIMES.length] });
   }
 
   return (
@@ -31,7 +36,7 @@ export default function Avisos() {
       <DetailHeader title="Avisos" />
       <View style={styles.intro}><Txt variant="label" color={Colors.accentLight}>RECORDATORIOS</Txt><Txt variant="screenTitle">Que no se te pase.</Txt><Txt variant="body" color={Colors.textSecondary}>Elige qué quieres recordar y con cuánta anticipación.</Txt></View>
       <Surface size="md" style={styles.card}>
-        {settings.map((setting, index) => <NoticeRow key={setting.id} setting={setting} onToggle={() => toggle(setting.id)} onAdvance={() => advanceLeadTime(setting.id)} last={index === settings.length - 1} />)}
+        {settings.map((setting, index) => <NoticeRow key={setting.id} setting={setting} onToggle={() => toggle(setting)} onAdvance={() => advanceLeadTime(setting)} last={index === settings.length - 1} />)}
       </Surface>
       <Txt variant="bodySmall" color={Colors.textTertiary} style={styles.note}>Los avisos llegan como notificación en tu celular. Puedes cambiarlos cuando quieras.</Txt>
     </Screen>

@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BorderWidth, Colors, Radius, TouchTarget } from '@/theme/tokens';
+import { BorderWidth, Colors, Radius, Spacing, TouchTarget } from '@/theme/tokens';
 import { ChunkyPressable } from '@/ui/ChunkyPressable';
 import { Txt } from '@/ui/Txt';
 
@@ -56,5 +56,5 @@ const styles = StyleSheet.create({
   outlined: { borderWidth: BorderWidth, borderColor: Colors.border },
   tertiaryFace: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   tertiaryLabel: { textDecorationLine: 'underline' },
-  content: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: Spacing.lg },
 });

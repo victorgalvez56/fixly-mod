@@ -1,7 +1,8 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { remainingLine, statusWord } from '@/lib/wear/selectors';
+import { COPY } from '@/lib/wear/copy';
+import { remainingLine } from '@/lib/wear/selectors';
 import type { WearEstimate } from '@/lib/wear/types';
 import { Colors, Radius } from '@/theme/tokens';
 import { LevelBars } from '@/ui/LevelBars';
@@ -26,8 +27,10 @@ export function WorstTileContent({ worst, worstDef, worstMeta, lifeLeft, style }
           {worstDef.shortLabel}
         </Txt>
         <View style={[styles.chip, { backgroundColor: worstMeta.soft }]}>
-          <Txt variant="label" color={worstMeta.text}>
-            {statusWord(worst)}
+          {/* The short word: "Revisión vencida" would eat the whole row and crush the
+              component name. WorstTile's accessibility label still reads the long form. */}
+          <Txt variant="label" color={worstMeta.text} numberOfLines={1}>
+            {COPY.statusWord[worst.status]}
           </Txt>
         </View>
       </View>
@@ -45,7 +48,9 @@ export function WorstTileContent({ worst, worstDef, worstMeta, lifeLeft, style }
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 10 },
+  // Fill the tile: the stats row is as tall as the two stacked tiles beside it,
+  // and without this the content bunched at the top over a large empty area.
+  content: { flex: 1, gap: 10, justifyContent: 'space-between' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   flex: { flex: 1 },

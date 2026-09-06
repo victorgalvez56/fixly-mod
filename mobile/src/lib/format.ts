@@ -9,6 +9,14 @@ export function formatKm(km: number): string {
   return `${km.toLocaleString('es-PE')} km`;
 }
 
+/**
+ * "1 servicio" / "9 servicios". Spanish agrees the noun with the count, and
+ * hard-coded plurals were reading "1 lecturas" and "1 meses" all over the app.
+ */
+export function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
 const MONTHS_ES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
 
 /**

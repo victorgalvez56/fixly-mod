@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { Colors, Spacing } from '@/theme/tokens';
@@ -10,14 +10,19 @@ export function Screen({ children, scroll = true, padded = true, contentStyle, f
   const content = padded ? [styles.padded, contentStyle] : [contentStyle];
   return (
     <SafeAreaView style={styles.root} edges={edges}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentInsetAdjustmentBehavior="automatic">
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={[styles.flex, content]}>{children}</View>
-      )}
-      {footer ? <View style={styles.footer}>{footer}</View> : null}
+      {/* Every form in the app lives inside a Screen, and the keyboard used to
+          cover the lower fields and the pinned footer button — there was no way
+          to reach "Guardar" without dismissing it first. */}
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        {scroll ? (
+          <ScrollView contentContainerStyle={content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentInsetAdjustmentBehavior="automatic">
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={[styles.flex, content]}>{children}</View>
+        )}
+        {footer ? <View style={styles.footer}>{footer}</View> : null}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

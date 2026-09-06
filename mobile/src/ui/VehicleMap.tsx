@@ -2,7 +2,8 @@ import { memo } from 'react';
 import Animated, { Extrapolation, interpolate, useAnimatedProps, useDerivedValue, type SharedValue } from 'react-native-reanimated';
 import Svg, { G, Path } from 'react-native-svg';
 
-import { CAR_PATHS, CAR_VIEWBOX, type CarPath, type CarZone } from '@/data/car-drawing';
+import type { DrawingPath, VehicleDrawing } from '@/data/drawing';
+import type { Zone } from '@/lib/wear/types';
 import { Colors } from '@/theme/tokens';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -20,38 +21,29 @@ export type RevealPlan = {
 };
 
 type Props = {
+  /** Which vehicle to draw. The component knows nothing else about the vehicle. */
+  drawing: VehicleDrawing;
   width: number;
-  zones: Partial<Record<CarZone, ZoneVisual>>;
-  selectedZone: CarZone | null;
+  zones: Partial<Record<Zone, ZoneVisual>>;
+  selectedZone: Zone | null;
   /** 0..1 draw-in of the selected zone's components (strokeDashoffset). */
   reveal: SharedValue<number>;
-  /** 0..1 visibility of the engine-bay detail layer over the plain wireframe. */
+  /** 0..1 visibility of the schematic detail layer over the plain wireframe. */
   detail: SharedValue<number>;
   plan: RevealPlan;
   /** componentId -> status color once the status has "resolved"; empty before that. */
   resolvedColors: Record<string, string>;
-  onPressZone?: (zone: CarZone) => void;
+  onPressZone?: (zone: Zone) => void;
 };
 
-export function carMapHeight(width: number): number {
-  return (width * CAR_VIEWBOX.h) / CAR_VIEWBOX.w;
-}
+const isStatic = (p: DrawingPath) => p.layer === 'silhouette' || p.layer === 'glass' || p.layer === 'wheels';
+const isDetail = (p: DrawingPath) => p.layer === 'enginebay' || p.layer === 'hoses';
 
-/** viewBox units -> rendered pixels for a map of the given width. */
-export function unitScale(width: number): number {
-  return width / CAR_VIEWBOX.w;
-}
-
-const STATIC = CAR_PATHS.filter((p) => p.layer === 'silhouette' || p.layer === 'glass' || p.layer === 'wheels');
-const ZONES = CAR_PATHS.filter((p) => p.layer === 'zones');
-const DETAIL = CAR_PATHS.filter((p) => p.layer === 'enginebay' || p.layer === 'hoses');
-const HIT = CAR_PATHS.filter((p) => p.layer === 'hit');
-
-/** The car body, glass and wheels: never re-rendered by state changes. */
-const StaticLayer = memo(function StaticLayer() {
+/** The vehicle body, glass and wheels: never re-rendered by state changes. */
+const StaticLayer = memo(function StaticLayer({ paths }: { paths: DrawingPath[] }) {
   return (
     <G>
-      {STATIC.map((p) => (
+      {paths.map((p) => (
         <Path
           key={p.id}
           d={p.d}
@@ -74,7 +66,7 @@ function RevealPath({
   active,
   color,
 }: {
-  path: CarPath;
+  path: DrawingPath;
   reveal: SharedValue<number>;
   detail: SharedValue<number>;
   window: [number, number] | null;
@@ -104,23 +96,25 @@ function RevealPath({
 }
 
 /**
- * The car drawing as JSX SVG: a static wireframe, zone outlines colored by
- * status, and an engine-bay detail layer whose strokes draw in during the
- * reveal (exactly the reference's "schematic over wireframe" effect). Zones
- * are tapped through invisible filled polygons that are >= 56 px on a phone.
+ * A vehicle drawing as JSX SVG: a static wireframe, zone outlines colored by
+ * status, and a schematic detail layer whose strokes draw in during the reveal
+ * (the reference's "schematic over wireframe" effect). Zones are tapped through
+ * invisible filled polygons that are >= 56 px on a phone. Cars and motorcycles
+ * differ only in the drawing handed in.
  */
-export function CarMap({ width, zones, selectedZone, reveal, detail, plan, resolvedColors, onPressZone }: Props) {
-  const height = carMapHeight(width);
+export function VehicleMap({ drawing, width, zones, selectedZone, reveal, detail, plan, resolvedColors, onPressZone }: Props) {
+  const { viewBox, paths } = drawing;
+  const height = (width * viewBox.h) / viewBox.w;
   const zoneOpacity = useDerivedValue(() => 1 - detail.value * 0.75);
 
   return (
-    <Svg width={width} height={height} viewBox={`${CAR_VIEWBOX.x} ${CAR_VIEWBOX.y} ${CAR_VIEWBOX.w} ${CAR_VIEWBOX.h}`}>
-      <StaticLayer />
+    <Svg width={width} height={height} viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}>
+      <StaticLayer paths={paths.filter(isStatic)} />
 
-      <ZoneLayer zones={zones} selectedZone={selectedZone} opacity={zoneOpacity} />
+      <ZoneLayer paths={paths.filter((p) => p.layer === 'zones')} zones={zones} selectedZone={selectedZone} opacity={zoneOpacity} />
 
       <G>
-        {DETAIL.map((p) => {
+        {paths.filter(isDetail).map((p) => {
           const active = selectedZone !== null && p.zone === selectedZone;
           const window = p.componentId ? (plan.windows[p.componentId] ?? null) : active ? [0, 1] : null;
           const resolved = p.componentId ? resolvedColors[p.componentId] : undefined;
@@ -131,16 +125,18 @@ export function CarMap({ width, zones, selectedZone, reveal, detail, plan, resol
 
       {onPressZone ? (
         <G>
-          {HIT.map((p) => (
-            <Path
-              key={p.id}
-              d={p.d}
-              fill="transparent"
-              stroke="none"
-              onPress={() => p.zone && onPressZone(p.zone)}
-              accessibilityLabel={p.zone ?? p.id}
-            />
-          ))}
+          {paths
+            .filter((p) => p.layer === 'hit')
+            .map((p) => (
+              <Path
+                key={p.id}
+                d={p.d}
+                fill="transparent"
+                stroke="none"
+                onPress={() => p.zone && onPressZone(p.zone)}
+                accessibilityLabel={p.zone ?? p.id}
+              />
+            ))}
         </G>
       ) : null}
     </Svg>
@@ -149,12 +145,22 @@ export function CarMap({ width, zones, selectedZone, reveal, detail, plan, resol
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
-function ZoneLayer({ zones, selectedZone, opacity }: { zones: Partial<Record<CarZone, ZoneVisual>>; selectedZone: CarZone | null; opacity: SharedValue<number> }) {
+function ZoneLayer({
+  paths,
+  zones,
+  selectedZone,
+  opacity,
+}: {
+  paths: DrawingPath[];
+  zones: Partial<Record<Zone, ZoneVisual>>;
+  selectedZone: Zone | null;
+  opacity: SharedValue<number>;
+}) {
   const animatedProps = useAnimatedProps(() => ({ opacity: opacity.value }));
   return (
     <AnimatedG animatedProps={animatedProps}>
-      {ZONES.map((p) => {
-        const zone = p.zone as CarZone | undefined;
+      {paths.map((p) => {
+        const zone = p.zone;
         const visual = zone ? zones[zone] : undefined;
         const dim = selectedZone !== null && zone !== selectedZone;
         const stroke = visual?.pending ? visual.color : STROKE_ZONE_MUTED;
@@ -173,14 +179,4 @@ function ZoneLayer({ zones, selectedZone, opacity }: { zones: Partial<Record<Car
       })}
     </AnimatedG>
   );
-}
-
-/** Component paths of a zone, worst-first order is decided by the caller. */
-export function componentPathsFor(zone: CarZone): CarPath[] {
-  return DETAIL.filter((p) => p.zone === zone && p.componentId);
-}
-
-export function anchorFor(componentId: string): { x: number; y: number } | null {
-  const p = DETAIL.find((q) => q.componentId === componentId);
-  return p ? p.anchor : null;
 }

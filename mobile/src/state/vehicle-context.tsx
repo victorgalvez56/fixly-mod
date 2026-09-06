@@ -1,9 +1,10 @@
 import { createContext, use, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { DEMO_PROFILE, DEMO_READINGS, DEMO_RECORDS } from '@/data/demo';
-import { findSpec } from '@/data/specs/toyota-yaris-2013-2017-pe';
-import type { MaintenanceSpec, OdometerReading, ServiceRecord, UsageProfile, VehicleProfile } from '@/lib/wear/types';
-import { vehicle as mockVehicle, type Vehicle } from '@/mock/data';
+import { demoFixture } from '@/data/demo';
+import { specForProfile } from '@/data/specs';
+import { isVehicleType } from '@/lib/vehicle';
+import type { MaintenanceSpec, OdometerReading, ServiceRecord, UsageProfile, VehicleProfile, VehicleType } from '@/lib/wear/types';
+import { mockVehicleFor, type Vehicle } from '@/mock/data';
 import { getItem, setItem } from '@/state/storage';
 
 const STORAGE_KEY = 'fixly.vehicle.v1';
@@ -14,21 +15,67 @@ export function todayISO(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+/** One reminder the driver can switch off, and how far ahead it warns. */
+export type NoticePref = { enabled: boolean; leadTimeDays?: number };
+
+const DEFAULT_NOTICES: Record<string, NoticePref> = {
+  documentos: { enabled: true, leadTimeDays: 15 },
+  mantenimiento: { enabled: true, leadTimeDays: 7 },
+  kilometraje: { enabled: false },
+};
+
 type Persisted = {
-  version: 1;
+  version: 3;
+  /** What the driver said they ride, before any plate is looked up. */
+  vehicleType: VehicleType;
   plate: string | null;
   profile: VehicleProfile | null;
   readings: OdometerReading[];
   records: ServiceRecord[];
   assumeDone: string[];
+  /** Reminder preferences. Survive navigation and restarts, unlike component state. */
+  notices: Record<string, NoticePref>;
 };
 
-const EMPTY: Persisted = { version: 1, plate: null, profile: null, readings: [], records: [], assumeDone: [] };
+const EMPTY: Persisted = {
+  version: 3,
+  vehicleType: 'auto',
+  plate: null,
+  profile: null,
+  readings: [],
+  records: [],
+  assumeDone: [],
+  notices: DEFAULT_NOTICES,
+};
+
+/**
+ * v1 had no vehicle type: everyone who saved one was driving a car.
+ * v2 had no reminder preferences: they lived in component state and were lost
+ * on every navigation, so there is nothing to carry forward — take the defaults.
+ */
+function migrate(raw: unknown): Persisted | null {
+  const parsed = raw as (Omit<Partial<Persisted>, 'version'> & { version?: number }) | null;
+  if (!parsed || ![1, 2, 3].includes(parsed.version ?? 0)) return null;
+  const profileType = isVehicleType(parsed.profile?.type) ? parsed.profile.type : 'auto';
+  const profile = parsed.profile ? { ...parsed.profile, type: profileType } : null;
+  return {
+    version: 3,
+    vehicleType: isVehicleType(parsed.vehicleType) ? parsed.vehicleType : profileType,
+    plate: parsed.plate ?? null,
+    profile,
+    readings: parsed.readings ?? [],
+    records: parsed.records ?? [],
+    assumeDone: parsed.assumeDone ?? [],
+    notices: { ...DEFAULT_NOTICES, ...(parsed.notices ?? {}) },
+  };
+}
 
 type NewRecord = Omit<ServiceRecord, 'id' | 'source'> & { source?: ServiceRecord['source'] };
 
 type VehicleContextValue = {
   hydrated: boolean;
+  /** The active vehicle type: the profile's when there is one, else the driver's choice. */
+  vehicleType: VehicleType;
   plate: string | null;
   profile: VehicleProfile | null;
   spec: MaintenanceSpec | null;
@@ -38,8 +85,12 @@ type VehicleContextValue = {
   lastReading: OdometerReading | null;
   /** Legacy shape the older screens read (plate, brand, model, mileage…). Derived, never stored. */
   vehicle: Vehicle | null;
+  notices: Record<string, NoticePref>;
+  setNotice: (id: string, pref: NoticePref) => void;
+  setVehicleType: (type: VehicleType) => void;
   setFound: (plate: string) => void;
   reset: () => void;
+  clearAll: () => void;
   addReading: (km: number, date?: string) => void;
   /** Kept for the vehicle sheet: appends a reading, never overwrites. */
   updateMileage: (km: number) => void;
@@ -72,8 +123,8 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
       try {
         const raw = await getItem(STORAGE_KEY);
         if (raw && !cancelled) {
-          const parsed = JSON.parse(raw) as Persisted;
-          if (parsed && parsed.version === 1) setState(parsed);
+          const migrated = migrate(JSON.parse(raw));
+          if (migrated) setState(migrated);
         }
       } catch {
         // Corrupt or unavailable storage: start clean, never crash the app for this.
@@ -99,11 +150,14 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
   const value = useMemo<VehicleContextValue>(() => {
     const sortedReadings = [...state.readings].sort((a, b) => a.date.localeCompare(b.date) || a.km - b.km);
     const lastReading = sortedReadings[sortedReadings.length - 1] ?? null;
-    const spec = state.profile ? findSpec(state.profile.brand, state.profile.model, state.profile.year) : null;
+    const spec = specForProfile(state.profile);
+    const vehicleType = state.profile?.type ?? state.vehicleType;
+    const base = mockVehicleFor(vehicleType);
     const vehicle: Vehicle | null = state.profile
       ? {
-          ...mockVehicle,
-          plate: state.plate ?? mockVehicle.plate,
+          ...base,
+          type: vehicleType,
+          plate: state.plate ?? base.plate,
           brand: state.profile.brand,
           model: state.profile.model,
           year: state.profile.year,
@@ -115,6 +169,7 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
 
     return {
       hydrated,
+      vehicleType,
       plate: state.plate,
       profile: state.profile,
       spec,
@@ -123,9 +178,29 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
       assumeDone: state.assumeDone,
       lastReading,
       vehicle,
+      notices: state.notices,
+      setNotice: (id, pref) => setState((prev) => ({ ...prev, notices: { ...prev.notices, [id]: pref } })),
+      // Changing type invalidates the profile, its manual and its records; picking
+      // the type you already have must leave every one of them alone.
+      setVehicleType: (type) =>
+        setState((prev) => (prev.vehicleType === type ? prev : { ...EMPTY, vehicleType: type, notices: prev.notices })),
       setFound: (plate) =>
-        setState({ version: 1, plate, profile: DEMO_PROFILE, readings: DEMO_READINGS, records: DEMO_RECORDS, assumeDone: [] }),
-      reset: () => setState(EMPTY),
+        setState((prev) => {
+          const fixture = demoFixture(prev.vehicleType);
+          return {
+            version: 3,
+            vehicleType: prev.vehicleType,
+            plate,
+            profile: fixture.profile,
+            readings: fixture.readings,
+            records: fixture.records,
+            assumeDone: [],
+            notices: prev.notices,
+          };
+        }),
+      reset: () => setState((prev) => ({ ...EMPTY, vehicleType: prev.vehicleType, notices: prev.notices })),
+      /** Wipes everything, preferences included: the "borrar mis datos" action. */
+      clearAll: () => setState(EMPTY),
       addReading: (km, date = todayISO()) =>
         setState((prev) => ({ ...prev, readings: [...prev.readings, { id: newId('o'), date, km, source: 'user' }] })),
       updateMileage: (km) =>

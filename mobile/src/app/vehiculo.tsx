@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { formatKm, formatLongDate } from '@/lib/format';
+import { transmissionLabel, vehicleCopy } from '@/lib/vehicle';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors } from '@/theme/tokens';
 import { DetailHeader } from '@/ui/DetailHeader';
@@ -12,10 +13,14 @@ import { Surface } from '@/ui/Surface';
 import { Switch } from '@/ui/Switch';
 import { Txt } from '@/ui/Txt';
 
+const FINAL_DRIVE_LABEL = { cadena: 'Cadena', correa: 'Correa', cardan: 'Cardán' } as const;
+const COOLING_LABEL = { aire: 'Por aire', liquido: 'Por líquido', aceite: 'Por aceite', unknown: 'Sin dato' } as const;
+
 export default function Vehiculo() {
-  const { vehicle, profile, updateMileage, setUsage, reset } = useVehicle();
+  const { vehicle, profile, vehicleType, updateMileage, setUsage, reset } = useVehicle();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(vehicle?.mileage ?? ''));
+  const copy = vehicleCopy(vehicleType);
 
   if (!vehicle || !profile) return null;
 
@@ -24,7 +29,10 @@ export default function Vehiculo() {
     ['Modelo', vehicle.model],
     ['Año', String(vehicle.year)],
     ['Motor', vehicle.engine],
-    ['Caja', profile.transmission === 'MT' ? 'Manual' : profile.transmission === 'unknown' ? 'Sin dato' : 'Automática'],
+    [copy.transmissionLabel, transmissionLabel(vehicleType, profile.transmission)],
+    // A bike's manual splits its lines by these two; a car's never mentions them.
+    ...(vehicleType === 'moto' && profile.finalDrive ? ([['Transmisión final', FINAL_DRIVE_LABEL[profile.finalDrive]]] as [string, string][]) : []),
+    ...(vehicleType === 'moto' && profile.cooling ? ([['Refrigeración', COOLING_LABEL[profile.cooling]]] as [string, string][]) : []),
     ['Color', vehicle.color],
     ['Combustible', vehicle.fuel],
   ];
@@ -36,9 +44,13 @@ export default function Vehiculo() {
   }
 
   const usageRows: { key: keyof typeof profile.usage; label: string; hint: string }[] = [
-    { key: 'rideHailing', label: 'Manejo para aplicativo o taxi', hint: 'Aplica la tabla de uso intensivo del manual cuando existe.' },
+    { key: 'rideHailing', ...copy.commercialUse },
     { key: 'mostlyCity', label: 'Mayormente ciudad', hint: 'Tráfico y paradas frecuentes.' },
-    { key: 'dustyRoads', label: 'Calles de tierra o polvo', hint: 'Los filtros se tapan antes.' },
+    {
+      key: 'dustyRoads',
+      label: 'Calles de tierra o polvo',
+      hint: vehicleType === 'moto' ? 'El filtro de aire y la cadena sufren antes.' : 'Los filtros se tapan antes.',
+    },
     { key: 'shortTrips', label: 'Viajes cortos', hint: 'Menos de 8 km seguidos.' },
   ];
 
@@ -71,7 +83,7 @@ export default function Vehiculo() {
 
       <Surface size="md" style={[styles.card, styles.mileageBlock]}>
         <Txt variant="label" color={Colors.textTertiary}>
-          Kilometraje actual
+          {copy.odometerLabel}
         </Txt>
         {editing ? (
           <TextInput
@@ -109,7 +121,7 @@ export default function Vehiculo() {
 
       <View>
         <Txt variant="label" color={Colors.textTertiary} style={styles.sectionLabel}>
-          Cómo usas tu auto
+          Cómo usas {copy.yours}
         </Txt>
         <Surface size="md" style={styles.card}>
           {usageRows.map((row, index) => (

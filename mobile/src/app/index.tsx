@@ -3,18 +3,21 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
+import { vehicleCopy } from '@/lib/vehicle';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors, Spacing } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
 import { PlateField } from '@/ui/PlateField';
 import { Screen } from '@/ui/Screen';
 import { Txt } from '@/ui/Txt';
+import { VehicleTypePicker } from '@/ui/VehicleTypePicker';
 
 const PLATE_NOT_FOUND = 'ZZZ-999';
 const PLATE_LENGTH = 7;
 
 export default function PlateEntry() {
-  const { setFound, hydrated, vehicle } = useVehicle();
+  const { setFound, hydrated, vehicle, vehicleType, setVehicleType } = useVehicle();
+  const copy = vehicleCopy(vehicleType);
   const [plate, setPlate] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const lookupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,7 +53,7 @@ export default function PlateEntry() {
             <View style={styles.logoStripe} />
             <Txt variant="cardTitle" color={Colors.onAccent} style={styles.logoLetter}>F</Txt>
           </View>
-          <Txt variant="label" color={Colors.textMuted}>FIXLY / TU AUTO, AL DÍA</Txt>
+          <Txt variant="label" color={Colors.textMuted}>FIXLY / {copy.plural.toUpperCase()} AL DÍA</Txt>
         </View>
         <Pressable onPress={() => router.push('/onboarding')} accessibilityRole="button" accessibilityLabel="Conocer Fixly" style={styles.infoButton}>
           <Feather name="help-circle" size={20} color={Colors.textMuted} />
@@ -60,22 +63,23 @@ export default function PlateEntry() {
       <View style={styles.hero}>
         <View style={styles.halo} />
         <Txt variant="label" color={Colors.accentLight}>CONSULTA RÁPIDA</Txt>
-        <Txt variant="screenTitle" style={styles.headline}>¿Qué le debes{'\n'}a tu auto?</Txt>
+        <Txt variant="screenTitle" style={styles.headline}>¿Qué le debes{'\n'}a {copy.yours}?</Txt>
         <Txt variant="body" color={Colors.textSecondary} style={styles.intro}>
           Revisa documentos, mantenimiento y gastos desde un solo lugar.
         </Txt>
+        <VehicleTypePicker value={vehicleType} onChange={setVehicleType} variant="segmented" />
         <View style={styles.fieldBlock}>
           <PlateField value={plate} onChangeText={(v) => { setPlate(v); setStatus('idle'); }} onSubmit={onSubmit} />
           {status === 'error' ? (
             <Txt variant="bodySmall" color={Colors.statusExpired} accessibilityLiveRegion="polite">
-              No encontramos esa placa. Revisa que esté bien escrita o prueba con otra.
+              No encontramos esa placa entre las {copy.plural.toLowerCase()}. Revisa que esté bien escrita o prueba con otra.
             </Txt>
           ) : null}
         </View>
       </View>
 
       <View style={styles.footer}>
-        <Button label={status === 'loading' ? 'Buscando tu auto…' : 'Consultar placa'} variant="primary" onPress={onSubmit} disabled={!canSubmit} />
+        <Button label={status === 'loading' ? `Buscando ${copy.yours}…` : 'Consultar placa'} variant="primary" onPress={onSubmit} disabled={!canSubmit} />
         <Txt variant="monoSmall" color={Colors.textTertiary} style={styles.footnote}>
           No pedimos registro. Solo tu placa.
         </Txt>

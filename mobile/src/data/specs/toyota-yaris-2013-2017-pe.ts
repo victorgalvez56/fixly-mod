@@ -18,6 +18,7 @@ const source: SpecSource = {
 
 export const TOYOTA_YARIS_2013_2017_PE: MaintenanceSpec = {
   specId: 'toyota-yaris-2013-2017-pe',
+  vehicleType: 'auto',
   brand: 'Toyota',
   model: 'Yaris',
   yearFrom: 2013,
@@ -41,12 +42,3 @@ export const TOYOTA_YARIS_2013_2017_PE: MaintenanceSpec = {
     { componentId: 'filtro_combustible', zone: 'combustible', action: 'replace', normal: { km: 40000, months: 24 }, severe: null, criticality: 'engine', source },
   ],
 };
-
-/** Later: a registry keyed by brand/model/year with a cold-start path. One demo spec for now. */
-export function findSpec(brand: string, model: string, year: number): MaintenanceSpec | null {
-  const s = TOYOTA_YARIS_2013_2017_PE;
-  if (brand.toLowerCase() === s.brand.toLowerCase() && model.toLowerCase() === s.model.toLowerCase() && year >= s.yearFrom && year <= s.yearTo) {
-    return s;
-  }
-  return null;
-}

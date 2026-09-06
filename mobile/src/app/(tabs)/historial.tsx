@@ -1,7 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 
-import { formatPEN } from '@/lib/format';
+import { formatPEN, plural } from '@/lib/format';
+import { vehicleCopy } from '@/lib/vehicle';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors } from '@/theme/tokens';
 import { EmptyState } from '@/ui/EmptyState';
@@ -22,7 +23,8 @@ export function groupRecordsByYear(records: { date: string; costPen?: number }[]
 }
 
 export default function Historial() {
-  const { records } = useVehicle();
+  const { records, vehicleType } = useVehicle();
+  const copy = vehicleCopy(vehicleType);
   const groups = groupRecordsByYear(records);
 
   if (groups.length === 0) {
@@ -31,7 +33,7 @@ export default function Historial() {
         <EmptyState
           icon="archive"
           title="Aún no hay historial"
-          description="Cada servicio que registres aquí sube el valor de tu auto al venderlo."
+          description={`Cada servicio que registres aquí sube el valor de ${copy.yours} al ${vehicleType === 'moto' ? 'venderla' : 'venderlo'}.`}
           actionLabel="Registrar un servicio"
           onAction={() => router.push('/registrar')}
         />
@@ -52,13 +54,13 @@ export default function Historial() {
           {formatPEN(totalSpent)}
         </Txt>
         <Txt variant="bodySmall" color={Colors.textSecondary}>
-          En {records.length} servicios registrados
+          En {plural(records.length, 'servicio registrado', 'servicios registrados')}
         </Txt>
       </View>
 
       <FolderCard
         title={String(featured.year)}
-        subtitle={`${featured.count} servicios registrados`}
+        subtitle={plural(featured.count, 'servicio registrado', 'servicios registrados')}
         featured
         onPress={() => router.push({ pathname: '/historial/[year]', params: { year: String(featured.year) } })}
       />
@@ -68,7 +70,7 @@ export default function Historial() {
           <View key={group.year} style={styles.gridItem}>
             <FolderCard
               title={String(group.year)}
-              subtitle={`${group.count} servicios`}
+              subtitle={plural(group.count, 'servicio', 'servicios')}
               onPress={() => router.push({ pathname: '/historial/[year]', params: { year: String(group.year) } })}
             />
           </View>

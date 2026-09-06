@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { componentDef } from '@/data/catalog';
-import { formatKm, formatPEN, formatShortDate } from '@/lib/format';
+import { formatKm, formatPEN, formatShortDate, plural } from '@/lib/format';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors } from '@/theme/tokens';
 import { DetailHeader } from '@/ui/DetailHeader';
@@ -20,7 +20,7 @@ const KIND_LABEL = {
 
 export default function HistorialYear() {
   const { year } = useLocalSearchParams<{ year: string }>();
-  const { records } = useVehicle();
+  const { records, vehicleType } = useVehicle();
   const entries = records.filter((r) => r.date.startsWith(`${year}-`)).sort((a, b) => b.date.localeCompare(a.date));
 
   if (entries.length === 0) return null;
@@ -32,7 +32,7 @@ export default function HistorialYear() {
       <DetailHeader title={year ?? ''} />
 
       <Txt variant="bodySmall" color={Colors.textSecondary}>
-        {entries.length} servicios · {formatPEN(total)} en total
+        {plural(entries.length, 'servicio', 'servicios')} · {formatPEN(total)} en total
       </Txt>
 
       <Surface size="md" style={styles.card}>
@@ -44,7 +44,7 @@ export default function HistorialYear() {
               </Txt>
               <View style={styles.rowBody}>
                 <Txt variant="cardTitle" style={styles.service}>
-                  {KIND_LABEL[entry.kind]}: {entry.componentIds.map((id) => componentDef(id).shortLabel).join(', ')}
+                  {KIND_LABEL[entry.kind]}: {entry.componentIds.map((id) => componentDef(id, vehicleType).shortLabel).join(', ')}
                 </Txt>
                 <Txt variant="bodySmall" color={Colors.textTertiary}>
                   {[entry.workshop, entry.odometerKm !== null ? formatKm(entry.odometerKm) : null, entry.note].filter(Boolean).join(' · ')}

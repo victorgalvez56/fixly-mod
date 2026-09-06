@@ -28,7 +28,8 @@ export function StatTile({ icon, label, value, valueColor, caption }: Props) {
             <Txt variant="bodySmall" color={Colors.textSecondary}>
               {label}
             </Txt>
-            <Txt variant="sectionTitle" color={valueColor ?? Colors.textPrimary}>
+            {/* One line always: a six-figure odometer wrapped here and stretched the row. */}
+            <Txt variant="sectionTitle" color={valueColor ?? Colors.textPrimary} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {value}
             </Txt>
             {caption ? (
