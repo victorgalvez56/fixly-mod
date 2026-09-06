@@ -94,7 +94,7 @@ export function intervalSentence(spec: ComponentSpec, e: WearEstimate): string {
   if (spec.action === 'no_schedule') return `${basis}, no programa un cambio.`;
   const parts: string[] = [];
   if (interval.km !== null) parts.push(formatKm(interval.km));
-  if (interval.months !== null) parts.push(`${interval.months} meses`);
+  if (interval.months !== null) parts.push(`${interval.months} ${interval.months === 1 ? 'mes' : 'meses'}`);
   if (parts.length === 0) return `${basis}, sin intervalo.`;
   const verb = isInspect(e) ? 'revisar' : e.action === 'rotate' ? 'rotar' : 'cambiar';
   const tail = parts.length === 2 ? `, ${COPY.basis.whicheverFirst}` : '';

@@ -316,15 +316,21 @@ hit('hit_electrico', 'electrico', 136, 30, 214, 88);
 hit('hit_transmision', 'transmision', 136, 90, 230, 148);
 
 // --- zoom targets per zone --------------------------------------------------
+/**
+ * Zoom targets. The scales are lower than the car's for the same apparent
+ * magnification: a wide drawing is laid out at ~92% of the screen width against
+ * the car's ~62%, so it already renders about 1.5x larger per viewBox unit.
+ * Matching the car's nominal 1.9 here would push the drawing off the top.
+ */
 const ZONE_FOCUS = {
-  motor: { cx: 115, cy: 95, scale: 2 },
-  refrigeracion: { cx: 84, cy: 98, scale: 2.4 },
-  transmision: { cx: 172, cy: 107, scale: 2 },
-  frenos: { cx: 46, cy: 108, scale: 2 },
-  llantas: { cx: 117, cy: 106, scale: 1.35 },
-  electrico: { cx: 167, cy: 71, scale: 2.4 },
-  suspension: { cx: 61, cy: 76, scale: 2 },
-  combustible: { cx: 125, cy: 52, scale: 2.2 },
+  motor: { cx: 115, cy: 95, scale: 1.3 },
+  refrigeracion: { cx: 84, cy: 98, scale: 1.7 },
+  transmision: { cx: 172, cy: 107, scale: 1.3 },
+  frenos: { cx: 46, cy: 108, scale: 1.4 },
+  llantas: { cx: 117, cy: 106, scale: 1.05 },
+  electrico: { cx: 167, cy: 71, scale: 1.7 },
+  suspension: { cx: 61, cy: 76, scale: 1.35 },
+  combustible: { cx: 125, cy: 52, scale: 1.35 },
 };
 
 // ---------------------------------------------------------------------------
