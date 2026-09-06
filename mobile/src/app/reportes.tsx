@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
 import { componentDef } from '@/data/catalog';
-import { formatKm, formatPEN } from '@/lib/format';
+import { formatKm, formatPEN, plural } from '@/lib/format';
 import { vehicleCopy } from '@/lib/vehicle';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors, Spacing } from '@/theme/tokens';
@@ -29,7 +29,7 @@ export default function Reportes() {
       <Surface size="lg" style={styles.totalCard}>
         <Txt variant="label" color={Colors.textMuted}>GASTO ACUMULADO</Txt>
         <Txt variant="bigNumber">{formatPEN(total)}</Txt>
-        <Txt variant="bodySmall" color={Colors.textSecondary}>{records.length} servicios registrados · promedio {formatPEN(average)}</Txt>
+        <Txt variant="bodySmall" color={Colors.textSecondary}>{plural(records.length, 'servicio registrado', 'servicios registrados')} · promedio {formatPEN(average)}</Txt>
       </Surface>
 
       <View style={styles.stats}>

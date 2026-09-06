@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { componentDef } from '@/data/catalog';
 import { formatKm } from '@/lib/format';
 import { vehicleCopy } from '@/lib/vehicle';
+import { COPY } from '@/lib/wear/copy';
 import { remainingLine, statusWord } from '@/lib/wear/selectors';
 import type { VehicleType, WearEstimate } from '@/lib/wear/types';
 import { useMaintenance } from '@/state/use-maintenance';
@@ -93,11 +94,12 @@ function Row({ item, last, muted, index, vehicleType }: { item: WearEstimate; la
           </Txt>
           <View style={styles.rowBody}>
             <View style={styles.titleLine}>
-              <Txt variant="cardTitle" color={muted ? Colors.textSecondary : Colors.textPrimary} style={styles.service} numberOfLines={1}>
+              {/* See ComponentRow: two lines for the part, short word for the status. */}
+              <Txt variant="cardTitle" color={muted ? Colors.textSecondary : Colors.textPrimary} style={styles.service} numberOfLines={2}>
                 {def.label}
               </Txt>
-              <Txt variant="label" color={meta.text}>
-                {statusWord(item)}
+              <Txt variant="label" color={meta.text} numberOfLines={1} style={styles.status}>
+                {COPY.statusWord[item.status]}
               </Txt>
             </View>
             <Txt variant="bodySmall" color={Colors.textSecondary} numberOfLines={1}>
@@ -125,7 +127,8 @@ const styles = StyleSheet.create({
   bar: { width: 4, alignSelf: 'stretch', borderRadius: 2, minHeight: 40 },
   km: { width: 72, paddingTop: 3 },
   rowBody: { flex: 1, gap: 4 },
-  titleLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  titleLine: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   service: { fontSize: 16, lineHeight: 21, flex: 1 },
+  status: { flexShrink: 0, paddingTop: 3 },
   barWrap: { paddingTop: 4, paddingBottom: 2 },
 });

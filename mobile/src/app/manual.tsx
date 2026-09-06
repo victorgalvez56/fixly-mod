@@ -51,7 +51,7 @@ export default function Manual() {
 
 const styles = StyleSheet.create({
   intro: { gap: 14, paddingTop: Spacing.lg },
-  done: { alignItems: 'flex-start', gap: 14, padding: Spacing.xxl, backgroundColor: Colors.accentSoft, borderColor: Colors.accent },
+  done: { gap: 14, padding: Spacing.xxl, backgroundColor: Colors.accentSoft, borderColor: Colors.accent },
   doneIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.accent, alignItems: 'center', justifyContent: 'center' },
   note: { textAlign: 'center' },
 });

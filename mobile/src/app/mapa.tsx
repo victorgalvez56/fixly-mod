@@ -23,7 +23,7 @@ import { isZoneId, zoneMeta, type ZoneId } from '@/data/zones';
 import { formatKm } from '@/lib/format';
 import { vehicleCopy } from '@/lib/vehicle';
 import { COPY } from '@/lib/wear/copy';
-import { daysLabel, explanation, formatDateEs, intervalSentence, isInspect, remainingLine, statusWord } from '@/lib/wear/selectors';
+import { daysLabel, explanation, formatDateEs, intervalSentence, isInspect, recordActionLabel, remainingLine, statusWord } from '@/lib/wear/selectors';
 import type { VehicleType, WearEstimate } from '@/lib/wear/types';
 import { useMaintenance } from '@/state/use-maintenance';
 import { useVehicle } from '@/state/vehicle-context';
@@ -431,7 +431,7 @@ export default function Mapa() {
                 </Txt>
               </Pressable>
               <Button
-                label={worst.status === 'sin_datos' ? COPY.recordLastChange : COPY.doneAction}
+                label={recordActionLabel(worst)}
                 variant="primary"
                 icon={<Feather name="tool" size={16} color={Colors.onAccent} />}
                 onPress={() => router.push({ pathname: '/registrar', params: { component: worst.componentId } })}

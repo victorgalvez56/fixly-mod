@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
 import { zoneMeta, type ZoneId } from '@/data/zones';
+import { plural } from '@/lib/format';
 import { COPY } from '@/lib/wear/copy';
 import { statusWord } from '@/lib/wear/selectors';
 import type { VehicleType } from '@/lib/wear/types';
@@ -38,7 +39,7 @@ export function ZoneChips({ zones, order, vehicleType, onPress, limit }: Props) 
             key={zone}
             onPress={() => onPress(zone)}
             accessibilityRole="button"
-            accessibilityLabel={`${info.label}: ${longWord}${pending ? `, ${z.pending} pendientes` : ''}`}
+            accessibilityLabel={`${info.label}: ${longWord}${pending ? `, ${plural(z.pending, 'pendiente', 'pendientes')}` : ''}`}
             style={({ pressed }) => [styles.chip, pressed && styles.pressed]}>
             {pending ? <View style={[styles.dot, { backgroundColor: meta.color }]} /> : null}
             <Feather name={info.icon} size={22} color={Colors.textPrimary} />

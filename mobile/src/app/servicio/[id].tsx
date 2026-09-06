@@ -6,7 +6,7 @@ import { componentDef } from '@/data/catalog';
 import { formatKm } from '@/lib/format';
 import { vehicleCopy } from '@/lib/vehicle';
 import { COPY } from '@/lib/wear/copy';
-import { confidenceLabel, explanation, formatDateEs, intervalSentence, isInspect, kmPerDayLabel, statusWord } from '@/lib/wear/selectors';
+import { confidenceLabel, explanation, formatDateEs, intervalSentence, isInspect, kmPerDayLabel, recordActionLabel, statusWord } from '@/lib/wear/selectors';
 import { useMaintenance } from '@/state/use-maintenance';
 import { Colors, ComponentStatusMeta, Radius, Spacing } from '@/theme/tokens';
 import { Button } from '@/ui/Button';
@@ -49,7 +49,7 @@ export default function ServicioDetalle() {
   const footer = (
     <View style={styles.footer}>
       <Button
-        label={estimate.status === 'sin_datos' ? COPY.recordLastChange : COPY.doneAction}
+        label={recordActionLabel(estimate)}
         variant="primary"
         onPress={() => router.push({ pathname: '/registrar', params: { component: estimate.componentId } })}
       />

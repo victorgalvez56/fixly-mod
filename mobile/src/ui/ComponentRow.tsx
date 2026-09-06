@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
 import { componentDef } from '@/data/catalog';
+import { COPY } from '@/lib/wear/copy';
 import { isPending, remainingLine, statusWord } from '@/lib/wear/selectors';
 import type { WearEstimate } from '@/lib/wear/types';
 import { useVehicle } from '@/state/vehicle-context';
@@ -32,11 +33,15 @@ export function ComponentRow({ estimate, onPress, showBar = true, compact }: Pro
       </View>
       <View style={styles.body}>
         <View style={styles.titleLine}>
-          <Txt variant="cardTitle" numberOfLines={1} style={styles.title}>
+          {/* Two lines for the part, the short word for the status: a motorcycle's
+              names ("Kit de arrastre (cadena, piñón y catalina)") and inspect wording
+              ("Revisión vencida") together truncated the name to a stub. The full
+              sentence is in the row's accessibility label. */}
+          <Txt variant="cardTitle" numberOfLines={2} style={styles.title}>
             {def.label}
           </Txt>
-          <Txt variant="label" color={meta.text}>
-            {statusWord(estimate)}
+          <Txt variant="label" color={meta.text} numberOfLines={1} style={styles.status}>
+            {COPY.statusWord[estimate.status]}
           </Txt>
         </View>
         <Txt variant="bodySmall" color={Colors.textSecondary} numberOfLines={2}>
@@ -68,8 +73,9 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.9 },
   tile: { width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
   body: { flex: 1, gap: 3 },
-  titleLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  titleLine: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   title: { flex: 1, fontSize: 15, lineHeight: 20 },
+  status: { flexShrink: 0, paddingTop: 2 },
   bar: { paddingTop: 6, paddingBottom: 2 },
   dot: { position: 'absolute', top: 10, right: 10, width: 7, height: 7, borderRadius: 4 },
 });

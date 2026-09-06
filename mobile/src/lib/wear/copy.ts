@@ -24,6 +24,7 @@ export const COPY = {
     media: 'Estimación aproximada',
     baja: 'Estimación poco confiable. Actualiza tu kilometraje',
     bajaAssumed: 'Estimación poco confiable. Confirma el último cambio',
+    bajaAssumedInspect: 'Estimación poco confiable. Confirma la última revisión',
   },
   basis: {
     manual: 'Según el manual',
@@ -36,6 +37,7 @@ export const COPY = {
   },
   noSchedule: 'El manual no programa un cambio; se revisa si hay ruido o fuga.',
   noRecord: 'No registraste cuándo fue el último cambio.',
+  noRecordInspect: 'No registraste cuándo fue la última revisión.',
   possiblyOverdue: 'Ya pasaste ese kilometraje; si no sabes cuándo se hizo, pídele al taller que lo revise.',
   inspectionSaidReplace: 'El taller indicó que hay que cambiarlo.',
   inspectHint: 'El cambio depende de lo que mida el taller.',
@@ -50,6 +52,7 @@ export const COPY = {
   scheduleAction: 'Agendar este servicio',
   recordService: 'Registrar un servicio',
   recordLastChange: 'Registrar último cambio',
+  recordLastInspect: 'Registrar última revisión',
   ifSkipped: 'Si no lo haces',
   componentsByManual: 'Componentes según tu manual',
   reviewingPlan: 'Revisando tu plan',

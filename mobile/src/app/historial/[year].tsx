@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { componentDef } from '@/data/catalog';
-import { formatKm, formatPEN, formatShortDate } from '@/lib/format';
+import { formatKm, formatPEN, formatShortDate, plural } from '@/lib/format';
 import { useVehicle } from '@/state/vehicle-context';
 import { Colors } from '@/theme/tokens';
 import { DetailHeader } from '@/ui/DetailHeader';
@@ -32,7 +32,7 @@ export default function HistorialYear() {
       <DetailHeader title={year ?? ''} />
 
       <Txt variant="bodySmall" color={Colors.textSecondary}>
-        {entries.length} servicios · {formatPEN(total)} en total
+        {plural(entries.length, 'servicio', 'servicios')} · {formatPEN(total)} en total
       </Txt>
 
       <Surface size="md" style={styles.card}>
