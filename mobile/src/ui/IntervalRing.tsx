@@ -136,9 +136,7 @@ export function IntervalRing({ estimate, size = 132, delayMs = 0, durationMs = 6
               fill="none"
               strokeDasharray={[activeC * warnWindow, activeC]}
               strokeDashoffset={-(activeC * (1 - warnWindow))}
-              rotation={-90}
-              originX={cx}
-              originY={cy}
+              transform={`rotate(-90 ${cx} ${cy})`}
             />
           ) : null}
 
@@ -155,9 +153,7 @@ export function IntervalRing({ estimate, size = 132, delayMs = 0, durationMs = 6
               fill="none"
               strokeDasharray={[secondaryC, secondaryC]}
               strokeDashoffset={secondaryC * (1 - Math.min(1, secondaryPct))}
-              rotation={-90}
-              originX={cx}
-              originY={cy}
+              transform={`rotate(-90 ${cx} ${cy})`}
             />
           ) : null}
 
@@ -175,9 +171,7 @@ export function IntervalRing({ estimate, size = 132, delayMs = 0, durationMs = 6
                 fill="none"
                 strokeDasharray={[activeC, activeC]}
                 animatedProps={shadowProps}
-                rotation={-90}
-                originX={cx}
-                originY={cy + 1}
+                transform={`rotate(-90 ${cx} ${cy + 1})`}
               />
               <AnimatedCircle
                 cx={cx}
@@ -189,9 +183,7 @@ export function IntervalRing({ estimate, size = 132, delayMs = 0, durationMs = 6
                 fill="none"
                 strokeDasharray={[activeC, activeC]}
                 animatedProps={activeProps}
-                rotation={-90}
-                originX={cx}
-                originY={cy}
+                transform={`rotate(-90 ${cx} ${cy})`}
               />
               <AnimatedCircle
                 cx={cx}
@@ -203,9 +195,7 @@ export function IntervalRing({ estimate, size = 132, delayMs = 0, durationMs = 6
                 fill="none"
                 strokeDasharray={[activeC, activeC]}
                 animatedProps={excessProps}
-                rotation={-90}
-                originX={cx}
-                originY={cy}
+                transform={`rotate(-90 ${cx} ${cy})`}
               />
             </>
           ) : null}

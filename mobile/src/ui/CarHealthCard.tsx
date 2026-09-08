@@ -92,8 +92,11 @@ export function CarHealthCard() {
   return (
     <Surface size="md" style={styles.card}>
       <View style={styles.row}>
-        <Pressable onPress={() => router.push('/mapa')} accessibilityRole="button" accessibilityLabel="Ver el mapa del auto" style={{ width: MAP_W, height: mapH * 0.72, overflow: 'hidden' }}>
+        <View style={{ width: MAP_W, height: mapH * 0.72, overflow: 'hidden' }}>
           <View style={{ marginTop: -8 }}>
+            {/* Background press opens the map; zone overlays inside CarMap sit
+                above it as siblings (never nested buttons) and route to the zone. */}
+            <Pressable onPress={() => router.push('/mapa')} accessibilityRole="button" accessibilityLabel="Ver el mapa del auto" style={[styles.mapBackdrop, { height: mapH }]} />
             <CarMap
               width={MAP_W}
               zones={zoneVisuals}
@@ -110,7 +113,7 @@ export function CarHealthCard() {
                 <View key={z} pointerEvents="none" style={[styles.zoneDot, { left: ZONE_ANCHORS[z].x * k - 5, top: ZONE_ANCHORS[z].y * k - 5, backgroundColor: ComponentStatusMeta[zones[z].status].color }]} />
               ))}
           </View>
-        </Pressable>
+        </View>
         <View style={styles.ringCol}>
           {worst ? <IntervalRing estimate={worst} size={116} /> : null}
           {worstDef ? (
@@ -170,6 +173,7 @@ export function CarHealthCard() {
 
 const styles = StyleSheet.create({
   card: { padding: Spacing.lg, gap: Spacing.md },
+  mapBackdrop: { position: 'absolute', left: 0, right: 0, top: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   ringCol: { flex: 1, alignItems: 'center', gap: 4 },
   ringLabel: { textAlign: 'center' },

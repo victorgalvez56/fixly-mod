@@ -1,9 +1,10 @@
 import { memo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedProps, useDerivedValue, type SharedValue } from 'react-native-reanimated';
 import Svg, { G, Path } from 'react-native-svg';
 
 import { CAR_PATHS, CAR_VIEWBOX, type CarPath, type CarZone } from '@/data/car-drawing';
-import { Colors } from '@/theme/tokens';
+import { Colors, TouchTarget } from '@/theme/tokens';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -46,6 +47,30 @@ const STATIC = CAR_PATHS.filter((p) => p.layer === 'silhouette' || p.layer === '
 const ZONES = CAR_PATHS.filter((p) => p.layer === 'zones');
 const DETAIL = CAR_PATHS.filter((p) => p.layer === 'enginebay' || p.layer === 'hoses');
 const HIT = CAR_PATHS.filter((p) => p.layer === 'hit');
+
+/**
+ * The generated hit layer is made of axis-aligned rectangles written as
+ * `M x1 y1 L x2 y1 L x2 y2 L x1 y2 Z` paths. Tapping through svg <Path>
+ * props leaks responder handlers to the DOM on web (the handlers are ignored,
+ * so taps die, and every leak logs an error), so we render real Pressables
+ * over the drawing instead, sized from the same data.
+ */
+function hitRects(): { zone: CarZone; left: number; top: number; w: number; h: number }[] {
+  const rectRe = /^M ([\d.]+) ([\d.]+) L ([\d.]+) ([\d.]+) L ([\d.]+) ([\d.]+) L ([\d.]+) ([\d.]+) Z$/;
+  const out: { zone: CarZone; left: number; top: number; w: number; h: number }[] = [];
+  for (const p of HIT) {
+    if (!p.zone) continue;
+    const m = rectRe.exec(p.d.replace(/\s+/g, ' ').trim());
+    if (!m) continue;
+    const x1 = Number(m[1]);
+    const y1 = Number(m[2]);
+    const x2 = Number(m[4]);
+    const y2 = Number(m[6]);
+    out.push({ zone: p.zone, left: x1, top: y1, w: x2 - x1, h: y2 - y1 });
+  }
+  return out;
+}
+const HIT_RECTS = hitRects();
 
 /** The car body, glass and wheels: never re-rendered by state changes. */
 const StaticLayer = memo(function StaticLayer() {
@@ -112,40 +137,51 @@ function RevealPath({
 export function CarMap({ width, zones, selectedZone, reveal, detail, plan, resolvedColors, onPressZone }: Props) {
   const height = carMapHeight(width);
   const zoneOpacity = useDerivedValue(() => 1 - detail.value * 0.75);
+  const k = unitScale(width);
 
   return (
-    <Svg width={width} height={height} viewBox={`${CAR_VIEWBOX.x} ${CAR_VIEWBOX.y} ${CAR_VIEWBOX.w} ${CAR_VIEWBOX.h}`}>
-      <StaticLayer />
+    <View style={{ width, height }}>
+      <Svg width={width} height={height} viewBox={`${CAR_VIEWBOX.x} ${CAR_VIEWBOX.y} ${CAR_VIEWBOX.w} ${CAR_VIEWBOX.h}`}>
+        <StaticLayer />
 
-      <ZoneLayer zones={zones} selectedZone={selectedZone} opacity={zoneOpacity} />
+        <ZoneLayer zones={zones} selectedZone={selectedZone} opacity={zoneOpacity} />
 
-      <G>
-        {DETAIL.map((p) => {
-          const active = selectedZone !== null && p.zone === selectedZone;
-          const window = p.componentId ? (plan.windows[p.componentId] ?? null) : active ? [0, 1] : null;
-          const resolved = p.componentId ? resolvedColors[p.componentId] : undefined;
-          const color = resolved ?? STROKE_COMPONENT;
-          return <RevealPath key={p.id} path={p} reveal={reveal} detail={detail} window={window as [number, number] | null} active={active} color={color} />;
-        })}
-      </G>
-
-      {onPressZone ? (
         <G>
-          {HIT.map((p) => (
-            <Path
-              key={p.id}
-              d={p.d}
-              fill="transparent"
-              stroke="none"
-              onPress={() => p.zone && onPressZone(p.zone)}
-              accessibilityLabel={p.zone ?? p.id}
-            />
-          ))}
+          {DETAIL.map((p) => {
+            const active = selectedZone !== null && p.zone === selectedZone;
+            const window = p.componentId ? (plan.windows[p.componentId] ?? null) : active ? [0, 1] : null;
+            const resolved = p.componentId ? resolvedColors[p.componentId] : undefined;
+            const color = resolved ?? STROKE_COMPONENT;
+            return <RevealPath key={p.id} path={p} reveal={reveal} detail={detail} window={window as [number, number] | null} active={active} color={color} />;
+          })}
         </G>
-      ) : null}
-    </Svg>
+      </Svg>
+
+      {onPressZone
+        ? HIT_RECTS.map((r, i) => {
+            // Scale the generated rect to pixels, then pad undersized zones up
+            // to the 56 px touch minimum around their centre (visual-only map
+            // widths like the home card make hood zones smaller than a finger).
+            const wPx = Math.max(r.w * k, TouchTarget);
+            const hPx = Math.max(r.h * k, TouchTarget);
+            const left = r.left * k - (wPx - r.w * k) / 2;
+            const top = r.top * k - (hPx - r.h * k) / 2;
+            return (
+              <Pressable
+                key={`${r.zone}-${i}`}
+                onPress={() => onPressZone(r.zone)}
+                accessibilityLabel={r.zone}
+                accessibilityRole="button"
+                style={[styles.hit, { left, top, width: wPx, height: hPx }]}
+              />
+            );
+          })
+        : null}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({ hit: { position: 'absolute', backgroundColor: 'transparent' } });
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 

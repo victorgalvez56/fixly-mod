@@ -1151,6 +1151,16 @@ Decisiones que se apartan de este documento, a pedido de Victor: la revelación 
 
 Lo que sigue sin hacerse: la verificación adversarial de las 63 afirmaciones técnicas y el jurado de diseños (límite de uso); la base real de manuales (P9); las notificaciones; "Agendar este servicio" no hace nada aún.
 
+### 10.1 Correcciones web (misma fecha, sesión siguiente)
+
+La primera pasada dejaba errores en la consola del navegador (en Metro aparecían como `Web ERROR` en blanco con marco de código, sin mensaje). Causa y arreglo, verificados con Chrome headless + CDP y estado demo sembrado en localStorage (`fixly.vehicle.v1` con el fixture §4.6):
+
+1. **Tocar zonas dentro del SVG no funcionaba en web y escupía 6 errores por render.** `onPress` sobre `<Path>` de react-native-svg filtra los props de respuesta (`onStartShouldSetResponder`, …) al DOM; React DOM los ignora (el toque muere) y los registra con `console.error` con formato `%s` (por eso el mensaje en blanco). Arreglo: la capa `hit` del dibujo (rectángulos alineados a ejes) se convierte en `Pressable`s reales superpuestos al mapa, con mínimo de 56 px (`TouchTarget`), en `CarMap.tsx` (`hitRects()`). Nativos y web tocan igual y la consola queda limpia.
+2. **`Invalid DOM property transform-origin`** en `IntervalRing`: los props `rotation/originX/originY` de `<Circle>` generan ese atributo en DOM. Arreglo: `transform={`rotate(-90 cx cy)`}` (cadena SVG válida en web y parseada por react-native-svg en nativo). El anillo sigue arrancando a las 12.
+3. **`<button>` anidado en `<button>`** en la tarjeta del home (el Pressable envolvente contenía los overlays de zona): HTML inválido y riesgo de hidratación. Arreglo: el envolvente es un `View` y el fondo tocable es un Pressable hermano detrás del mapa (`mapBackdrop` en `CarHealthCard.tsx`).
+
+Lección de verificación: el servidor dev de Metro puede servir un bundle viejo entre sesiones — si el DOM no refleja un cambio, reiniciar con `npx expo start --web --clear` antes de diagnosticar. Estado final: cero errores de consola en `/estado` y `/mapa`, toque de zona → revelación → resultados verificado por CDP, `tsc` y `expo lint` limpios. Cambios sin commitear.
+
 ---
 
 ## 11. Fuentes principales
